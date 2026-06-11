@@ -1,0 +1,492 @@
+const docx = require('docx');
+const fs = require('fs');
+const path = require('path');
+
+const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak } = docx;
+
+const C={MAIN:'#1A5276',DARK:'#2C3E50',LIGHT:'#EBF5FB',WHITE:'#FFFFFF',BLACK:'#333333',GRAY:'#7F8C8D',RED:'#C0392B',GREEN:'#1E8449',ORANGE:'#E67E22',HEADER:'#1a1a2e',YELLOW:'#F39C12',LIGHTGRAY:'#F5F6FA'};
+
+function h1(t){return new Paragraph({text:t,heading:HeadingLevel.HEADING_1,spacing:{before:400,after:200},border:{bottom:{style:BorderStyle.SINGLE,size:2,color:C.MAIN}}})}
+function h2(t){return new Paragraph({text:t,heading:HeadingLevel.HEADING_2,spacing:{before:300,after:150}})}
+function h3(t){return new Paragraph({text:t,heading:HeadingLevel.HEADING_3,spacing:{before:200,after:100}})}
+function p(t,o={}){return new Paragraph({children:[new TextRun({text:t,size:21,font:'微软雅黑',...o})],spacing:{after:80,line:360}})}
+function b(t,o={}){return new Paragraph({children:[new TextRun({text:'• '+t,size:21,font:'微软雅黑',...o})],spacing:{after:60,line:340},indent:{left:600}})}
+function n(i,t){return new Paragraph({children:[new TextRun({text:`${i}. ${t}`,size:21,font:'微软雅黑'})],spacing:{after:60,line:340},indent:{left:600}})}
+function divider(){return new Paragraph({spacing:{after:200},children:[]})}
+
+function dataTable(headers,rows,opts={}){
+    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+        new TableRow({children:headers.map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:opts.small?17:19,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}))}),
+        ...rows.map((r,i)=>{
+            const vals = Array.isArray(r) ? r : [r];
+            return new TableRow({children:vals.map(v=>new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:String(v),size:opts.small?16:18,font:'微软雅黑'})],spacing:{before:15,after:15}})]}))});
+        }),
+    ]});
+}
+
+// Status badge helper
+function statusCell(text, status) {
+    const colors = {
+        pass: C.GREEN, fail: C.RED, warn: C.ORANGE, na: C.GRAY, pending: C.YELLOW
+    };
+    return new Paragraph({children:[new TextRun({text, size:18, font:'微软雅黑', bold:true, color: colors[status] || C.GRAY})], spacing:{before:15,after:15}});
+}
+
+// Severity-aware row for review table
+function reviewRow(num, module, touchpoint, standard, severity, finding, status) {
+    const sevColors = { '🔴 P0': C.RED, '🟠 P1': C.ORANGE, '🟡 P2': C.YELLOW, '🟢 P3': C.GREEN };
+    const stColors = { '✅通过': C.GREEN, '❌不通过': C.RED, '⚠️部分': C.ORANGE, '⏳待查': C.GRAY };
+    return [
+        num, module, touchpoint, standard,
+        {text: severity, color: sevColors[severity] || C.GRAY},
+        finding,
+        {text: status, color: stColors[status] || C.GRAY}
+    ];
+}
+
+// Rich review table with formatting
+function reviewTable(headers, rows) {
+    return new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+            // Header row
+            new TableRow({children: headers.map(h => new TableCell({
+                shading: { fill: C.HEADER },
+                children: [new Paragraph({children: [new TextRun({text: h, size: 17, font: '微软雅黑', bold: true, color: C.WHITE})], alignment: AlignmentType.CENTER, spacing: {before: 20, after: 20}})]
+            }))}),
+            // Data rows
+            ...rows.map((r, i) => new TableRow({
+                children: r.map((cell, j) => {
+                    const cellObj = typeof cell === 'object' && !Array.isArray(cell) ? cell : { text: String(cell) };
+                    return new TableCell({
+                        shading: i % 2 === 0 ? { fill: C.LIGHT } : undefined,
+                        children: [new Paragraph({
+                            children: [new TextRun({
+                                text: cellObj.text || '',
+                                size: 16,
+                                font: '微软雅黑',
+                                color: cellObj.color || C.BLACK,
+                                bold: cellObj.bold || false
+                            })],
+                            spacing: { before: 12, after: 12 }
+                        })]
+                    });
+                })
+            }))
+        ]
+    });
+}
+
+const OUT = '20260602 链商平台 技术部会议整理';
+
+// ============================================================
+// 构建审查报告
+// ============================================================
+function buildReview() {
+    return {
+        properties: { page: { margin: { top: 1440, bottom: 1440, left: 1000, right: 1000 } } },
+        children: [
+
+            // ========== COVER ==========
+            new Paragraph({children:[new TextRun({text:'链商平台公测 · 品牌专业审查报告',size:38,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
+            new Paragraph({children:[new TextRun({text:'Chain Commerce Platform · Brand Audit Report',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
+            new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:14,font:'微软雅黑',color:C.LIGHT.replace('#','')})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'审查对象：链商2.0公测版本（22张截图）',size:20,font:'微软雅黑',color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'审查维度：品牌色 / Logo / 字体 / 文案 / 图标 / 组件 / 合规 / 体验',size:20,font:'微软雅黑',color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'审查人：梁君衡 | 日期：2026年6月3日 | 版本：V1.0',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            divider(),
+
+            // ========== EXECUTIVE SUMMARY ==========
+            h1('审查概要'),
+            p('本报告针对链商2.0公测版本22张测试截图进行系统化品牌审查。审查标准依据《链生活品牌视觉与超级符号体系手册V1.0》《店铺模板设计Brief V1.0》《法律合规框架》及6/2技术会议纪要中的品牌规范要求。', {bold: true}),
+            divider(),
+            p('审查框架：本次审查采用"8维×6模块×28触点"三级结构——8个品牌维度下，逐个检查6大系统模块的28个品牌触点。每个触点标注：通过/不通过/部分通过，P0/P1/P2优先级，及具体修正建议。', {color: C.MAIN}),
+            divider(),
+
+            // ========== SECTION 1: BRAND STANDARDS QUICK REFERENCE ==========
+            h1('第一部分：品牌标准速查'),
+
+            h2('1.1 品牌色系统'),
+            dataTable(
+                ['色值名称','色号','用途','错误用法示例'],
+                [
+                    ['深海蓝（主色）','#1A5276','导航栏/标题/主按钮/品牌标识\nTab选中态/链接/重要信息','❌ 用其他蓝色替代\n❌ 透明度改变导致色偏'],
+                    ['温暖橙（强调色）','#E67E22','CTA按钮/让利标签/排名标记\n促销信息/金额高亮','❌ 大面积用作背景色\n❌ 与红色/黄色混用'],
+                    ['深空灰（正文）','#2C3E50','正文/副标题/辅助信息','❌ 纯黑#000000代替'],
+                    ['浅蓝底（背景）','#EBF5FB','卡片背景/空状态/信息区','❌ 纯白背景无层次'],
+                    ['合规绿（通过）','#1E8449','成功提示/合规标识/已完成','❌ 用于营销/促销场景'],
+                    ['警示红（红线）','#C0392B','删除/警告/合规红线标注','❌ 大面积使用'],
+                    ['中性灰（次要）','#7F8C8D','次要文字/禁用状态/说明','❌ 用作正文颜色'],
+                ]
+            ),
+
+            h2('1.2 Logo使用规范'),
+            dataTable(
+                ['规范项','标准','常见错误'],
+                [
+                    ['Logo位置','导航栏左上角、页面底部、分享海报\n商圈页顶部、支付成功页','❌ Logo缺失\n❌ Logo居中（应为左侧）\n❌ 底部品牌标识缺失'],
+                    ['Logo尺寸','导航栏：≤120×40px\n底部：≤80×27px\n水印：60×20px','❌ 拉伸变形\n❌ 过小看不清（<40px宽）'],
+                    ['安全间距','Logo四周≥Logo高度的1/4\n不可有文字/图标侵入安全区','❌ Logo贴边\n❌ 文字紧贴Logo'],
+                    ['禁止行为','不可反转颜色（除反白版）\n不可旋转/倾斜/加阴影\n不可添加其他元素','❌ Logo改色\n❌ 叠加特效'],
+                ]
+            ),
+
+            h2('1.3 字体规范'),
+            dataTable(
+                ['层级','字体','大小/字重','使用场景'],
+                [
+                    ['H1 大标题','微软雅黑 / PingFang SC','20px Bold (700)','页面主标题/商圈名称'],
+                    ['H2 中标题','微软雅黑 / PingFang SC','16px Bold (700)','模块标题/店铺名称'],
+                    ['H3 小标题','微软雅黑 / PingFang SC','14px Medium (600)','卡片标题/分类名'],
+                    ['Body 正文','微软雅黑 / PingFang SC','14px Regular (400)','正文/说明/菜单项'],
+                    ['Caption 辅助','微软雅黑 / PingFang SC','12px Regular (400)','辅助说明/时间/标签'],
+                    ['Price 价格数字','DIN / SF Pro Display','18-24px Bold (700)','价格/金额/让利百分比'],
+                ]
+            ),
+
+            h2('1.4 文案语调标准'),
+            dataTable(
+                ['场景','标准用语','禁用用语'],
+                [
+                    ['空状态','"暂无商品，敬请期待"\n"暂无订单记录"','❌ "暂无数据"\n❌ "无结果"'],
+                    ['加载中','"正在加载…"\n（配链环旋转动效）','❌ "loading..."\n❌ 空白等待'],
+                    ['错误提示','"网络开了小差，请刷新"\n"页面走丢了～"','❌ "加载失败"\n❌ "网络错误"'],
+                    ['支付成功','"感谢您的惠顾！"\n"本次消费获得XX积分"','❌ "支付成功"\n❌ 无品牌信息'],
+                    ['底部标识','"由链商·链生活提供技术与运营支持"','❌ 缺失\n❌ 文字可删除'],
+                    ['合规声明','"积分不可兑换现金"\n"本平台不对收益做任何承诺"','❌ 使用"币""Token"\n❌ "投资回报""增值"'],
+                ]
+            ),
+
+            h2('1.5 组件与图标规范'),
+            dataTable(
+                ['组件','规范','反例'],
+                [
+                    ['卡片','圆角8px / 阴影 0 2px 8px rgba(0,0,0,0.08)\n内边距16px','❌ 圆角不一致\n❌ 无阴影/阴影过重'],
+                    ['按钮-主CTA','背景#E67E22 / 白字 / 圆角4px\n高度44px（移动端最小触摸区）','❌ 蓝色/绿色按钮\n❌ 按钮过小难点击'],
+                    ['按钮-次要','边框#1A5276 / 蓝色字 / 白底','❌ 灰色按钮'],
+                    ['标签-让利','橙底白字 / 圆角2px\n字号12px Bold','❌ 灰色/黑色标签\n❌ 无品牌色感'],
+                    ['图标','Feather Icons 或 Material Icons\n尺寸24px / 颜色#2C3E50','❌ 多种图标库混用\n❌ 图标大小不一'],
+                    ['输入框','边框#DEE2E6 / 聚焦#1A5276\n圆角4px / 高度44px','❌ 默认直角\n❌ 聚焦无品牌色'],
+                ]
+            ),
+
+            // ========== SECTION 2: MODULE-BY-MODULE REVIEW ==========
+            h1('第二部分：模块化品牌审查'),
+            p('以下按系统模块逐项审查。请在查看对应截图后，在"审查发现"和"审查结果"列记录。审查结果：✅通过 / ❌不通过 / ⚠️部分通过 / ⏳待查。', {bold: true, color: C.MAIN}),
+            divider(),
+
+            // ---- MODULE A: C端 ----
+            h2('A模块：用户前端 C端（12个触点）'),
+            p('预期截图：商圈首页 → 搜索/分类 → 商家店铺页 → 商品详情 → 下单 → 支付 → 个人中心 → 消息/客服', {color: C.GRAY}),
+
+            h3('A1-A4：首页与导航（P0关键）'),
+            dataTable(
+                ['触点','品牌标准','审查发现\n（对照截图填写）','审查\n结果','修正建议\n（如不通过）'],
+                [
+                    ['A1\n顶部导航栏','① 底色统一#1A5276\n② Logo尺寸≤120×40px\n③ Logo点击返回首页\n④ 搜索栏品牌色边框','','⏳',''],
+                    ['A2\n商圈/首页','① 品牌标题"链生活商圈·附近好店"\n② 让利排名规则可见（一句话说明）\n③ 分类图标风格统一\n④ 轮播Banner有品牌Logo','','⏳',''],
+                    ['A3\n商家店铺页\n底部','① 底部固定品牌标识：\n"由链商·链生活\n提供技术与运营支持"\n② 标识不可删除/不可隐藏','','⏳',''],
+                    ['A4\n注册/会员弹窗','① 品牌欢迎页（非直接弹窗）\n② PIPL隐私告知文案\n③ 品牌色按钮"同意并成为会员"\n④ 可查看隐私政策链接','','⏳',''],
+                ]
+            ),
+
+            h3('A5-A8：交易与内容（P1重要）'),
+            dataTable(
+                ['触点','品牌标准','审查发现\n（对照截图填写）','审查\n结果','修正建议\n（如不通过）'],
+                [
+                    ['A5\n支付成功页','① 品牌支付成功页（非微信默认）\n② "感谢您的惠顾！"\n③ 链商Logo+让利金额展示\n④ 消费金/积分获得提示','','⏳',''],
+                    ['A6\n分享海报/\n二维码','① 二维码嵌入品牌Logo\n② 双品牌联名展示（商家+链商）\n③ 统一排版模板\n④ "扫码即享优惠"引导语','','⏳',''],
+                    ['A7\n个人中心\n"我的"','① 消费金余额（顶部醒目）\n② 积分余额\n③ 会员等级标识\n④ 让利记录/订单入口\n⑤ 品牌色UI设计','','⏳',''],
+                    ['A8\n空状态页面','① 品牌统一空状态设计\n② 友好文案（非"暂无数据"）\n③ 品牌插画/图标\n④ 背景色#EBF5FB','','⏳',''],
+                ]
+            ),
+
+            h3('A9-A12：辅助与体验（P2次要）'),
+            dataTable(
+                ['触点','品牌标准','审查发现\n（对照截图填写）','审查\n结果','修正建议\n（如不通过）'],
+                [
+                    ['A9\n错误/404页','① 品牌错误页设计\n② "页面走丢了～"\n③ 返回首页按钮（品牌色）','','⏳',''],
+                    ['A10\nLoading\n加载状态','① 品牌Loading动画（链环旋转）\n② 品牌色加载条\n③ "正在加载…"文案','','⏳',''],
+                    ['A11\n消息推送\n模板','① 品牌推送模板\n② 标题+内容+品牌Logo\n③ 统一文案调性\n④ 推送时间合理（不扰民）','','⏳',''],
+                    ['A12\n客服对话页','① 品牌问候语："您好！\n欢迎光临，有什么可以帮您的？"\n② 品牌色聊天气泡\n③ 客服头像品牌化','','⏳',''],
+                ]
+            ),
+
+            // ---- MODULE B: B端 ----
+            h2('B模块：商户SaaS端 B端（5个触点）'),
+            p('预期截图：商家登录 → 后台首页仪表盘 → 店铺装修/模板选择 → 入驻流程 → 数据报告', {color: C.GRAY}),
+
+            dataTable(
+                ['触点','品牌标准','审查发现\n（对照截图填写）','审查\n结果','修正建议\n（如不通过）'],
+                [
+                    ['B1\n商家登录页','① Logo+品牌色设计\n② "链商·链生活 商家中心"\n③ 合规声明链接可见\n④ 品牌色登录按钮','','⏳',''],
+                    ['B2\n商家后台\n仪表盘','① 品牌色数据卡片\n② "今日订单/收入/客户数"\n③ 品牌Logo+商家名称\n④ 数据可视化品牌色','','⏳',''],
+                    ['B3\n模板选择页\n店铺装修','① 6套品牌模板预览图\n② 每套标注色系/适用行业\n③ "免费使用"标签\n④ 模板品牌色标注清晰','','⏳',''],
+                    ['B4\n入驻流程\n资料提交','① 品牌引导流程（步骤1-2-3）\n② 品牌色进度条\n③ 品牌色按钮\n④ 入驻成功品牌欢迎页','','⏳',''],
+                    ['B5\n数据报告\n经营分析','① 品牌数据报告模板\n② Logo+品牌色图表\n③ "链商·链生活商家经营报告"\n④ 报告可导出/分享','','⏳',''],
+                ]
+            ),
+
+            // ---- MODULE C: 收银台 ----
+            h2('C模块：收银台/POS（3个触点）'),
+            p('预期截图：收银主界面 → 支付确认页 → 核销/退款页', {color: C.GRAY}),
+
+            dataTable(
+                ['触点','品牌标准','审查发现\n（对照截图填写）','审查\n结果','修正建议\n（如不通过）'],
+                [
+                    ['C1\n收银台\n主界面','① 顶部品牌Logo+"链商收银"\n② 品牌色金额显示\n③ 让利信息可见\n④ 界面整洁/操作流畅','','⏳',''],
+                    ['C2\n支付确认页\n（消费者端）','① 品牌色金额+让利信息\n② "本次消费获得XX积分"\n③ 品牌Logo水印\n④ 品牌色确认按钮','','⏳',''],
+                    ['C3\n核销/退款\n确认页','① 品牌色确认/退款按钮\n② 退款原因品牌化文案\n③ 操作成功品牌提示\n④ 退款金额清晰展示','','⏳',''],
+                ]
+            ),
+
+            // ---- MODULE D: 资管后台 ----
+            h2('D模块：资管后台（2个触点）'),
+            p('预期截图：资管登录页 → 管理后台页面', {color: C.GRAY}),
+
+            dataTable(
+                ['触点','品牌标准','审查发现\n（对照截图填写）','审查\n结果','修正建议\n（如不通过）'],
+                [
+                    ['D1\n资管登录页','① 品牌内网标识\n② "链商·链生活 管理后台"\n③ 仅内部使用提示\n④ 品牌色设计（低调版）','','⏳',''],
+                    ['D2\n资管页面\n品牌标识','① 每页顶部/底部品牌Logo\n② 当前系统版本号\n③ "内部管理系统·请勿外传"\n④ 水印防截图泄露','','⏳',''],
+                ]
+            ),
+
+            // ---- MODULE E: 知识库 ----
+            h2('E模块：知识库/帮助中心（3个触点）'),
+            p('预期截图：知识库首页 → 操作指南/教程 → FAQ', {color: C.GRAY}),
+
+            dataTable(
+                ['触点','品牌标准','审查发现\n（对照截图填写）','审查\n结果','修正建议\n（如不通过）'],
+                [
+                    ['E1\n知识库首页\n帮助中心','① Logo+搜索+分类导航\n② 品牌色设计\n③ 品牌插画/图标\n④ 图文并茂+短视频入口','','⏳',''],
+                    ['E2\n操作指南\n图文教程','① 品牌教程模板\n② 步骤式教学+品牌色标注\n③ 每篇底部品牌标识\n④ 教程可搜索/收藏','','⏳',''],
+                    ['E3\nFAQ\n常见问题','① 品牌FAQ模板\n② Q&A品牌色样式\n③ 客服联系方式+工作时间\n④ 品牌问候语','','⏳',''],
+                ]
+            ),
+
+            // ---- MODULE F: 对外物料 ----
+            h2('F模块：对外物料（3个触点）'),
+            p('预期截图：入驻资料包 → 推广海报模板 → 门头/物料模板', {color: C.GRAY}),
+
+            dataTable(
+                ['触点','品牌标准','审查发现\n（对照截图填写）','审查\n结果','修正建议\n（如不通过）'],
+                [
+                    ['F1\n入驻资料包','① 品牌封面+目录\n② Logo/VI色/轮播图规范\n③ 小程序申请材料清单\n④ 品牌欢迎信','','⏳',''],
+                    ['F2\n推广海报\n模板','① 品牌海报模板（可替换图）\n② 商家Logo+门店图位\n③ 让利信息+链商Logo\n④ "扫码即享优惠"引导','','⏳',''],
+                    ['F3\n门头/物料\n模板','① 品牌门头模板\n② 链商Logo+社区名称\n③ 服务站二维码\n④ 品牌色边框/底板','','⏳',''],
+                ]
+            ),
+
+            // ========== SECTION 3: 8-DIMENSION CROSS-CUT REVIEW ==========
+            h1('第三部分：8维交叉审查'),
+            p('以下8个维度横切所有模块，检查系统性品牌问题。每个维度标注：整体评分（★★★★★）、主要问题、典型案例（从截图中找）。', {bold: true}),
+            divider(),
+
+            h2('维度1：品牌色一致性'),
+            p('检查所有页面中品牌色的使用是否统一、准确。重点关注：', {bold: true}),
+            b('导航栏/标题是否使用#1A5276（非其他蓝色）'),
+            b('CTA按钮/让利标签/排名标记是否使用#E67E22'),
+            b('正文是否使用#2C3E50（非纯黑#000000）'),
+            b('是否有未经授权的颜色（如绿色按钮/紫色标签）'),
+            b('日间/夜间模式下品牌色是否有适配方案'),
+            divider(),
+            dataTable(
+                ['评分','★★★★★','主要问题','典型案例','优先整改项'],
+                [['____','____','____','____','____']]
+            ),
+
+            h2('维度2：Logo规范性'),
+            p('检查Logo在5处关键位置是否正确部署：导航栏/底部/分享海报/商圈页/支付成功页。', {bold: true}),
+            dataTable(
+                ['评分','★★★★★','主要问题','典型案例','优先整改项'],
+                [['____','____','____','____','____']]
+            ),
+
+            h2('维度3：字体统一性'),
+            p('检查全局字体是否统一为微软雅黑/PingFang SC，价格数字是否使用DIN/SF字体，字号层级是否清晰。', {bold: true}),
+            dataTable(
+                ['评分','★★★★★','主要问题','典型案例','优先整改项'],
+                [['____','____','____','____','____']]
+            ),
+
+            h2('维度4：文案语调'),
+            p('检查空状态/加载/错误/支付成功/底部标识/合规声明等文案是否符合品牌语调指南。', {bold: true}),
+            dataTable(
+                ['评分','★★★★★','主要问题','典型案例','优先整改项'],
+                [['____','____','____','____','____']]
+            ),
+
+            h2('维度5：图标与组件'),
+            p('检查卡片圆角阴影/按钮样式/标签样式/图标库/输入框等组件是否统一品牌化。', {bold: true}),
+            dataTable(
+                ['评分','★★★★★','主要问题','典型案例','优先整改项'],
+                [['____','____','____','____','____']]
+            ),
+
+            h2('维度6：合规安全性'),
+            p('检查所有页面是否违反三条合规红线：积分不可兑现/不可形成资金池/不可承诺收益。检查术语是否合规。', {bold: true}),
+            dataTable(
+                ['评分','★★★★★','主要问题','典型案例','优先整改项'],
+                [['____','____','____','____','____']]
+            ),
+
+            h2('维度7：信息架构与体验'),
+            p('检查页面信息层级是否清晰、关键操作是否可达、品牌信任元素是否充分展示。', {bold: true}),
+            dataTable(
+                ['评分','★★★★★','主要问题','典型案例','优先整改项'],
+                [['____','____','____','____','____']]
+            ),
+
+            h2('维度8：差异化品牌表达'),
+            p('检查"链商=让利排名+千店千面+不抽佣"的差异化品牌定位是否在产品界面中可感知。', {bold: true}),
+            dataTable(
+                ['评分','★★★★★','主要问题','典型案例','优先整改项'],
+                [['____','____','____','____','____']]
+            ),
+
+            // ========== SECTION 4: KNOWN ISSUES CROSS-REFERENCE ==========
+            h1('第四部分：已知问题对照'),
+            p('以下18项问题来自Day 4 UI品牌审查清单。请在截图中逐项核对：是否已修复？是否有新问题？', {bold: true, color: C.RED}),
+            divider(),
+
+            h2('4.1 P0严重问题（4项·公测前必须修复）'),
+            dataTable(
+                ['#','问题','Day 4发现','截图复核\n已修复？','新发现'],
+                [
+                    ['C01','商圈排名标签\n品牌色缺失','标签颜色不统一\n无法体现"让利排名"品牌感\n修正：统一#E67E22橙底白字','',''],
+                    ['C02','导航栏颜色\n各页面不统一','首页蓝/商家页自选色\n修正：统一#1A5276\n联盟店铺可在VI框架微调','',''],
+                    ['L01','底部品牌标识\n缺失','联盟店铺页底部无\n"由链商·链生活提供\n技术与运营支持"','',''],
+                    ['F01','系统字体\n与品牌不一致','部分文字默认宋体/等线体\n修正：全局PingFang SC\n/ Microsoft YaHei','',''],
+                ]
+            ),
+
+            h2('4.2 P1重要问题（7项）'),
+            dataTable(
+                ['#','问题','Day 4发现','截图复核\n已修复？','新发现'],
+                [
+                    ['C03','按钮颜色混乱','CTA/次要/禁用无统一规则\n修正：CTA#E67E22\n次要#1A5276 禁用灰','',''],
+                    ['F03','字号层级混乱','H1/H2/H3不同页面不一致\n修正：严格执行Brief§4.2','',''],
+                    ['L02','分享海报\n无品牌联名','二维码无链商Logo\n修正：双品牌联名模板','',''],
+                    ['L04','商圈页面\n无品牌标题','仅商家列表，无品牌引导\n修正："链生活商圈·附近好店"','',''],
+                    ['T02','让利说明\n不够友好','技术术语，消费者看不懂\n修正："让利多=排前面=更多优惠"','',''],
+                    ['I03','标签样式\n无品牌感','让利/包邮/新品标签\n使用默认样式\n修正：统一品牌标签组件','',''],
+                    ['F02','价格字体\n无品牌识别','价格数字默认字体\n修正：DIN/SF Pro Display\nfont-weight:700','',''],
+                ]
+            ),
+
+            h2('4.3 P2次要问题（7项）'),
+            dataTable(
+                ['#','问题','Day 4发现','截图复核\n已修复？','新发现'],
+                [
+                    ['C04','支付/价格颜色\n不突出','金额默认黑色\n修正：品牌色#1A5276\n让利金额#E67E22','',''],
+                    ['C05','空状态/加载\n无品牌设计','系统默认样式\n修正：#EBF5FB底色+品牌插画','',''],
+                    ['T01','空状态文案\n生硬','"暂无数据""加载失败"\n修正：友好品牌文案','',''],
+                    ['T03','代金券/消费金\n概念混淆','区分不明显\n修正：标注"全平台通用"/"仅限本店"','',''],
+                    ['I01','图标风格\n不统一','Material+自定义混用\n修正：统一图标库','',''],
+                    ['I02','卡片圆角/阴影\n不一致','不同页面参数不同\n修正：圆角8px/阴影统一','',''],
+                    ['L03','资管后台\n无品牌标识','无任何品牌标识\n修正：增加Logo+系统标识','',''],
+                ]
+            ),
+
+            // ========== SECTION 5: SCORECARD ==========
+            h1('第五部分：品牌健康度评分卡'),
+            p('审查完成后，在此汇总评分。每个模块按8个维度分别打分（1-5），计算模块得分和总评。', {bold: true}),
+            divider(),
+
+            dataTable(
+                ['模块/维度','品牌色\n(20%)','Logo\n(15%)','字体\n(15%)','文案\n(15%)','图标组件\n(10%)','合规\n(10%)','信息体验\n(10%)','差异化\n(5%)','模块\n得分'],
+                [
+                    ['A.C端\n(12触点)','___','___','___','___','___','___','___','___','___/5'],
+                    ['B.B端\n(5触点)','___','___','___','___','___','___','___','___','___/5'],
+                    ['C.收银台\n(3触点)','___','___','___','___','___','___','___','___','___/5'],
+                    ['D.资管\n(2触点)','___','___','___','___','___','___','___','___','___/5'],
+                    ['E.知识库\n(3触点)','___','___','___','___','___','___','___','___','___/5'],
+                    ['F.对外物料\n(3触点)','___','___','___','___','___','___','___','___','___/5'],
+                    ['总评','___','___','___','___','___','___','___','___','___/5'],
+                ]
+            ),
+            divider(),
+            p('评分标准：5=完全符合品牌规范·无问题 | 4=基本符合·有少量P2问题 | 3=部分符合·存在P1问题 | 2=较多偏差·存在P0问题 | 1=严重偏离·品牌形象受损', {color: C.GRAY}),
+
+            // ========== SECTION 6: PROFESSIONAL RECOMMENDATIONS ==========
+            h1('第六部分：专业建议与行动项'),
+            p('根据品牌审查最佳实践，以下为通用品牌质量提升建议，请结合截图审查结果执行：', {bold: true}),
+            divider(),
+
+            h2('6.1 公测前（6/11评审会）必须达标项'),
+            n(1, '品牌色100%统一：全局CSS变量定义品牌色，禁止硬编码颜色值'),
+            n(2, 'Logo 5处关键位置全部就位：导航栏/底部/分享海报/商圈页/支付成功页'),
+            n(3, '底部品牌标识不可删除：所有商家店铺页底部固定品牌标识'),
+            n(4, '字体全局声明：body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }'),
+            n(5, '合规声明到位：隐私弹窗/PIPL告知/会员绑定同意/禁止承诺收益声明'),
+            n(6, 'P0问题清零：Day 4审查的4项P0问题100%修复'),
+
+            h2('6.2 品牌质量提升的"20/80法则"'),
+            p('以下3个改进能带来80%的品牌感知提升：', {bold: true}),
+            b('让利排名可视化：当前版本让利排名可能仅以数字/百分比呈现。建议增加"排名上升/下降"的动态视觉（如箭头动画），让商家和消费者直观感知"让利多→排名高"的逻辑，这是链商最核心的差异化。'),
+            b('千店千面的"第一眼差异"：6套模板虽然功能模块不同，但首页（封面）是第一印象。建议每套模板的封面有强烈的行业视觉特征——餐饮看菜单/菜品图，电商看商品/分类，服务看预约/技师——让消费者0.5秒内识别店铺类型。'),
+            b('品牌信任标识系统化：在关键转化节点（注册/下单/支付）统一展示信任标识——"资金T+1直达商家""真实消费·真实评价""积分全平台通用"——用简短标识建立消费者信任。'),
+
+            h2('6.3 避免"公测翻车"的5个品牌检查'),
+            n(1, '截图走查：每个页面截图→对比品牌标准→标注偏差→修复→再截图验证'),
+            n(2, '真机测试：至少iOS+Android各3款主流机型实测品牌色/字体/Logo显示'),
+            n(3, '"生人测试"：找3个不了解项目的同事，让他们操作并描述看到什么品牌——验证品牌传达是否准确'),
+            n(4, '合规Last Check：法务在公测前逐页检查合规用语（建议半天集中审查）'),
+            n(5, '应急预案：准备"品牌问题快速修复SOP"——谁发现问题→反馈给谁→修复时限（P0=1小时/P1=4小时/P2=24小时）'),
+
+            h2('6.4 公测后的品牌迭代节奏'),
+            dataTable(
+                ['时间','重点','动作'],
+                [
+                    ['公测第1天\n（6/12）','紧急修复','品牌触点线上检查+紧急问题修复\nP0问题1小时内响应\n建立品牌问题日志'],
+                    ['公测第1周\n（6/12-19）','数据驱动','收集商家/消费者品牌反馈\n触点体验数据（点击率/停留时长）\n修复所有P1问题'],
+                    ['公测第2周\n（6/19-26）','优化迭代','品牌触点V1.1优化\nP2问题清零\n输出《公测品牌效果报告》'],
+                    ['公测第3-4周\n（6/26-7/10）','升级固化','品牌视觉规范升级（基于数据）\n输出《品牌触点V2.0规范》\n纳入品牌知识库'],
+                ]
+            ),
+
+            // ========== APPENDIX ==========
+            h1('附录：审查方法论'),
+            p('本次审查采用"三线并查"方法：', {bold: true}),
+            divider(),
+            n(1, '标准线：对照《链生活品牌视觉与超级符号体系手册V1.0》逐项检查——品牌色/Logo/字体/文案/组件是否符合规范。'),
+            n(2, '竞品线：对照美团/高德/抖音在对应页面的品牌表达水平——链商是否在品牌体验上形成差异化或至少不输竞品。'),
+            n(3, '用户线：模拟首次使用消费者的视角——品牌是否令人信任？差异化是否可感知？操作是否顺畅？'),
+            divider(),
+            p('每个触点至少从2条线交叉验证，确保审查结论客观、可复现。', {color: C.GRAY}),
+
+            divider(),
+            divider(),
+            new Paragraph({children:[new TextRun({text:'— 链商平台公测 · 品牌专业审查报告 · 完 —',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300}}),
+            new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 链邦科技 · 企业宣传策划专员 | 2026年6月3日',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:100}}),
+        ]
+    };
+}
+
+// ============================================================
+// 构建 & 输出
+// ============================================================
+const doc = new Document({
+    styles: { default: { document: { run: { font: '微软雅黑', size: 21 } } } },
+    sections: [buildReview()]
+});
+
+const outDir = path.join(__dirname, OUT);
+if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+
+Packer.toBuffer(doc).then(buf => {
+    const filePath = path.join(outDir, '链商公测_品牌专业审查报告.docx');
+    fs.writeFileSync(filePath, buf);
+    console.log('✅ 品牌审查报告已生成: ' + filePath);
+    console.log('   包含:');
+    console.log('   - 第一部分：品牌标准速查（5张速查表）');
+    console.log('   - 第二部分：6模块×28触点逐项审查表');
+    console.log('   - 第三部分：8维交叉审查');
+    console.log('   - 第四部分：Day4已知18项问题对照');
+    console.log('   - 第五部分：品牌健康度评分卡');
+    console.log('   - 第六部分：专业建议与行动项');
+}).catch(err => {
+    console.error('❌ 生成失败:', err);
+    process.exit(1);
+});

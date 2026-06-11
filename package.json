@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "docx": "^9.7.1",
+    "exceljs": "^4.4.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "jpeg-js": "^0.4.4"
+  }
+}

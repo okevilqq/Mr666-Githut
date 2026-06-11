@@ -1,0 +1,708 @@
+const docx = require('docx');
+const fs = require('fs');
+const path = require('path');
+
+const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak } = docx;
+
+const C = {
+    MAIN:'#1A5276', DARK:'#2C3E50', LIGHT:'#EBF5FB', WHITE:'#FFFFFF',
+    BLACK:'#333333', GRAY:'#7F8C8D', RED:'#C0392B', GREEN:'#1E8449',
+    ORANGE:'#E67E22', HEADER:'#1a1a2e', YELLOW:'#F39C12',
+    P0:'#C0392B', P1:'#E67E22', P2:'#F39C12',
+};
+
+const outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理');
+const outFile = path.join(outDir, '链商平台_分账与核销模型分析报告_V1.0.docx');
+
+// ========== HELPERS ==========
+function h1(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_1, spacing:{before:400,after:200}, border:{bottom:{style:BorderStyle.SINGLE,size:2,color:C.MAIN}} }); }
+function h2(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_2, spacing:{before:300,after:150} }); }
+function h3(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_3, spacing:{before:200,after:100} }); }
+function p(t,o={}) { return new Paragraph({ children:[new TextRun({text:t,size:21,font:'微软雅黑',...o})], spacing:{after:80,line:360} }); }
+function b(t,o={}) { return new Paragraph({ children:[new TextRun({text:'  • '+t,size:21,font:'微软雅黑',...o})], spacing:{after:60,line:340}, indent:{left:600} }); }
+function n(i,t,o={}) { return new Paragraph({ children:[new TextRun({text:`${i}. ${t}`,size:21,font:'微软雅黑',...o})], spacing:{after:60,line:340}, indent:{left:600} }); }
+function divider() { return new Paragraph({spacing:{after:200},children:[]}); }
+function pageBreak() { return new Paragraph({children:[new PageBreak()]}); }
+
+function infoTable(rows) {
+    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:rows.map(([l,v])=>new TableRow({children:[
+        new TableCell({width:{size:18,type:WidthType.PERCENTAGE},shading:{fill:C.LIGHT},children:[new Paragraph({children:[new TextRun({text:l,size:20,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.RIGHT,spacing:{before:30,after:30}})]}),
+        new TableCell({width:{size:82,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:v,size:20,font:'微软雅黑'})],spacing:{before:30,after:30}})]}),
+    ]}))});
+}
+
+function dataTable(headers, rows, opts={}) {
+    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+        new TableRow({children:headers.map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:opts.small?17:19,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}))}),
+        ...rows.map((r,i)=>new TableRow({children:r.map(c=>new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:String(c||'—'),size:opts.small?16:18,font:'微软雅黑'})],spacing:{before:15,after:15}})]}))})),
+    ]});
+}
+
+function thCell(w, txt) {
+    return new TableCell({
+        width: {size: w, type: WidthType.PERCENTAGE},
+        shading: {fill: C.HEADER},
+        children: [new Paragraph({
+            children: [new TextRun({text: txt, size: 16, font: '微软雅黑', bold: true, color: C.WHITE})],
+            alignment: AlignmentType.CENTER
+        })]
+    });
+}
+function tdCell(w, txt, opts) {
+    opts = opts || {};
+    var cellObj = {
+        width: {size: w, type: WidthType.PERCENTAGE},
+        children: [new Paragraph({
+            children: [new TextRun({text: txt, size: opts.sz || 16, font: '微软雅黑', bold: opts.b || false, color: opts.c || C.BLACK})],
+            alignment: opts.align || AlignmentType.LEFT,
+            spacing: {before: opts.before || 10, after: opts.after || 10}
+        })]
+    };
+    if (opts.shading) {
+        cellObj.shading = {fill: opts.shading};
+    }
+    return new TableCell(cellObj);
+}
+function issueRow(level, id, title, problem, risk, suggestion, owner) {
+    var lc = level === 'P0' ? C.P0 : (level === 'P1' ? C.P1 : C.P2);
+    return new TableRow({children: [
+        tdCell(5, level, {align: AlignmentType.CENTER, c: C.WHITE, b: true, shading: lc}),
+        tdCell(8, id, {b: true}),
+        tdCell(17, title),
+        tdCell(27, problem, {sz: 15}),
+        tdCell(10, risk, {align: AlignmentType.CENTER, c: lc, sz: 15}),
+        tdCell(23, suggestion, {sz: 15}),
+        tdCell(10, owner, {c: C.GRAY, sz: 15})
+    ]});
+}
+function buildIssueTable(headers, issues) {
+    var hdrRow = new TableRow({children: headers.map(function(h){return thCell(h.w, h.t);})});
+    var dataRows = issues.map(function(i){
+        return issueRow(i.level, i.id, i.title, i.problem, i.risk, i.suggestion, i.owner);
+    });
+    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[hdrRow].concat(dataRows)});
+}
+
+function flowBox(text, isRed) {
+    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+        new TableRow({children:[new TableCell({shading:{fill:isRed?'#FFF5F5':C.LIGHT},children:[new Paragraph({children:[new TextRun({text:text,size:18,font:'微软雅黑',bold:isRed,color:isRed?C.RED:C.DARK})],spacing:{before:15,after:15},alignment:AlignmentType.CENTER})],border:{top:{style:BorderStyle.SINGLE,size:1,color:isRed?C.RED:C.MAIN},bottom:{style:BorderStyle.SINGLE,size:1,color:isRed?C.RED:C.MAIN}}})]}),
+    ]});
+}
+
+function recTable(headers, rows) {
+    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+        new TableRow({children:headers.map(h=>new TableCell({shading:{fill:C.MAIN},children:[new Paragraph({children:[new TextRun({text:h,size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}))}),
+        ...rows.map((r,i)=>new TableRow({children:r.map(c=>new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:String(c||'—'),size:17,font:'微软雅黑'})],spacing:{before:12,after:12}})]}))})),
+    ]});
+}
+
+function redline(text) {
+    return new Paragraph({
+        children:[new TextRun({text:'⛔ '+text,size:21,font:'微软雅黑',bold:true,color:C.RED})],
+        spacing:{after:80,line:360}, indent:{left:300},
+        border:{left:{style:BorderStyle.SINGLE,size:6,color:C.RED,space:8}},
+    });
+}
+
+function calloutBox(title, content, color) {
+    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+        new TableRow({children:[new TableCell({shading:{fill:color||C.LIGHT},children:[
+            new Paragraph({children:[new TextRun({text:title,size:19,font:'微软雅黑',bold:true,color:C.MAIN})],spacing:{before:15,after:5}}),
+            ...content.map(c=>new Paragraph({children:[new TextRun({text:'  '+c,size:18,font:'微软雅黑'})],spacing:{after:4}})),
+        ],border:{left:{style:BorderStyle.SINGLE,size:4,color:C.MAIN,space:6}},spacing:{before:15,after:15}})]}),
+    ]});
+}
+
+// ========== ISSUE DATA ==========
+var P0_HEADERS = [
+    {w:5,t:'级别'},{w:8,t:'编号'},{w:17,t:'问题'},{w:27,t:'具体描述'},{w:10,t:'风险'},{w:23,t:'建议方案'},{w:10,t:'负责人'}
+];
+var P0_ISSUES = [
+    {level:'P0',id:'S01',title:'备付金账户\n涉嫌资金池',problem:'"链邦核销备付金汇付账户"作为所有消费者资金的中转汇聚节点，符合监管对"资金池"的定义特征。消费者付款先入平台控制的备付金账户，再由平台分账给商家——资金在平台账户停留期间形成沉淀。',risk:'合规\n红线',suggestion:'① 改为汇付"直清"模式：消费者付款→汇付监管账户→按分账指令实时直清到各商家\n② 平台不触碰消费者资金\n③ 如无法实现，需取得支付牌照或备案',owner:'技术部\n+ 法务'},
+    {level:'P0',id:'S02',title:'二清风险\n无证清算',problem:'"大商户收单→再分账"模式构成"二清"：链邦先以自己名义收款（一清），再结算给下游商家（二清）。根据央行《非银行支付机构条例》，二清属于无证从事支付清算业务。',risk:'监管\n处罚',suggestion:'① 使用持牌支付机构的分账产品（如汇付天下"分账宝"），由支付机构直接完成资金清算\n② 链邦仅传递分账指令，不经手资金\n③ 在商户协议中明确分账路径和资金流向',owner:'技术部\n+ 法务\n+ 汇付'},
+    {level:'P0',id:'S03',title:'联盟商家充值\n分账为0%',problem:'模型2.1：联盟商家充值¥1,000 → 平台商家得¥868 + 链商备付¥132 → 联盟商家得¥0。充值方自身分账比率为0%——这意味着联盟商家的充值资金被全部分走，商业逻辑上无法成立。',risk:'商家\n纠纷',suggestion:'① 充值场景改为"充值方得100%"或"充值方得≥95%"\n② 服务费从后续消费交易中收取\n③ 如确需收取平台服务费，应在充值前明确告知费率和规则',owner:'梁君衡\n+ 技术部'},
+    {level:'P0',id:'S04',title:'合规术语\n未统一',problem:'Excel模型中使用了"消费福利""金融备付金""链商金融"等术语，与《法律合规框架》规定的合规术语体系不一致。"备付金"在监管语境下有特定含义（支付机构客户备付金），平台不应使用。',risk:'合规\n审查',suggestion:'① "消费福利" → "消费让利"或"消费奖励"\n② "金融备付金" → "平台营销额度"\n③ "链商金融" → "链商服务"或"平台服务"\n④ 全局替换，参照《法律合规框架》术语表',owner:'梁君衡\n+ 法务'},
+];
+var P12_HEADERS = [
+    {w:5,t:'级别'},{w:8,t:'编号'},{w:17,t:'问题'},{w:27,t:'具体描述'},{w:10,t:'影响'},{w:23,t:'建议方案'},{w:10,t:'负责人'}
+];
+var P1_ISSUES = [
+    {level:'P1',id:'S05',title:'方案A/B并行\n未统一',problem:'drawio文件包含四页图表：核销-消费金方案A、收款-分账方案A、收款-分账方案B、核销-消费金方案B。两套方案资金流向不同，实现和维护成本翻倍，且容易导致开发实现混乱。',risk:'开发\n混乱',suggestion:'① 技术评估后二选一作为主方案\n② 建议采用方案B（消费金核销直连→简化资金链路）\n③ 方案A作为过渡/灰度方案，限期下线',owner:'技术部\n+ 梁君衡'},
+    {level:'P1',id:'S06',title:'联盟商家\n平台中转过重',problem:'余额支付到联盟商家需通过平台商家汇付商户号中转。这意味着联盟商家的收款依赖平台商家的账户状态——若平台商家账户异常（冻结/注销/风控），联盟商家资金安全受影响。',risk:'资金\n安全',suggestion:'① 联盟商家独立开通汇付商户号\n② 取消平台商家中转，改为直接结算\n③ 如平台商家需对联盟商家抽成，通过分账比例实现（而非资金路径控制）',owner:'技术部\n+ 商务'},
+    {level:'P1',id:'S07',title:'平台商家1.2\n余额消费0%分账',problem:'模型1.2：用户用余额在平台商家消费，平台商家分账为0%。这会严重打击平台商家接受余额支付的意愿——没有商家愿意免费提供服务。',risk:'商家\n抵制',suggestion:'① 余额消费分账比率至少与汇付收单持平（82.4%）\n② 或：余额消费场景与汇付收单合并，统一分账比率\n③ 余额支付本质上是预充值消费，商家应获得合理分成',owner:'技术部\n+ 梁君衡'},
+    {level:'P1',id:'S08',title:'退款/逆向\n流程缺失',problem:'全部12个子模型均未设计退款场景的资金逆向流转。实际运营中退款是高频场景（退菜、退单、纠纷退款），已分账的资金如何追回、已发放的消费金如何处理、已提现的资金如何扣回——这些都没有定义。',risk:'运营\n混乱',suggestion:'① 补充退款场景分账逆向流程：退款→原路退回→按原分账比例逆向追回\n② 消费金退款：已核销的消费金退回用户消费金余额\n③ 已提现的退款：从商家下一笔结算款中扣回\n④ 制定《退款分账处理SOP》',owner:'技术部\n+ 运营'},
+];
+var P2_ISSUES = [
+    {level:'P2',id:'S09',title:'手工提现\n"包圆"定义模糊',problem:'手工提现（银行账户体系）标注为"手工包圆场景"，但未定义什么情况触发手工提现、审批流程、处理时效。',risk:'操作\n不规范',suggestion:'① 定义手工提现触发条件：单笔超¥50,000 / 自动提现失败 / 银行通道异常\n② 制定审批流程：商家申请→运营审核→财务确认→打款\n③ 明确SLA：T+1工作日到账',owner:'运营\n+ 财务'},
+    {level:'P2',id:'S10',title:'消费福利比率\n描述矛盾',problem:'Excel中消费福利标注"固定，启动后"，drawio同时标注"蓝色色块可调"——两个描述互相矛盾。以哪个为准？调整是否需要审批？',risk:'理解\n偏差',suggestion:'① 明确：消费福利比率在活动期内固定，活动结束后可调整\n② 调整需经过：运营提案→品牌评估→技术确认→法务审核→管理层审批\n③ 所有调整记录留痕（版本号+变更日志）',owner:'梁君衡\n+ 技术部'},
+    {level:'P2',id:'S11',title:'对账机制\n未设计',problem:'12个子模型均未提及对账机制：商家如何核对分账金额？差异如何处理？对账周期是多久？',risk:'商家\n信任',suggestion:'① 每日生成分账对账单（含订单明细+分账比例+实际金额）\n② 商家后台实时展示分账流水\n③ 差异申诉：商家发起→运营核查→3个工作日内反馈\n④ 每月出具月度分账汇总报告',owner:'技术部\n+ 财务'},
+    {level:'P2',id:'S12',title:'商家退出\n清算规则缺失',problem:'联盟商家/平台商家退出平台时，其账户余额（消费金/待结算资金）如何处理？已分账的营销备付金是否需要退还？',risk:'纠纷\n隐患',suggestion:'① 制定《商家退出资金清算规则》\n② 待结算资金：完成所有在途订单结算后T+7退出\n③ 余额/消费金：支持提现至商家银行账户\n④ 营销备付金：已产生的备付金不退，未使用的活动额度回收',owner:'运营\n+ 法务\n+ 财务'},
+];
+
+// ========== DOCUMENT ==========
+const doc = new Document({
+    styles:{default:{document:{run:{font:'微软雅黑',size:21}}}},
+    sections:[{
+        properties:{page:{margin:{top:1440,bottom:1440,left:1440,right:1440}}},
+        children:[
+
+            // ===== COVER =====
+            new Paragraph({children:[new TextRun({text:'链商平台 · 链生活品牌',size:28,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'分账与核销模型',size:40,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'分析报告与调整建议方案',size:36,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
+            new Paragraph({children:[new TextRun({text:'—— 平台商家 · 联盟商家 · 综合商家 三模型合理性评估 ——',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+            infoTable([
+                ['文档性质','分账与核销模型专业分析报告 · 含合规审查与调整建议'],
+                ['文档版本','V1.0'],
+                ['编制日期','2026年6月3日'],
+                ['编制人','梁君衡（企业宣传部）'],
+                ['审查范围','平台商家模型 × 4场景 · 联盟商家模型 × 4场景 · 综合电商模型 × 4场景 · 核销消费金流程 · 资金流转路径'],
+                ['数据来源','《分账与核销 2026.5.26》drawio流程图 · 《链商平台 模型核算v15》Excel · 《品牌策划工作 法律合规框架》'],
+                ['关联文档','《链商平台2.0系统技术会议纪要》《品牌执行手册》《法律合规框架》《消费权益×分润模型融合策略》'],
+            ]),
+            divider(),
+
+            // ===== 目录 =====
+            h1('目录'),
+            p('第一章  执行摘要 ……………………………………………… 3'),
+            p('第二章  现有模型全景还原 …………………………………… 4'),
+            p('  2.1  三大商家类型与分账结构'),
+            p('  2.2  资金流转路径图'),
+            p('  2.3  关键参数汇总'),
+            p('第三章  合理性评估 …………………………………………… 8'),
+            p('  3.1  商业逻辑评估'),
+            p('  3.2  合规风险评估'),
+            p('  3.3  技术可行性评估'),
+            p('第四章  发现的问题清单 ……………………………………… 10'),
+            p('  4.1  P0 高危问题（公测前必须解决）'),
+            p('  4.2  P1 中危问题（公测后两周内解决）'),
+            p('  4.3  P2 低危问题（持续优化）'),
+            p('第五章  调整建议方案 ………………………………………… 13'),
+            p('  5.1  资金架构调整（核心方案）'),
+            p('  5.2  分账比率修订'),
+            p('  5.3  流程优化'),
+            p('  5.4  操作细则补充'),
+            p('第六章  修订后的模型参数 …………………………………… 17'),
+            p('  6.1  平台商家修订模型'),
+            p('  6.2  联盟商家修订模型'),
+            p('  6.3  综合电商修订模型'),
+            p('第七章  实施路线图 …………………………………………… 21'),
+            p('第八章  合规自查清单 ………………………………………… 22'),
+            p('附录A  关键术语对照表 ……………………………………… 23'),
+            p('附录B  风险检查清单（一票否决项） ……………………… 24'),
+            pageBreak(),
+
+            // ===== 一、执行摘要 =====
+            h1('第一章  执行摘要'),
+
+            p('本报告基于链商平台《分账与核销 2026.5.26》drawio资金流程图和《模型核算v15》Excel参数表，对平台商家、联盟商家、综合电商三种商家类型共计12个分账子模型进行系统性分析。'),
+
+            p('核心发现：',{bold:true}),
+            b('商业逻辑层面：三级商家 × 四种场景（充值/余额支付/消费金核销/汇付收单）的差异化分账设计基本合理，消费福利比率（平台20% / 联盟15%）的梯度设置有利于激励体系构建'),
+            b('合规层面存在重大风险：当前"链邦核销备付金账户"作为所有资金的中转枢纽，涉嫌构成"资金池"模式，违反平台合规红线第2条（不可形成资金池）；"先收后分"的资金流转模式存在"二清"（二次清算）合规风险'),
+            b('分账公平性存在一个严重问题：联盟商家充值场景（模型2.1）中，联盟商家自身分账比率为0%，充值资金全部分配给平台商家——这在商业逻辑上难以成立'),
+            b('流程设计存在优化空间：方案A（收款分账）与方案B（消费金核销）两套并行方案未明确主次关系；联盟商家余额支付需通过平台商家中转，增加了不必要的结算链长'),
+
+            divider(),
+            calloutBox('报告结论', [
+                '建议在公测（6月12日）前完成：① 资金架构合规整改（P0）；② 联盟商家充值分账比率修正（P0）',
+                '建议在公测后两周内完成：③ 方案A/B统一（P1）；④ 取消联盟商家-平台商家中转（P1）',
+                '建议在公测后一个月内完成：⑤ 操作细则补充（P2）；⑥ 手工提现流程规范化（P2）',
+            ]),
+            pageBreak(),
+
+            // ===== 二、现有模型全景还原 =====
+            h1('第二章  现有模型全景还原'),
+
+            h2('2.1  三大商家类型与分账结构'),
+            p('链商平台采用"大平台→平台商家→联盟商家"三层架构，涉及三种商家主体：平台商家（拥有独立主体小程序，如老树根餐饮、玖玖餐饮）、联盟商家（围绕平台商家的中小商户，如XXX沐足）、综合电商（链邦科技直营的电商业务，使用链邦子户）。每种商家类型对应四种分账场景，共12个子模型。'),
+
+            h3('2.1.1  平台商家模型（4个子模型）'),
+            dataTable(
+                ['编号','场景描述','收单方式','消费福利','平台商家得','链商金融备付','样例（消费¥1,000）'],
+                [
+                    ['1.1','充值-汇付收单\n（订单分账）','汇付','20%','82.4%','17.6%','商家 ¥824 + 备付 ¥176'],
+                    ['1.2','消费-余额支付\n（订单分账）','余额支付','20%','0%','—','全部进入备付账户'],
+                    ['1.3','消费-消费金核销\n（余额分账）','消费金核销','—','90%','10%','商家 ¥900 + 备付 ¥100'],
+                    ['1.4','消费-汇付收单\n（订单分账）','汇付','20%','82.4%','17.6%','商家 ¥824 + 备付 ¥176'],
+                ]
+            ),
+            divider(),
+
+            h3('2.1.2  联盟商家模型（4个子模型）'),
+            dataTable(
+                ['编号','场景描述','收单方式','消费福利','平台商家得','联盟商家得','链商金融备付','样例（消费¥1,000）'],
+                [
+                    ['2.1','充值-汇付收单（订单分账）','汇付','15%','86.8%','0%','13.2%','平台 ¥868 + 备付 ¥132'],
+                    ['2.2','消费-余额支付（订单分账）','余额支付','15%','—','—','—','（参数待定）'],
+                    ['2.3','消费-消费金核销（余额分账）','消费金核销','—','0%','90%','10%','联盟 ¥900 + 备付 ¥100'],
+                    ['2.4','消费-汇付收单（订单分账）','汇付','15%','0%','85%','15%','联盟 ¥850 + 备付 ¥150'],
+                ]
+            ),
+            divider(),
+
+            h3('2.1.3  综合电商模型（4个子模型）'),
+            dataTable(
+                ['编号','场景描述','收单方式','消费福利','综合电商得','链商金融备付','样例（消费¥1,000）'],
+                [
+                    ['3.1','充值-汇付收单（订单分账）','汇付','20%','82.4%','17.6%','电商 ¥824 + 备付 ¥176'],
+                    ['3.2','消费-余额支付（订单分账）','余额支付','20%','—','—','（参数待定）'],
+                    ['3.3','消费-消费金核销（余额分账）','消费金核销','—','90%','10%','电商 ¥900 + 备付 ¥100'],
+                    ['3.4','消费-汇付收单（订单分账）','汇付','20%','82.4%','17.6%','电商 ¥824 + 备付 ¥176'],
+                ]
+            ),
+            divider(),
+            pageBreak(),
+
+            h2('2.2  资金流转路径图'),
+            p('根据《分账与核销 2026.5.26》drawio文件还原，当前资金流转分为上下两层：上层为"核销-消费金"流程，下层为"收款-分账"流程。'),
+
+            h3('流程图A：核销-消费金流程（方案A·当前主流程）'),
+            flowBox('用户消费行为', false),
+            flowBox('消费 → 核销消费金', false),
+            p('↓ ↓ ↓',{alignment:AlignmentType.CENTER,size:24}),
+            flowBox('平台商家主体小程序（老树根 / 玖玖）', false),
+            p('↓',{alignment:AlignmentType.CENTER,size:24}),
+            flowBox('资管核销分账', false),
+            p('↓          ↓          ↓',{alignment:AlignmentType.CENTER}),
+            flowBox('联盟商家\n核销收入账户', false),
+            flowBox('链邦\n核销收入账户', true),
+            flowBox('平台商家\n核销收入账户', false),
+            p('     ↓ 自动核销                ↓ 自动核销',{alignment:AlignmentType.CENTER,size:16}),
+            flowBox('自动划扣（汇付商户体系）', false),
+            p('     ↓                         ↓',{alignment:AlignmentType.CENTER}),
+            flowBox('自动提现（≥¥1, 30分钟监测）', false),
+            flowBox('手工提现（银行账户·包圆场景）', false),
+            divider(),
+
+            h3('流程图B：收款-分账流程（方案B·备选）'),
+            flowBox('消费者在商家小程序下单支付', false),
+            p('↓',{alignment:AlignmentType.CENTER,size:24}),
+            flowBox('链邦核销备付金汇付账户（普通商户）⚠️ 红色标注·资金汇聚点', true),
+            p('↓          ↓          ↓',{alignment:AlignmentType.CENTER}),
+            flowBox('平台商家账户\n（老树根/玖玖）', false),
+            flowBox('联盟商家账户\n（XXX沐足等）', false),
+            flowBox('综合电商账户\n（链邦子户）', false),
+            p('↓',{alignment:AlignmentType.CENTER}),
+            flowBox('延迟交易分账（T+?）', false),
+            divider(),
+
+            h3('余额支付规则（drawio标注）'),
+            dataTable(
+                ['规则','说明'],
+                [
+                    ['规则1','给关联的下级可以支付'],
+                    ['规则2','同个上级下的平级可以互相支付'],
+                    ['规则3','关联的上级可以支付'],
+                    ['规则4','跨上级不可以支付'],
+                    ['特别约束','余额支付到联盟商家，需要通过平台商家中转'],
+                    ['特别约束','老树根现金户接收二次核销款项，但配置为不能自己提现'],
+                ]
+            ),
+            divider(),
+            calloutBox('关键发现', [
+                '所有资金流经"链邦核销备付金汇付账户（普通商户）"——这是drawio中唯一红色标注的节点',
+                '该账户实质上承担了"资金中转池"的角色：消费者付款→备付金账户→分账给各方',
+                '汇付体系内的同一个顶级商户号下，所有子商户号可以相互分账；链邦子户每个主体限开5个',
+            ]),
+            pageBreak(),
+
+            h2('2.3  关键参数汇总'),
+            dataTable(
+                ['参数名称','平台商家','联盟商家','综合电商','说明'],
+                [
+                    ['基准消费福利','20%','15%','20%','平台/综合高于联盟5个百分点'],
+                    ['链商金融基准备付金','17.6%','13.2%','17.6%','= 消费福利 × (备付金/福利)'],
+                    ['消费金核销·商家比率','90%','90%','90%','三种商家统一'],
+                    ['消费金核销·备付比率','10%','10%','10%','三种商家统一'],
+                    ['汇付收单·商家比率','82.4%','85%','82.4%','联盟略高于平台（无平台抽成）'],
+                    ['汇付收单·备付比率','17.6%','15%','17.6%','联盟略低于平台'],
+                    ['自动提现最低金额','¥1','¥1','¥1','统一'],
+                    ['自动提现监测周期','30分钟','30分钟','30分钟','统一'],
+                    ['链邦子户数量上限','5个/主体','5个/主体','5个/主体','统一'],
+                ]
+            ),
+            divider(),
+            p('注：消费福利比率标注为"固定，启动后"不可调，但同时drawio备注中提示"蓝色色块可调"——存在描述矛盾，需澄清。',{color:C.GRAY,size:18}),
+            pageBreak(),
+
+            // ===== 三、合理性评估 =====
+            h1('第三章  合理性评估'),
+
+            h2('3.1  商业逻辑评估'),
+            dataTable(
+                ['评估维度','评分','说明'],
+                [
+                    ['分账差异化设计','⭐⭐⭐⭐','三种商家类型 + 四种场景的差异化分账设计考虑了业务多样性，梯度福利（20%/15%）有利于激励联盟商家向平台商家升级'],
+                    ['消费金核销激励','⭐⭐⭐⭐','核销场景让利90%给商家（vs普通消费82-85%），有效激励商家推动消费金使用，符合"消费权益"的战略定位'],
+                    ['余额支付管控','⭐⭐⭐','层级管控规则（关联上下级可付/跨上级不可付）合理，但联盟商家必须通过平台中转而增加了不必要的结算链长'],
+                    ['充值场景分账','⭐⭐','联盟商家充值场景（2.1）分账为0%是严重的逻辑缺陷；平台商家充值场景（1.1）中平台得82.4%也需要审视——充值资金本质上是商家自有资金，不应被大规模分走'],
+                    ['方案A/B两套并存','⭐⭐','两套方案未明确主次关系，实现和维护复杂度翻倍，建议统一为方案B（消费金核销直连）'],
+                ]
+            ),
+            divider(),
+
+            h2('3.2  合规风险评估'),
+            dataTable(
+                ['评估维度','风险等级','说明'],
+                [
+                    ['资金池风险','🔴 高危','"链邦核销备付金账户"作为所有资金汇聚和中转节点，符合监管对"资金池"的定义特征——消费者资金先汇集到平台控制的账户再分配，而非直接结算给商户'],
+                    ['二清风险','🔴 高危','平台先收款→再分账给商家的模式，符合"大商户+二清"的监管敏感特征。如果汇付未提供合规的"直清"分账产品，存在被认定为无证从事支付清算业务的风险'],
+                    ['备付金挪用风险','🟡 中危','备付金账户如果不受央行集中存管，存在挪用风险。drawio中标注为"普通商户"类型（非"支付机构备付金"类型），暗示该账户可能不在监管框架内'],
+                    ['信息透传','🟢 低危','分账过程中的交易信息是否完整透传给各方商家？商家看到的入账金额是否可追溯到具体订单？如果信息不透明，容易引发商家对账争议'],
+                    ['退款处理','🟡 中危','当前模型中未见退款场景的资金逆向流转设计——消费者退款时已分账的资金如何追回？这是实际运营中高频发生的场景'],
+                ]
+            ),
+            divider(),
+
+            h2('3.3  技术可行性评估'),
+            dataTable(
+                ['评估维度','评分','说明'],
+                [
+                    ['汇付分账产品对接','⭐⭐⭐⭐','汇付天下具备成熟的订单分账产品（分账API+电子账簿），支持按比例/固定金额自动分账，可覆盖大部分场景'],
+                    ['消费金核销逻辑','⭐⭐⭐','消费金核销涉及"消费金余额→实际支付"的转换，需要独立的核销引擎，与普通分账逻辑不同——技术实现复杂度中等'],
+                    ['自动提现30分钟监测','⭐⭐⭐⭐','汇付支持T+0/T+1自动提现，30分钟轮询监测频率合理，技术可行'],
+                    ['手工提现（包圆场景）','⭐⭐','手工提现的触发条件、审批流程、SLA均未定义——这是运营流程问题而非纯技术问题，但会影响技术方案设计'],
+                ]
+            ),
+            pageBreak(),
+
+            // ===== 四、发现的问题清单 =====
+            h1('第四章  发现的问题清单'),
+
+            h2('4.1  P0 高危问题（公测前必须解决）'),
+            buildIssueTable(P0_HEADERS, P0_ISSUES),
+            
+
+            h2('4.2  P1 中危问题（公测后两周内解决）'),
+            buildIssueTable(P12_HEADERS, P1_ISSUES),
+            divider(),
+
+            h2('4.3  P2 低危问题（持续优化）'),
+            buildIssueTable(P12_HEADERS, P2_ISSUES),
+            divider(),
+            pageBreak(),
+
+            // ===== 五、调整建议方案 =====
+            h1('第五章  调整建议方案'),
+
+            h2('5.1  资金架构调整（核心方案·P0）'),
+            p('这是本次调整中优先级最高、改动最大的部分。核心思路是：将"平台经手资金"改为"支付机构直清"。'),
+
+            h3('5.1.1  当前架构（存在合规风险）'),
+            flowBox('消费者 ──付款──→ 链邦备付金账户（平台控制）──分账──→ 各商家账户', true),
+            p('问题：平台触碰资金，构成资金池 + 二清',{color:C.RED}),
+            divider(),
+
+            h3('5.1.2  建议架构（合规方案）'),
+            flowBox('消费者 ──付款──→ 汇付监管账户（持牌支付机构控制·央行监管）', false),
+            p('↓',{alignment:AlignmentType.CENTER,size:24}),
+            flowBox('汇付按分账指令实时直清到各商户号', false),
+            p('↓          ↓          ↓',{alignment:AlignmentType.CENTER}),
+            flowBox('平台商家\n汇付商户号', false),
+            flowBox('联盟商家\n汇付商户号', false),
+            flowBox('链邦平台\n汇付商户号', false),
+            p('',{}),
+            calloutBox('关键变更', [
+                '链邦不再持有/控制客户备付金账户',
+                '所有消费者资金由汇付天下（持牌支付机构）直接托管和清算',
+                '链邦仅负责：生成分账指令 → 传给汇付 → 汇付执行分账',
+                '变更术语："备付金账户" → "汇付监管分账账户"；"链邦金融" → "链商平台服务"',
+                '各商家在汇付拥有独立商户号，资金直接进入自己账户——无需通过平台中转',
+            ]),
+            divider(),
+
+            h3('5.1.3  汇付分账产品选型建议'),
+            dataTable(
+                ['方案','产品','特点','推荐度'],
+                [
+                    ['方案一','汇付天下"分账宝"','支持按比例/固定金额实时分账、支持多级分账（平台→商家→分销员）、支持退款逆向分账、银行级资金安全','⭐⭐⭐⭐⭐ 推荐'],
+                    ['方案二','汇付天下"账户+"电子账簿','灵活的分账规则配置、支持T+0/T+1结算、支持多主体分账','⭐⭐⭐⭐ 备选'],
+                    ['方案三','自建分账系统+汇付代付','平台自行计算分账金额→调用汇付批量代付接口→逐笔打款。较方案一更灵活但开发量大，且存在"二清"认定风险','⭐⭐ 不推荐'],
+                ]
+            ),
+            divider(),
+
+            h2('5.2  分账比率修订'),
+            p('基于上述分析，提出以下分账比率修订方案：'),
+
+            h3('5.2.1  平台商家修订模型'),
+            dataTable(
+                ['场景','原比率','修订后','修订理由'],
+                [
+                    ['充值-汇付收单','商家82.4% / 备付17.6%','充值方100%（服务费0%）','充值资金是商家自有资金，不应分走'],
+                    ['消费-余额支付','商家0%','商家82.4% / 平台服务17.6%','与原汇付收单保持一致，避免商家抵制余额支付'],
+                    ['消费-消费金核销','商家90% / 备付10%','商家90% / 平台服务10%','维持不变，核销场景让利多有利于消费金流转'],
+                    ['消费-汇付收单','商家82.4% / 备付17.6%','商家82.4% / 平台服务17.6%','维持不变，仅更改术语'],
+                ]
+            ),
+            divider(),
+
+            h3('5.2.2  联盟商家修订模型'),
+            dataTable(
+                ['场景','原比率','修订后','修订理由'],
+                [
+                    ['充值-汇付收单','平台86.8% / 联盟0% / 备付13.2%','联盟100%（服务费0%）','充值方得充值全额，这是最基本的商业公平'],
+                    ['消费-余额支付','（参数待定）','联盟82% / 平台5% / 平台服务13%','新增平台商家渠道费5%，体现平台商家为联盟导流的价值'],
+                    ['消费-消费金核销','联盟90% / 备付10%','联盟90% / 平台服务10%','维持不变'],
+                    ['消费-汇付收单','联盟85% / 备付15%','联盟82% / 平台5% / 平台服务13%','新增平台商家渠道费5%，平台服务费从15%降至13%'],
+                ]
+            ),
+            divider(),
+
+            h3('5.2.3  综合电商修订模型'),
+            dataTable(
+                ['场景','原比率','修订后','修订理由'],
+                [
+                    ['充值-汇付收单','电商82.4% / 备付17.6%','电商100%（服务费0%）','综合电商是链邦直营，充值即为自有资金；服务费从消费端收取'],
+                    ['消费-余额支付','（参数待定）','电商82.4% / 平台服务17.6%','与其他消费场景统一'],
+                    ['消费-消费金核销','电商90% / 备付10%','电商90% / 平台服务10%','维持不变'],
+                    ['消费-汇付收单','电商82.4% / 备付17.6%','电商82.4% / 平台服务17.6%','维持不变'],
+                ]
+            ),
+            pageBreak(),
+
+            h2('5.3  流程优化'),
+
+            h3('5.3.1  取消联盟商家→平台商家中转'),
+            p('当前设计：联盟商家余额支付需通过平台商家汇付商户号中转。这是不必要的结算环节。'),
+            p('修订后：联盟商家直接开通独立汇付商户号，所有收款直接进入自有账户。平台商家对联盟商家的管理抽成通过分账比例实现（如消费场景中平台抽5%），而非资金路径控制。'),
+            divider(),
+
+            h3('5.3.2  统一方案A/B → 方案B'),
+            p('建议以方案B（消费金核销直连+汇付直清）作为唯一方案：'),
+            b('消费者付款 → 汇付监管账户 → 实时分账 → 各方商户号'),
+            b('资金不经平台，平台只传递分账指令'),
+            b('取消"延迟交易分账"中的"延迟"环节——从T+N改为实时分账'),
+            b('方案A（收款-分账→延迟交易分账）作为过渡方案，公测后30天内下线'),
+            divider(),
+
+            h3('5.3.3  增加退款逆向流程'),
+            dataTable(
+                ['退款场景','处理方式','时效'],
+                [
+                    ['全额退款·未分账','取消分账指令，资金原路退回用户','实时'],
+                    ['全额退款·已分账','按原分账比例从各方商户号逆向扣回→汇总→退回用户','T+1'],
+                    ['部分退款·已分账','按退款金额重新计算分账→差额从各方扣回→退回用户','T+1'],
+                    ['消费金核销退款','已核销消费金退回用户消费金余额；商家已收到的货款从下笔结算款中扣回','T+0（消费金）\nT+1（货款）'],
+                    ['纠纷/争议退款','暂缓分账→运营介入→根据处理结果执行分账或退款','T+3'],
+                ]
+            ),
+            divider(),
+
+            h2('5.4  操作细则补充'),
+            p('以下模块在现有模型中缺失，建议补充完整：'),
+
+            h3('5.4.1  手工提现（包圆场景）操作规范'),
+            b('触发条件：① 单笔提现金额 > ¥50,000；② 自动提现连续3次失败；③ 银行通道异常维护期；④ 商家特殊申请（如急需大额提现）'),
+            b('审批流程：商家提交申请 → 运营专员审核（确认账户状态正常）→ 运营主管审批（>¥50,000加财务主管审批）→ 财务手动打款 → 系统记录'),
+            b('处理时效：工作日15:00前提交，当日处理；15:00后提交，次工作日处理。节假日顺延。'),
+            b('费用承担：手工提现产生的手续费由商家承担（如适用）'),
+            divider(),
+
+            h3('5.4.2  对账机制'),
+            b('每日03:00生成前一日分账对账单（含订单号/交易时间/交易金额/分账比例/各方金额/提现状态）'),
+            b('商家后台"财务管理→分账明细"实时展示分账流水'),
+            b('差异申诉：商家发起 → 系统自动比对 → 差异≤¥10自动调账 → 差异>¥10人工核查（3个工作日内）'),
+            b('每月5日前出具上月分账汇总报告（含总交易额/总分账额/服务费汇总/异常交易清单）'),
+            divider(),
+
+            h3('5.4.3  商家退出清算规则'),
+            dataTable(
+                ['退出场景','处理规则','时效'],
+                [
+                    ['主动退出（商家申请）','完成所有在途订单结算 → 待结算资金T+7提现 → 账户余额退回商家银行账户 → 已产生的平台服务费不退','T+7'],
+                    ['被动清退（违规）','暂停账户交易 → 待结算资金冻结 → 法务审核 → 扣除违约金/罚款后剩余资金退回商家','T+30'],
+                    ['合同到期不续','同"主动退出"流程','T+7'],
+                    ['平台停止运营','提前30天通知 → 商家自行提现 → 平台协助完成最后一批结算 → 注销汇付商户号','T+30'],
+                ]
+            ),
+            pageBreak(),
+
+            // ===== 六、修订后的模型参数 =====
+            h1('第六章  修订后的模型参数'),
+
+            p('以下为整合以上所有调整建议后的修订版模型参数。**加粗**项为相对于原模型的变更。',{bold:true}),
+            divider(),
+
+            h2('6.1  平台商家修订模型'),
+            dataTable(
+                ['编号','场景','收单方式','消费让利','平台商家','平台服务','样例（¥1,000）','变更说明'],
+                [
+                    ['1.1','充值','汇付','20%','100%','0%','商家 ¥1,000','🆕 原82.4%→100%'],
+                    ['1.2','消费','余额支付','20%','82.4%','17.6%','商家 ¥824 + 平台 ¥176','🆕 原0%→82.4%'],
+                    ['1.3','消费','消费金核销','—','90%','10%','商家 ¥900 + 平台 ¥100','✅ 维持不变'],
+                    ['1.4','消费','汇付','20%','82.4%','17.6%','商家 ¥824 + 平台 ¥176','✅ 维持不变'],
+                ]
+            ),
+            divider(),
+
+            h2('6.2  联盟商家修订模型'),
+            dataTable(
+                ['编号','场景','收单方式','消费让利','平台商家','联盟商家','平台服务','样例（¥1,000）','变更说明'],
+                [
+                    ['2.1','充值','汇付','15%','0%','100%','0%','联盟 ¥1,000','🆕 原：平台86.8%/联盟0%'],
+                    ['2.2','消费','余额支付','15%','5%','82%','13%','联盟 ¥820+平台¥50+服务¥130','🆕 原参数待定→明确'],
+                    ['2.3','消费','消费金核销','—','0%','90%','10%','联盟 ¥900 + 服务 ¥100','✅ 维持不变'],
+                    ['2.4','消费','汇付','15%','5%','82%','13%','联盟 ¥820+平台¥50+服务¥130','🆕 原85%→82%，增加平台5%'],
+                ]
+            ),
+            divider(),
+
+            h2('6.3  综合电商修订模型'),
+            dataTable(
+                ['编号','场景','收单方式','消费让利','综合电商','平台服务','样例（¥1,000）','变更说明'],
+                [
+                    ['3.1','充值','汇付','20%','100%','0%','电商 ¥1,000','🆕 原82.4%→100%'],
+                    ['3.2','消费','余额支付','20%','82.4%','17.6%','电商 ¥824 + 平台 ¥176','🆕 原参数待定→明确'],
+                    ['3.3','消费','消费金核销','—','90%','10%','电商 ¥900 + 平台 ¥100','✅ 维持不变'],
+                    ['3.4','消费','汇付','20%','82.4%','17.6%','电商 ¥824 + 平台 ¥176','✅ 维持不变'],
+                ]
+            ),
+            divider(),
+
+            h2('6.4  全局参数修订对照'),
+            dataTable(
+                ['参数','原值','修订值','变更原因'],
+                [
+                    ['基准消费让利·平台','20%','20%','✅ 不变（仅术语调整）'],
+                    ['基准消费让利·联盟','15%','15%','✅ 不变（仅术语调整）'],
+                    ['平台服务费·汇付收单','17.6%','17.6%','✅ 不变'],
+                    ['平台服务费·消费金核销','10%','10%','✅ 不变'],
+                    ['联盟商家·平台渠道费','无','5%','🆕 新增：体现平台商家为联盟导流的价值'],
+                    ['联盟商家分账·汇付收单','85%','82%','🆕 让出5%给平台商家作为渠道费'],
+                    ['充值场景·商家分账','82.4%','100%','🆕 充值资金全额归属充值方'],
+                    ['余额支付·平台商家分账','0%','82.4%','🆕 修复：与汇付收单统一'],
+                    ['"消费福利"','消费福利','消费让利','🆕 合规术语替换'],
+                    ['"备付金"/"金融备付"','备付金','平台营销额度','🆕 合规术语替换（避免与央行备付金混淆）'],
+                    ['"链商金融"','链商金融','链商平台服务','🆕 合规术语替换'],
+                ]
+            ),
+            pageBreak(),
+
+            // ===== 七、实施路线图 =====
+            h1('第七章  实施路线图'),
+
+            dataTable(
+                ['阶段','时间窗口','任务','产出','负责人','状态'],
+                [
+                    ['Phase 0\n紧急整改','6/3-6/11\n（公测前）','① 合规术语全局替换\n② 联盟商家充值分账比率修正（0%→100%）\n③ 平台商家余额消费分账修正（0%→82.4%）\n④ 与法务确认合规架构方案','修正后的分账参数上线\n术语替换完毕','技术部\n+ 梁君衡\n+ 法务','🔴 紧急'],
+                    ['Phase 1\n合规架构\n升级','6/12-6/26\n（公测后2周）','① 对接汇付"分账宝"产品\n② 迁移备付金账户→监管分账账户\n③ 统一方案A/B，确定方案B为主方案\n④ 联盟商家独立开通汇付商户号','合规分账架构上线\n联盟商家直连','技术部\n+ 汇付','🟡 重要'],
+                    ['Phase 2\n运营流程\n完善','6/29-7/10\n（公测后4周）','① 上线退款逆向分账流程\n② 上线对账系统和商家后台\n③ 制定手工提现SOP\n④ 制定商家退出清算规则','运营SOP文档\n对账系统上线','技术部\n+ 运营\n+ 财务','🟢 常规'],
+                    ['Phase 3\n持续优化','7/13起','① 根据运营数据调优分账比率\n② 收集商家反馈迭代\n③ 法务定期合规复审（每季度）','优化报告\n合规复审记录','全员','🔵 持续'],
+                ]
+            ),
+            pageBreak(),
+
+            // ===== 八、合规自查清单 =====
+            h1('第八章  合规自查清单'),
+
+            p('以下清单应在每次模型参数调整前由相关部门逐项确认。所有项目必须全部通过才能上线。'),
+            divider(),
+
+            dataTable(
+                ['#','检查项','检查标准','责任方','通过条件'],
+                [
+                    ['1','是否形成资金池','消费者资金是否直接进入持牌支付机构监管账户？平台是否在任何环节触碰/滞留消费者资金？','技术部\n+ 法务','平台不触碰资金'],
+                    ['2','是否存在二清','是否由持牌支付机构完成最终资金清算？平台是否仅传递分账指令而非执行清算？','技术部\n+ 法务','支付机构直清'],
+                    ['3','分账比率是否合理','商家分账比率是否在合理区间（≥80%）？充值场景是否为100%归属充值方？','品牌组\n+ 运营','≥80% / 充值100%'],
+                    ['4','术语是否合规','是否已按《法律合规框架》术语表替换所有敏感词汇？是否避免了"币/Token/投资回报/稳赚"等禁用词？','梁君衡\n+ 法务','术语合规'],
+                    ['5','是否承诺收益','对外材料中是否出现任何形式的收益承诺（包括暗示）？是否使用"稳赚/躺赚/保本"等词汇？','梁君衡\n+ 法务','无收益承诺'],
+                    ['6','退款流程是否完整','是否覆盖全部退款场景（全额/部分/纠纷/消费金）？逆向分账逻辑是否正确？','技术部\n+ 财务','全部覆盖'],
+                    ['7','对账机制是否到位','商家是否可实时查看分账明细？差异处理是否有SLA？月度汇总报告是否覆盖？','技术部\n+ 财务','实时可见'],
+                    ['8','商家退出是否定义','主动退出/被动清退/合同到期/平台停运四种场景是否均有处理规则？','运营\n+ 法务','四场景覆盖'],
+                    ['9','商户协议是否充分','商户入驻协议中是否明确了分账比例、结算周期、服务费标准、退款规则？','商务\n+ 法务','协议齐全'],
+                    ['10','监管备案是否完成','如使用汇付分账产品，是否已完成监管要求的备案/报备？','技术部\n+ 法务\n+ 汇付','备案完成'],
+                ]
+            ),
+            divider(),
+            redline('以上10项全部通过前，不得进行任何分账参数的生产环境变更。'),
+            pageBreak(),
+
+            // ===== 附录A =====
+            h1('附录A  关键术语对照表'),
+
+            dataTable(
+                ['原术语（excel/drawio中）','合规替换术语','替换原因','适用范围'],
+                [
+                    ['消费福利','消费让利 / 消费奖励','"福利"在商业语境中可能被解读为固定承诺；"让利"更准确描述商家自愿的营销支出','所有对外/对内文档'],
+                    ['链商金融','链商平台服务','"金融"暗示金融业务属性，平台不具备金融牌照；"平台服务"准确描述技术服务性质','所有对外/对内文档'],
+                    ['金融备付金\n营销备付金','平台营销额度','"备付金"在监管语境下特指支付机构的客户备付金（央行集中存管）；平台不应使用此术语','所有对外/对内文档'],
+                    ['链商金融备付分账比率','平台服务费率','同上，去除"金融"和"备付"','Excel模型/技术文档'],
+                    ['链邦核销备付金账户','汇付监管分账账户','"备付金账户"暗示平台持有客户资金；实际应为持牌支付机构的监管账户','技术文档/流程图'],
+                    ['消费金','消费金 / 会员消费金','✅ 合规——属于预充值消费权益，不涉及金融属性','维持不变'],
+                    ['余额支付','余额支付 / 消费金支付','✅ 合规——属于预充值消费，不涉及借贷/投资','维持不变'],
+                    ['分账','分账 / 订单分账','✅ 合规——标准的支付清算术语','维持不变'],
+                    ['核销','核销 / 消费金核销','✅ 合规——标准消费权益使用术语','维持不变'],
+                    ['消费活跃度指数','消费活跃度指数','✅ 合规——按《法律合规框架》要求，替代"消费信用分"','维持不变'],
+                    ['商家营销额度','商家营销额度','✅ 合规——按《法律合规框架》要求，替代"数字信用债券"','维持不变'],
+                ]
+            ),
+            pageBreak(),
+
+            // ===== 附录B =====
+            h1('附录B  合规红线·一票否决项'),
+            p('以下三项为平台合规红线，违反任何一项即构成一票否决，不得上线运营。本报告已逐条对照检查。'),
+            divider(),
+
+            new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+                new TableRow({children:[
+                    new TableCell({width:{size:5,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'红线',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
+                    new TableCell({width:{size:20,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'红线内容',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
+                    new TableCell({width:{size:25,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'本模型相关风险',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
+                    new TableCell({width:{size:25,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'当前状态',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
+                    new TableCell({width:{size:25,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'整改措施',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
+                ]}),
+                new TableRow({children:[
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'1',size:24,font:'微软雅黑',bold:true,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
+                    new TableCell({shading:{fill:'#FFF5F5'},children:[new Paragraph({children:[new TextRun({text:'积分不可兑现',size:19,font:'微软雅黑',bold:true})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'消费金核销后如果支持提现/转让为现金，则构成变相兑现。目前消费金限定在平台内核销使用，不涉及现金兑换，风险可控。',size:17,font:'微软雅黑'})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'✅ 当前合规\n消费金仅限消费核销\n不支持提现/转让',size:17,font:'微软雅黑',color:C.GREEN})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'维持现状\n持续监控是否有"转让/兑现"功能需求',size:17,font:'微软雅黑'})],spacing:{before:15,after:15}})]}),
+                ]}),
+                new TableRow({children:[
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'2',size:24,font:'微软雅黑',bold:true,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
+                    new TableCell({shading:{fill:'#FFF5F5'},children:[new Paragraph({children:[new TextRun({text:'不可形成\n资金池',size:19,font:'微软雅黑',bold:true})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'🔴 当前存在风险：链邦核销备付金账户作为资金汇集节点，构成事实上的资金池。消费者资金在备付金账户停留期间形成沉淀。',size:17,font:'微软雅黑',color:C.RED})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'🔴 需整改\n备付金账户模式\n构成资金池特征',size:17,font:'微软雅黑',color:C.RED})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'公测前：改为汇付监管分账账户\n由支付机构（非平台）托管资金\n资金不经平台直接结算到商家',size:17,font:'微软雅黑'})],spacing:{before:15,after:15}})]}),
+                ]}),
+                new TableRow({children:[
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'3',size:24,font:'微软雅黑',bold:true,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
+                    new TableCell({shading:{fill:'#FFF5F5'},children:[new Paragraph({children:[new TextRun({text:'不可承诺\n收益',size:19,font:'微软雅黑',bold:true})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'消费让利（20%/15%）如果对外宣传为"消费返利""消费赚钱"，可能被认定为收益承诺。当前excel/drawio中未出现此类表述，但对外话术需严格控制。',size:17,font:'微软雅黑'})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'✅ 当前合规\n内部文档无承诺收益\n需监控对外话术',size:17,font:'微软雅黑',color:C.GREEN})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'持续监控对外话术\n禁止"消费返利/消费赚钱"\n统一表述为"消费让利"',size:17,font:'微软雅黑'})],spacing:{before:15,after:15}})]}),
+                ]}),
+            ]}),
+            divider(),
+            pageBreak(),
+
+            // ===== 文末 =====
+            h1('文档签署'),
+            p(''),
+            infoTable([
+                ['编制','梁君衡（企业宣传部）______ 日期：2026/6/3'],
+                ['审核·品牌','______ 日期：______'],
+                ['审核·技术','______ 日期：______'],
+                ['审核·法务','______ 日期：______'],
+                ['审核·财务','______ 日期：______'],
+                ['批准','______ 日期：______'],
+            ]),
+            divider(),
+            divider(),
+
+            new Paragraph({children:[new TextRun({text:'—— 文档结束 ——',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:200}}),
+            new Paragraph({children:[new TextRun({text:'本报告为链商平台·链生活品牌内部分析文件，不构成正式法律意见。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'所有合规判断建议经持牌法律专业人士复核确认后方可作为决策依据。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}),
+
+        ]} // end children
+    ]} // end sections
+); // end Document
+
+// ========== GENERATE ==========
+Packer.toBuffer(doc).then(buf => {
+    fs.writeFileSync(outFile, buf);
+    console.log('✅ 生成完成: ' + outFile);
+    console.log('   文件大小: ' + (buf.length / 1024).toFixed(0) + ' KB');
+}).catch(e => console.error(e));

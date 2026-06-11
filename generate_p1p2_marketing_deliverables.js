@@ -1,0 +1,576 @@
+const docx = require('docx');
+const fs = require('fs');
+const path = require('path');
+
+const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak } = docx;
+
+// ── Color Constants ──
+const C = {
+    MAIN: '#1A5276', DARK: '#2C3E50', LIGHT: '#EBF5FB', WHITE: '#FFFFFF',
+    BLACK: '#333333', GRAY: '#7F8C8D', RED: '#C0392B', GREEN: '#1E8449',
+    ORANGE: '#E67E22', HEADER: '#1a1a2e', YELLOW: '#F39C12', LIGHTGRAY: '#F5F6FA',
+    SOFT_BG: '#F8F9FA', ACCENT_WARM: '#D35400'
+};
+
+// ── Helper Functions ──
+function h1(t) { return new Paragraph({ text: t, heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 }, border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: C.MAIN } } }); }
+function h2(t) { return new Paragraph({ text: t, heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 150 } }); }
+function h3(t) { return new Paragraph({ text: t, heading: HeadingLevel.HEADING_3, spacing: { before: 200, after: 100 } }); }
+function p(t, o) { return new Paragraph({ children: [new TextRun(Object.assign({ text: t, size: 21, font: '微软雅黑' }, o || {}))], spacing: { after: 80, line: 360 } }); }
+function b(t, o) { return new Paragraph({ children: [new TextRun(Object.assign({ text: '• ' + t, size: 21, font: '微软雅黑' }, o || {}))], spacing: { after: 60, line: 340 }, indent: { left: 600 } }); }
+function n(i, t) { return new Paragraph({ children: [new TextRun({ text: i + '. ' + t, size: 21, font: '微软雅黑' })], spacing: { after: 60, line: 340 }, indent: { left: 600 } }); }
+function divider() { return new Paragraph({ spacing: { after: 200 }, children: [] }); }
+function pageBreak() { return new Paragraph({ children: [new PageBreak()] }); }
+
+function dataTable(headers, rows, opts) {
+    opts = opts || {};
+    return new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+            new TableRow({ children: headers.map(function(h) { return new TableCell({ shading: { fill: C.HEADER }, children: [new Paragraph({ children: [new TextRun({ text: h, size: opts.small ? 17 : 19, font: '微软雅黑', bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] }); }) })
+        ].concat(rows.map(function(r, i) {
+            var vals = Array.isArray(r) ? r : [r];
+            return new TableRow({ children: vals.map(function(v) { return new TableCell({ shading: i % 2 === 0 ? { fill: C.LIGHT } : undefined, children: [new Paragraph({ children: [new TextRun({ text: String(v), size: opts.small ? 16 : 18, font: '微软雅黑' })], spacing: { before: 15, after: 15 } })] }); }) });
+        }))
+    });
+}
+
+function calloutBox(text, type) {
+    type = type || 'info';
+    var colors = { info: C.MAIN, success: C.GREEN, warning: C.ORANGE, danger: C.RED };
+    var icons = { info: '💡', success: '✅', warning: '⚠️', danger: '🔴' };
+    return new Paragraph({
+        children: [new TextRun({ text: (icons[type] || '💡') + ' ' + text, size: 21, font: '微软雅黑', bold: true, color: colors[type] || C.MAIN })],
+        spacing: { before: 100, after: 100 }, indent: { left: 400 },
+        border: { left: { style: BorderStyle.SINGLE, size: 6, color: colors[type] || C.MAIN } }
+    });
+}
+
+function quoteBlock(text, attribution) {
+    var children = [new TextRun({ text: '"' + text + '"', size: 24, font: '微软雅黑', italics: true, color: C.MAIN })];
+    if (attribution) children.push(new TextRun({ text: '\n—— ' + attribution, size: 18, font: '微软雅黑', color: C.GRAY }));
+    return new Paragraph({ children: children, spacing: { before: 120, after: 120 }, indent: { left: 800, right: 800 }, border: { left: { style: BorderStyle.SINGLE, size: 3, color: C.ORANGE } } });
+}
+
+function comparisonTable(leftLabel, rightLabel, rows) {
+    return new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [].concat(
+            [new TableRow({ children: [
+                new TableCell({ shading: { fill: C.HEADER }, children: [new Paragraph({ children: [new TextRun({ text: '', size: 19, font: '微软雅黑', bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] }),
+                new TableCell({ shading: { fill: C.RED }, children: [new Paragraph({ children: [new TextRun({ text: leftLabel, size: 19, font: '微软雅黑', bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] }),
+                new TableCell({ shading: { fill: C.GREEN }, children: [new Paragraph({ children: [new TextRun({ text: rightLabel, size: 19, font: '微软雅黑', bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] })
+            ]})],
+            rows.map(function(r, i) {
+                return new TableRow({ children: r.map(function(cell, j) {
+                    var cellText = typeof cell === 'object' ? cell : { text: String(cell) };
+                    return new TableCell({
+                        shading: i % 2 === 0 ? { fill: j === 0 ? C.LIGHTGRAY : C.SOFT_BG } : undefined,
+                        children: [new Paragraph({
+                            children: [new TextRun({ text: cellText.text || '', size: 17, font: '微软雅黑', bold: cellText.bold || (j === 0), color: cellText.color || C.BLACK })],
+                            spacing: { before: 12, after: 12 }
+                        })]
+                    });
+                }) });
+            })
+        )
+    });
+}
+
+function infoCard(title, items) {
+    return new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+            new TableRow({ children: [new TableCell({ shading: { fill: C.MAIN }, children: [new Paragraph({ children: [new TextRun({ text: title, size: 20, font: '微软雅黑', bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] })] })
+        ].concat(items.map(function(item, i) {
+            return new TableRow({ children: [new TableCell({ shading: i % 2 === 0 ? { fill: C.LIGHT } : undefined, children: [new Paragraph({ children: [new TextRun({ text: (typeof item === 'string' ? '• ' : '') + item, size: 18, font: '微软雅黑' })], spacing: { before: 12, after: 12 } })] })] });
+        }))
+    });
+}
+
+function portalCard(portalName, color, sections) {
+    var rows = [];
+    sections.forEach(function(s) {
+        rows.push([s[0], s[1]]);
+    });
+    return [
+        h3(portalName, { color: color, bold: true }),
+        dataTable(['信息模块', '内容要点'], rows, { small: true }),
+        divider()
+    ];
+}
+
+// ── Output path ──
+var OUT = '20260602 链商平台 技术部会议整理';
+if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true });
+
+// ══════════════════════════════════════════════════════════════════
+// BUILD DOCUMENT
+// ══════════════════════════════════════════════════════════════════
+function buildDocument() {
+    var children = [];
+
+    // ── COVER ──
+    children.push(
+        new Paragraph({ children: [new TextRun({ text: '链商2.0 · 链生活品牌', size: 36, font: '微软雅黑', bold: true, color: C.MAIN })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
+        new Paragraph({ children: [new TextRun({ text: 'P1+P2 营销优化交付物', size: 28, font: '微软雅黑', bold: true, color: C.ORANGE })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
+        new Paragraph({ children: [new TextRun({ text: '三端信息架构分离 + 三元营销简化 + 竞品视觉武器 + 合规语言温度平衡', size: 20, font: '微软雅黑', color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+        new Paragraph({ children: [new TextRun({ text: '编制：梁君衡 | 2026年6月8日 | P1+P2 交付 | 机密文件', size: 18, font: '微软雅黑', color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+        divider(),
+        calloutBox('P1任务（公测第一周内完成）：三端信息架构分离、三元营销简化表达、竞品视觉对比武器。P2任务（持续优化）：合规语言温度平衡——在合规前提下恢复品牌情感感染力。', 'info'),
+        divider(),
+        pageBreak()
+    );
+
+    // ══════════════════════════════════════════════════════════════
+    // P1-1: THREE-PORTAL INFORMATION ARCHITECTURE
+    // ══════════════════════════════════════════════════════════════
+    children.push(
+        h1('第一部分：三端信息架构分离方案'),
+        divider(),
+        calloutBox('当前问题：品牌/产品信息在三端（C端消费者、B端商户、P端推广者）混合呈现，每端用户都需自行筛选与自己相关的信息，导致信息过载和决策摩擦。需要为每端建立独立的信息架构和内容策略。', 'danger'),
+        divider(),
+
+        h2('1.1 三端用户信息需求对比'),
+        dataTable(
+            ['维度', 'C端·消费者', 'B端·商户', 'P端·推广者'],
+            [
+                ['核心问题', '这对我有什么用？', '这能帮我多赚钱吗？', '我能赚多少？怎么赚？'],
+                ['决策时间', '3-30秒（浏览→下载）', '3-7天（了解→对比→入驻）', '1-3天（了解→注册→行动）'],
+                ['信息深度需求', '浅层（一眼看懂利益）', '深层（费率/分润/数据/案例）', '中层（机制/收益/培训/支持）'],
+                ['关键转化动作', '下载APP→首单消费', '提交入驻→开店上线', '注册认证→拓展首店'],
+                ['信任建立方式', '社会证明+优惠力度', '数据证明+同行案例', '收入证明+体系可信度'],
+                ['竞品对比需求', '美团/抖音→链商差异', '美团/有赞→费率对比', '传统地推/微商→模式对比'],
+                ['内容调性', '轻松·温暖·利益明确', '专业·数据·可信赖', '激励·清晰·机会感'],
+            ]
+        ),
+        divider(),
+
+        h2('1.2 C端信息架构（消费者门户）'),
+        p('信息目标：让消费者在3秒内看懂"链商对我有什么好处"，30秒内完成下载决策。', { bold: true, color: C.MAIN }),
+        divider()
+    );
+
+    // C端 portal
+    var cPortal = [
+        ['Hero区', '品牌锚点「消费有回响」+ 一句话利益「在A店消费获券，全城B店通用」+ 双CTA（领消费金/下载APP）+ 信任标识条'],
+        ['利益区（3-Pillar）', '①跨店通用（图标+一句话）②消费积累（三重权益图标阵列）③真实好店（评价可信标识）'],
+        ['How It Works（3步）', '发现好店 → 消费获权益 → 跨店使用。每步配1张界面截图+1行文字。'],
+        ['新人权益区', '¥30消费金+3张¥10代金券+500积分。量化展示总价值（¥65新人礼包）。'],
+        ['社会证明区', '已入驻商户数（实时计数）+ 用户好评截图 + "公测创始会员"稀缺性标签'],
+        ['FAQ区（折叠式）', '6个最常见消费者问题：和美团区别/券在哪用/积分过期吗/怎么保证商家质量/公测福利/资金安全'],
+        ['下载引导区', 'APP下载二维码+小程序码+应用商店评分。一句话："4.9分·10万+下载"（公测后更新）'],
+        ['底部导航', '首页|发现|消息|我的 四Tab标准结构'],
+    ];
+    children.push(h3('C端 APP/小程序 信息架构（消费者门户）'));
+    children.push(dataTable(['页面/模块', '内容要点'], cPortal, { small: true }));
+    children.push(divider());
+
+    // B端 portal
+    children.push(h2('1.3 B端信息架构（商户门户）'));
+    children.push(p('信息目标：让商户在浏览中完成"了解费率→对比竞品→建立信任→申请入驻"的完整决策链。', { bold: true, color: C.MAIN }));
+    children.push(divider());
+
+    var bPortal = [
+        ['Hero区', '主标题「平台服务费只有美团的1/3」+ 副标题「零固定费用·零预充值·按真实交易收费」+ CTA「公测期免服务费入驻」+ 信任标识'],
+        ['费率对比区（核心）', '链商 vs 美团 vs 有赞 — 费率/结算周期/客户归属/入驻门槛 — 四维对比表+数据可视化（柱状图）'],
+        ['分润透明区', '每¥100消费的完整分润路径图（消费者→汇付→9方拆分）— 商家到手82.4-85% 醒目展示'],
+        ['千面千店展示区', '三类店铺（Premium/Standard/Minimal）的真实页面截图对比+可自定义范围说明'],
+        ['商家工具区', '①自主营销配置（代金券/积分发放规则）②数据看板预览 ③客户管理（锁客机制说明）④T+1到账记录'],
+        ['公测专属权益区', '5项权益（免服务费/蓝标/免费看板/1对1指导/新店推荐位）— 标注"限前50家"制造紧迫感'],
+        ['成功案例/模拟区', '公测前：模拟数据案例（"假设一家月销¥5万的社区餐饮店，链商 vs 美团年省多少"）公测后：真实案例替换'],
+        ['入驻流程区', '3步可视化：填信息→审核上线→开始经营。每步标注耗时。'],
+        ['FAQ区', '6个商户最关心的问题：费率真实性/跨店通兑吃亏吗/不会运营怎么办/现有美团店怎么办/结算周期/退出机制'],
+        ['底部CTA', '入驻申请表单（极简：店名+品类+手机号，3字段即可提交）'],
+    ];
+    children.push(dataTable(['页面/模块', '内容要点'], bPortal, { small: true }));
+    children.push(divider());
+
+    // P端 portal
+    children.push(h2('1.4 P端信息架构（推广者门户）'));
+    children.push(p('信息目标：让潜在推广者在最短路径内理解"这不是传销→我能赚多少→怎么开始"。', { bold: true, color: C.MAIN }));
+    children.push(divider());
+
+    var pPortal = [
+        ['Hero区', '主标题「分享社区好店，获得持续收入」+ 副标题「0元加入·无会员费·按真实交易分润」+ CTA「成为推广者」'],
+        ['信任建立区（第一屏！）', '与传销的本质区别（5维对比表：入门门槛/收入来源/层级限制/产品服务/收入保障）— 这是P端的最大转化障碍'],
+        ['收益机制区', '三级角色（推广者/服务站/城市服务商）的收益对比+案例模拟："拓展10家店月均¥X收入"'],
+        ['How It Works（4步）', '注册认证→拓展商家→商家产生交易→获得分润。每步配手机界面截图。'],
+        ['支持体系区', '①推广素材库（海报/话术/视频）②培训课程 ③数据看板（实时查看分润）④晋升路径'],
+        ['FAQ区', '5个问题：需要交钱吗/怎么赚钱/需要什么能力/和微商有什么区别/收入稳定吗'],
+        ['注册入口', '极简注册：姓名+手机号+推荐人（选填）→提交'],
+    ];
+    children.push(dataTable(['页面/模块', '内容要点'], pPortal, { small: true }));
+    children.push(divider());
+
+    children.push(h2('1.5 三端信息架构对比总览'));
+    children.push(dataTable(
+        ['维度', 'C端·消费者门户', 'B端·商户门户', 'P端·推广者门户'],
+        [
+            ['首要任务', '利益可视化（一眼看懂好处）', '费率对比+分润透明（数据说服）', '去传销化信任建立（合法证明）'],
+            ['信息密度', '低（极简，3屏以内）', '高（深度信息，支持长滚动）', '中（关键信息前置，细节可折叠）'],
+            ['视觉主导元素', '生活场景图+权益图标+金额', '数据图表+对比表+流程图', '收入模拟+对比表+实名案例'],
+            ['核心CTA', '下载APP/领消费金', '提交入驻申请', '注册推广者'],
+            ['最大转化障碍', '"又一个美团？"', '"新平台没人用"', '"这是传销吧？"'],
+            ['应对策略', '跨店通兑故事+新人¥65礼包', '费率对比数据+公测免服务费', '传销5维对比+0元加入标签'],
+            ['关键指标', '下载转化率·首单率·复购率', '入驻申请率·审核通过率·上线率', '注册率·认证率·首店拓展率'],
+        ]
+    ));
+    children.push(divider());
+    children.push(calloutBox('建议公测前（6/10前）完成三端LP的独立搭建——产品/技术团队按以上信息架构分别开发三个落地页，而非一个通用介绍页。', 'warning'));
+    children.push(pageBreak());
+
+    // ══════════════════════════════════════════════════════════════
+    // P1-2: TRIPLE MARKETING SIMPLIFIED
+    // ══════════════════════════════════════════════════════════════
+    children.push(
+        h1('第二部分：三元营销简化表达方案'),
+        divider(),
+        calloutBox('当前问题：代金券、积分、消费金——三个概念同时抛给用户，认知成本过高。需要建立一套"一句话讲清三个、五秒钟看懂差异"的简化表达体系。', 'danger'),
+        divider(),
+
+        h2('2.1 核心简化：「消费权益三件套」概念'),
+        p('将"代金券+积分+消费金"统一包装为「消费权益三件套」——消费者无需理解三个独立概念，只需知道：每次消费后自动获得三件套、下次消费自动抵扣。如同"工资=基本+绩效+补贴"——你不需要知道每项怎么算，只需要知道总数。', { bold: true }),
+        divider(),
+
+        h3('简化类比对照'),
+        dataTable(
+            ['链商工具', '类比', '消费者一句话理解', '实际规则（后台自动）'],
+            [
+                ['代金券', '像"商家给你的红包"', '"商家送我的钱，全城都能花"', '5%发放·30%抵扣上限·90天·全平台通用'],
+                ['积分', '像"消费里程数"', '"消费越多、积分越多、越值钱"', '1:100兑换率·20%抵扣上限·2年有效'],
+                ['消费金', '像"平台的VIP回馈"', '"平台送我的福利金、级别越高越多"', '30%核销上限·12个月·消费活跃度驱动'],
+            ]
+        ),
+        divider(),
+
+        h3('三件套总览卡（消费者版·用于APP/海报/LP）'),
+        dataTable(
+            ['', '🎫 代金券', '⭐ 积分', '💰 消费金'],
+            [
+                ['谁给的？', '商家', '平台', '平台'],
+                ['怎么得？', '消费即得', '消费即得', '消费积累+活跃升级'],
+                ['在哪用？', '全城任意商家', '全城任意商家', '全城任意商家'],
+                ['抵扣上限', '30%', '20%', '30%'],
+                ['有效期', '90天', '2年', '12个月'],
+                ['一句话', '商家请客', '消费里程', 'VIP回馈'],
+            ]
+        ));
+    children.push(divider());
+
+        children.push(h2('2.2 三元营销 FABE 模型'));
+        children.push(p('FABE = Features（特征）+ Advantages（优势）+ Benefits（利益）+ Evidence（证据）。以下为每种营销工具的独立FABE卡片，用于商户端说服和消费者端教育。', { color: C.GRAY }));
+        children.push(divider());
+
+        children.push(h3('🎫 代金券 FABE'));
+        children.push(dataTable(
+            ['FABE', '内容'],
+            [
+                ['F·特征', '商家自主设定发放比例（建议5%）· 消费者消费后自动获得 · 30%单笔抵扣上限 · 90天有效期 · 🆕全平台通用'],
+                ['A·优势', 'vs 美团代金券：链商代金券跨店通用，消费者在A店获得→B店使用→C店也能用。商家发放一张券，全平台消费者都可能带着券来消费。'],
+                ['B·利益', '消费者：领券不浪费，处处都能用。商家：发券=向全平台消费者发邀请函，而非只给自己的回头客。'],
+                ['E·证据', '模拟数据：商家每发放¥100代金券→预期带动跨店消费¥400-600→增量GMV ROI 1:4-6。'],
+            ]
+        ));
+        children.push(divider());
+
+        children.push(h3('⭐ 积分 FABE'));
+        children.push(dataTable(
+            ['FABE', '内容'],
+            [
+                ['F·特征', '1:100兑换率（¥1消费=1积分）· 20%单笔抵扣上限 · 2年有效期（行业最长）· 全平台通用'],
+                ['A·优势', 'vs 美团积分：美团积分通常1年过期且仅限平台商城兑换。链商积分可在任意商家抵扣现金——积分=钱。'],
+                ['B·利益', '消费者：消费越多积分越多，积分越来越值钱。商家：积分驱动消费者跨店复购，积分流通=客源流通。'],
+                ['E·证据', '2年有效期远高于行业均值（1年），消费者积分浪费率预计降低60%+。'],
+            ]
+        ));
+        children.push(divider());
+
+        children.push(h3('💰 消费金 FABE'));
+        children.push(dataTable(
+            ['FABE', '内容'],
+            [
+                ['F·特征', '平台发放·消费活跃度驱动·30%核销上限·12个月有效期·全平台通用·消费金从备付金计提'],
+                ['A·优势', 'vs 竞品：美团/抖音无类似机制。消费金是平台级"消费回馈"——你的消费习惯越好，平台给你的回馈越多。'],
+                ['B·利益', '消费者：越消费→越有消费金→消费越划算→正向循环。商家：消费金由平台承担（非商家成本），消费者带着平台的钱来消费。'],
+                ['E·证据', '消费金30%抵扣上限=消费者最多可省30%——这是平台级补贴，商家无需承担。'],
+            ]
+        ));
+        children.push(divider());
+
+        children.push(h2('2.3「消费者钱包」可视化模型'));
+        children.push(p('将三元权益统一为"消费者钱包"界面——消费者打开APP看到的是一个"钱包"，而非三个独立数字。', { bold: true, color: C.MAIN }));
+        children.push(divider());
+        children.push(b('钱包总览：顶部显示"我的消费权益：¥XX（可抵扣金额）"——代金券+积分+消费金自动换算为现金等值总额'));
+        children.push(b('明细展开：点击展开显示三项明细——代金券¥X / 积分¥X（=¥X）/ 消费金¥X'));
+        children.push(b('消费时自动抵扣：结算页面显示"本次可用：¥XX（代金券¥X+积分¥X+消费金¥X）"——系统自动计算最优组合'));
+        children.push(b('一句话：消费者不需要学三个概念——只看到"我有多少钱可以用"，后台自动拆解来源'));
+        children.push(divider());
+
+        children.push(h2('2.4 三元营销一句话矩阵'));
+        children.push(dataTable(
+            ['场景', '一句话表达', '适用渠道'],
+            [
+                ['消费者首次接触', '"每次消费，自动获得三件套——下次消费自动抵扣"', 'Hero区/电梯广告'],
+                ['消费者APP内', '"我的消费权益 ¥XX"（一个数字）', 'APP钱包首页'],
+                ['商户招商', '"代金券拉新·积分促活·消费金锁客——三元营销，系统自动配置，你只管经营"', 'B端LP/招商话术'],
+                ['推广者话术', '"消费者每消费一笔，商家发券、平台送积分、系统奖消费金——三重权益锁定复购"', 'P端话术/培训材料'],
+                ['投资人/合作伙伴', '"三元权益互通体系——代金券(商家成本)+积分(平台成本)+消费金(备付金成本)——是链商区别于一切竞品的复购引擎"', 'BP/投资人演示'],
+            ]
+        ));
+        children.push(divider());
+        children.push(calloutBox('核心简化原则：消费者端→合并为一个"钱包数字"；商户端→讲清楚"谁出钱、谁受益、系统自动"；推广者端→一句话带过，重点是"这能帮商家提升复购"而非讲三元机制本身。', 'success'));
+        children.push(pageBreak());
+
+    // ══════════════════════════════════════════════════════════════
+    // P1-3: VISUAL COMPETITIVE COMPARISON WEAPON
+    // ══════════════════════════════════════════════════════════════
+    children.push(
+        h1('第三部分：竞品视觉对比武器'),
+        divider(),
+        calloutBox('当前问题：竞品分析仅以文字/表格形式存在于内部文档中，没有可对外使用的视觉化对比工具。B端招商和P端推广缺少"一图胜千言"的竞争对比物料。', 'danger'),
+        divider(),
+
+        h2('3.1 竞品雷达图 · 8维对比'),
+        p('用于：B端招商演示 · 投资BP · 品牌物料 · 公众号文章。以下为8个对比维度的评分定义（1-5分），可直接用于Chart.js雷达图。', { color: C.GRAY }),
+        divider(),
+
+        dataTable(
+            ['对比维度', '链商·链生活', '美团', '抖音团购', '有赞/微盟', '说明'],
+            [
+                ['平台费率', '⭐⭐⭐⭐⭐ 5-6%', '⭐⭐☆☆☆ 18-22%', '⭐⭐⭐⭐☆ 3-8%', '⭐⭐⭐☆☆ 年费+交易费', '费率越低评分越高'],
+                ['全平台权益互通', '⭐⭐⭐⭐⭐ 代金券/积分/消费金全平台通用', '⭐☆☆☆☆ 券仅限单店', '⭐☆☆☆☆ 券仅限单店', '⭐☆☆☆☆ 各自独立', '链商独有·核心壁垒'],
+                ['千面千店差异化', '⭐⭐⭐⭐⭐ 三档页面·品牌深度定制', '⭐⭐☆☆☆ 统一模板', '⭐☆☆☆☆ 无店铺概念', '⭐⭐⭐☆☆ SaaS可定制但需开发', '链商独有·商家自主品牌'],
+                ['商家自主经营', '⭐⭐⭐⭐⭐ 客户归商家·自主营销', '⭐☆☆☆☆ 客户归平台', '⭐⭐☆☆☆ 客户归平台', '⭐⭐⭐⭐☆ 客户归商家', '链商+有赞领先'],
+                ['结算速度', '⭐⭐⭐⭐⭐ T+1自动到账', '⭐⭐☆☆☆ T+7~T+30', '⭐⭐⭐☆☆ T+3~T+7', '⭐⭐⭐⭐☆ T+1~T+3', '链商最快'],
+                ['资金安全', '⭐⭐⭐⭐⭐ 汇付持牌托管·不碰资金', '⭐⭐⭐☆☆ 平台自持', '⭐⭐⭐☆☆ 平台自持', '⭐⭐⭐☆☆ 平台自持', '链商独有·合规壁垒'],
+                ['入驻门槛', '⭐⭐⭐⭐⭐ 0元入驻·按成交付费', '⭐⭐⭐☆☆ 需审核+年费', '⭐⭐⭐⭐☆ 低门槛', '⭐⭐☆☆☆ 年费+开发成本', '链商最低'],
+                ['复购机制', '⭐⭐⭐⭐⭐ 跨店通兑+三元权益循环', '⭐⭐☆☆☆ 平台补贴驱动', '⭐☆☆☆☆ 内容驱动·冲动消费', '⭐⭐☆☆☆ 商家自建·能力依赖', '链商独有·机制驱动'],
+            ]
+        ),
+        divider(),
+
+        h3('雷达图配置建议（Chart.js）'),
+        dataTable(
+            ['参数', '设置'],
+            [
+                ['数据集', '4组数据（链商/美团/抖音团购/有赞）'],
+                ['维度数', '8维（费率优势·权益互通·千面千店·商家自主·结算速度·资金安全·入驻门槛·复购机制）'],
+                ['颜色方案', '链商=#1A5276(蓝)·美团=#F39C12(黄)·抖音=#E91E63(粉)·有赞=#4CAF50(绿)'],
+                ['标注', '链商独有维度（权益互通/千面千店/资金安全/复购机制）标注星标★'],
+                ['使用场景', 'B端LP Hero下方·招商PPT第3页·品牌画册·投资者演示'],
+            ]
+        ),
+        divider(),
+
+        h2('3.2 一页制胜 · 竞品对比单页（Battle Card）'),
+        p('以下为可印刷/可截图的单页对比卡设计规范——B端招商时面对面递给商户的"杀手锏"。', { bold: true, color: C.MAIN }),
+        divider(),
+
+        h3('单页结构（A4纵向·品牌色体系）'),
+        n(1, '顶部·标题区：链商 vs 竞品 "选择链商，年省60-70%平台成本"（大号·深海蓝·加粗）'),
+        n(2, '核心对比表（4列×8行）：链商|美团|抖音团购|有赞。链商列用浅蓝底色高亮。'),
+        n(3, '关键数字区（3个醒目数字卡片）：5-6% 平台服务费率 · 82.4-85% 商家到手率 · T+1 自动到账'),
+        n(4, '链商独有标签区（4个绿底标签）：✓跨店通兑权益体系 ✓千面千店品牌定制 ✓汇付持牌资金托管 ✓交易即分润零预充值'),
+        n(5, '底部CTA区："公测期入驻·免一个月服务费。扫码申请→" + 二维码'),
+        divider(),
+
+        h2('3.3 费率对比计算器（交互工具建议）'),
+        p('建议开发一个简单的"费率对比计算器"嵌入B端LP——商户输入月营业额，自动计算链商 vs 美团 vs 有赞的年支出差额。', { color: C.GRAY }),
+        divider(),
+        h3('计算逻辑'),
+        b('输入：月均营业额（默认¥50,000）'),
+        b('链商支出 = 月营业额 × 5%（平台服务费）= ¥2,500/月 = ¥30,000/年'),
+        b('美团支出 = 月营业额 × 20%（平均抽佣）= ¥10,000/月 = ¥120,000/年'),
+        b('有赞支出 = ¥4,800（年费基础版）+ 月营业额 × 2%（交易费）= ¥16,800/年'),
+        b('结论展示："选择链商——每年省 ¥90,000 vs 美团 · 每年省 ¥0 vs 有赞（有赞SaaS含自建流量成本另计）"'),
+        divider(),
+
+        h2('3.4 竞争对比武器包 · 使用场景矩阵'),
+        dataTable(
+            ['武器', '格式', '使用场景', '受众', '紧急度'],
+            [
+                ['8维竞品雷达图', 'Chart.js交互图表/PNG截图', 'B端LP·招商PPT·投资BP', '商户·合作方·投资人', '🟠 P1'],
+                ['一页制胜Battle Card', 'A4印刷品/PDF/PNG', '面对面招商·地推·展会', '商户·推广者', '🟠 P1'],
+                ['费率对比计算器', '网页交互工具', 'B端LP嵌入·招商演示', '商户（自助计算）', '🟡 P2'],
+                ['竞品对比详情表', '网页长图/PDF', '深度了解·决策辅助', '商户·分析师·媒体', '🟡 P2'],
+                ['一句话竞争优势集合', '文本/话术库', '推广者话术·客服应答', '推广者·客服', '🟠 P1'],
+            ]
+        ),
+        divider(),
+        calloutBox('建议优先级：①先做Battle Card（可印刷·可截图·最快出街）→ ②再做雷达图（LP和PPT嵌入）→ ③费率计算器可公测后迭代。', 'success'),
+        children.push(pageBreak())
+    );
+
+    // ══════════════════════════════════════════════════════════════
+    // P2: COMPLIANCE LANGUAGE TEMPERATURE BALANCE
+    // ══════════════════════════════════════════════════════════════
+    children.push(
+        h1('第四部分：合规语言温度平衡方案'),
+        divider(),
+        calloutBox('当前问题：为确保合规安全，品牌语言经历了严格的"去金融化"处理——结果是术语准确但失去了情感温度和品牌感染力。需要在合规前提下恢复语言的温度和说服力。', 'info'),
+        divider(),
+
+        h2('4.1 诊断：合规语言的情感温度计'),
+        p('以下对当前使用的核心品牌术语进行"情感温度"评分（-5~+5，-5=冰冷/法律条文感，+5=有温度/品牌感染力）。', { color: C.GRAY }),
+        divider(),
+
+        dataTable(
+            ['术语', '当前合规版本', '情感温度', '问题诊断', '改进空间'],
+            [
+                ['消费权益', '"消费权益"（替代"数字资产"）', '🟡 +1', '中性，不冷也不暖。合规OK但缺少品牌联想。', '可加修饰语：如"消费权益包""专属权益"'],
+                ['消费活跃度指数', '"消费活跃度指数"（替代"消费信用分"）', '🔵 -1', '太技术化，听起来像征信报告术语。', '可简化为"消费活力值"或"活跃等级"'],
+                ['商家服务费计算规则', '"商家服务费计算规则"（替代"分润算法优化引擎"）', '🔵 -2', '过于官僚化，"规则"听起来像限制而非赋能。', '可改为"智能服务费系统"或"自动分润引擎"'],
+                ['权益升级', '"权益升级"（替代"资产增值"）', '🟡 0', '功能描述准确但无情感。', '可改为"权益成长"——有生命感'],
+                ['消费权益流转', '"消费权益流转"（替代"数字资产流通"）', '🔵 -2', '"流转"像物流术语。', '可改为"权益自由行"或"权益随行"'],
+                ['商家营销额度', '"商家营销额度"（替代"数字信用债券"）', '🟡 +1', '清晰但干瘪。', '可改为"营销弹药库"或"营销金库"'],
+                ['数据驱动经营', '"数据驱动经营"（替代"数据即资产"）', '🟡 0', '正确但无品牌个性。', '可改为"数据智慧经营"——有温度'],
+                ['资源/产业', '"资源/产业"（替代"资本"）', '🔵 -1', '语义模糊，失去原词的力量感。', '根据语境灵活选择："生态资源""平台赋能"'],
+            ]
+        ),
+        divider(),
+
+        h2('4.2 合规语言温度提升方案（术语对照表）'),
+        p('以下提供"合规安全版"和"品牌温度版"两套表达——合规安全版用于正式文件/法务审核/监管沟通，品牌温度版用于消费者/商户/推广者传播物料。', { bold: true, color: C.MAIN }),
+        divider(),
+
+        dataTable(
+            ['场景', '原始禁用词', '合规安全版（当前）', '品牌温度版（推荐）', '适用渠道'],
+            [
+                ['消费者权益', '数字资产', '消费权益', '消费权益包 / 我的消费宝库', 'C端APP·LP·海报'],
+                ['消费者等级', '消费信用分', '消费活跃度指数', '消费活力值 / 活跃等级', 'C端APP·会员页'],
+                ['权益成长', '资产增值', '权益升级', '权益成长 / 权益进化', 'C端·P端'],
+                ['权益跨店', '资产流通', '消费权益流转', '权益自由行 / 权益随行全城', 'C端·社交媒体'],
+                ['分润引擎', '分润算法优化引擎', '商家服务费计算规则', '智能分润系统 / 自动分润引擎', 'B端·招商'],
+                ['营销工具', '数字信用债券', '商家营销额度', '营销金库 / 营销弹药库', 'B端后台'],
+                ['数据赋能', '数据即资产', '数据驱动经营', '数据智慧经营 / 数据赋能经营', 'B端·P端'],
+                ['平台生态', '资本集群', '资源/产业', '生态资源池 / 平台赋能体系', '全部渠道'],
+                ['收入转化', '变现', '转化', '实现价值 / 收获成果', 'C端·P端'],
+                ['参与推广', '创业', '参与/开展推广', '开启推广之旅 / 成为推广伙伴', 'P端'],
+            ]
+        ),
+        divider(),
+
+        h2('4.3 品牌温度恢复四原则'),
+        p('合规不是语言的终点——合规是底线，品牌感染力是天际线。以下四原则帮助在合规框架内最大化语言的情感力量。', { bold: true }),
+        divider(),
+
+        h3('原则一：用"比喻"代替"定义"'),
+        p('合规要求禁用"资产""资本"等金融术语，但不禁止使用生活化的比喻来传达相同的情感价值。'),
+        comparisonTable(
+            '❌ 冰冷合规版',
+            '✅ 有温度的合规版',
+            [
+                ['"您的消费权益已升级"', '"您的权益正在成长——像一棵树，消费越多，枝叶越茂盛"'],
+                ['"您已获得商家营销额度"', '"您的营销金库已到账——随时可以发起活动，弹药充足"'],
+                ['"跨店消费权益流转已完成"', '"您的权益已出发——从A店到B店，自由穿行全城"'],
+            ]
+        ),
+        divider(),
+
+        h3('原则二：用"动词"复活"名词"'),
+        p('合规术语替换了大量动态名词（"增值"→"升级"），结果是被动、静态的。在合规版基础上增加动词，恢复动态感。'),
+        comparisonTable(
+            '❌ 静态合规版',
+            '✅ 动态有温版',
+            [
+                ['"消费活跃度指数：85"', '"你的消费活力正在上升——本周+5，保持活跃！"'],
+                ['"权益升级至Lv.3"', '"恭喜！你的权益成长到Lv.3——解锁了更高消费金抵扣额度"'],
+                ['"数据驱动经营建议"', '"你的经营数据在说话——本周最受欢迎的菜品是……"'],
+            ]
+        ),
+        divider(),
+
+        h3('原则三：用"用户语言"而非"企业语言"'),
+        p('合规术语替换的过程是"企业→监管"的逻辑，而非"企业→用户"的逻辑。需要对用户端做二次翻译。'),
+        comparisonTable(
+            '❌ 企业合规语言',
+            '✅ 用户自然语言',
+            [
+                ['"商家服务费计算规则已更新"', '"你的收入明细已刷新——每笔清清楚楚"'],
+                ['"消费权益流转机制"', '"权益全城通——在哪都能用，去哪都不浪费"'],
+                ['"按交易计费的服务费模式"', '"只在有真实成交时才收费——没生意不收费"'],
+                ['"消费者权益互通体系"', '"一张券，全城花——从茶楼到水果店，从美发到家居"'],
+            ]
+        ),
+        divider(),
+
+        h3('原则四：在"感动"与"安全"之间建立缓冲区'),
+        p('最打动人的语言往往离红线最近。不是禁止感动，而是为感动建立安全缓冲——在温度版文案后附加合规检查注释。', { bold: true }),
+        dataTable(
+            ['温度文案示例', '可能风险', '缓冲方案', '安全版本'],
+            [
+                ['"你的消费，正在生长出全城的回响"', '低风险·诗化表达，无金融暗示', '✅ 可直接使用', '无需修改'],
+                ['"越花越有"', '中风险·可能暗示消费=赚钱', '扩展为"越花越有礼""越花越有权益"——加"礼"或"权益"断开金钱联想', '"越花越有礼"'],
+                ['"让每一笔消费都有回响"', '低风险·"回响"是诗意比喻', '✅ 可直接使用', '无需修改'],
+                ['"消费即积累"', '中风险·"积累"可能暗示储蓄/投资', '扩展为"消费即积累权益"——明确积累对象是权益而非金钱', '"消费即积累权益"'],
+                ['"你的权益值钱了"', '高风险·"值钱"暗示经济回报', '改为"你的权益更多了""权益成长了"', '"你的权益更多了"'],
+            ]
+        ),
+        divider(),
+
+        h2('4.4 合规语言温度检查清单'),
+        p('所有对外传播文案发布前，按以下清单同时检查合规性和温度感。', { color: C.GRAY }),
+        divider(),
+
+        dataTable(
+            ['#', '检查项', '合规检查', '温度检查', '两全标准'],
+            [
+                ['1', '无禁止词汇（币/Token/通证/投资回报/稳赚/躺赚等）', '✅/❌', '—', '合规底线，不可妥协'],
+                ['2', '三条红线无触碰（兑现/资金池/承诺收益）', '✅/❌', '—', '合规底线，不可妥协'],
+                ['3', '术语替换完整（数字资产→消费权益等13项）', '✅/❌', '—', '内部审核使用合规安全版'],
+                ['4', '用户端语言已做"二次翻译"', '—', '🔥/❄️', '对外传播使用品牌温度版'],
+                ['5', '有情感动词（成长/出发/解锁/获得）', '—', '🔥/❄️', '每段文案至少1个动态动词'],
+                ['6', '有用户视角的利益表达（"对你意味着什么"）', '—', '🔥/❄️', '每段文案回答WIIFM'],
+                ['7', '有比喻/画面感/故事感', '—', '🔥/❄️', '每千字至少1个记忆点'],
+                ['8', '无过度技术化/官僚化表达', '—', '🔥/❄️', '"规则/机制/体系"→"系统/工具/宝库"'],
+            ]
+        ),
+        divider(),
+
+        h2('4.5 品牌温度版样例：链商品牌介绍（侧-by-side对比）'),
+        divider(),
+        h3('原版（合规安全版·可用于法务审核）'),
+        quoteBlock('链商2.0·链生活是面向社区商业的数字经营平台，通过商户独立经营、生态会员互通、消费权益流转和真实交易激励机制，帮助商家提升复购率、帮助用户获得持续消费权益、帮助社区形成可持续商业循环。'),
+        divider(),
+
+        h3('温度版（品牌传播版·可用于LP/Hero/画册/电梯广告）'),
+        quoteBlock('链生活——消费有回响。在这里，你每笔消费都在为你积累全城通用的消费权益：在茶楼吃饭得的券，去水果店也能用；买水果攒的积分，做美发也能抵扣。你的消费不浪费、不过期、不设限——因为这是你的消费，你的权益，你的回响。'),
+        divider(),
+
+        calloutBox('核心结论：合规安全版和品牌温度版不是互斥的——而是"同一信息、两种表达"。合规安全版保障底线、品牌温度版追求上限。正式文件/法务审核使用前者，消费者/商户/推广者传播物料使用后者。', 'success'),
+
+        divider(),
+        new Paragraph({ children: [new TextRun({ text: '— 文档结束 —', size: 18, font: '微软雅黑', color: C.GRAY, italics: true })], alignment: AlignmentType.CENTER, spacing: { before: 300 } })
+    );
+
+    return children;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// BUILD DOCUMENT
+// ══════════════════════════════════════════════════════════════════
+var doc = new Document({
+    properties: {
+        title: '链商2.0 P1+P2营销优化交付物 — 信息架构+三元营销+竞品对比+合规温度',
+        creator: '梁君衡',
+        description: 'P1公测首周交付：三端信息架构分离、三元营销简化表达、竞品视觉对比武器。P2持续优化：合规语言温度平衡方案。'
+    },
+    styles: {
+        default: { document: { run: { size: 21, font: '微软雅黑' } } }
+    },
+    sections: [{
+        properties: {
+            page: { margin: { top: 1200, bottom: 1200, left: 1100, right: 1100 } }
+        },
+        children: buildDocument()
+    }]
+});
+
+// ── Output ──
+var outPath = path.join(OUT, '链商平台_P1P2营销优化交付物_信息架构+三元营销+竞品对比+合规温度.docx');
+Packer.toBuffer(doc).then(function(buf) {
+    fs.writeFileSync(outPath, buf);
+    console.log('✅ 已生成: ' + outPath);
+    console.log('   包含: P1-1三端信息架构分离 + P1-2三元营销简化 + P1-3竞品视觉对比武器 + P2合规语言温度平衡');
+}).catch(function(err) { console.error('生成失败:', err); });

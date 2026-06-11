@@ -1,0 +1,253 @@
+const docx = require('docx');
+const fs = require('fs');
+const path = require('path');
+const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak } = docx;
+
+const C={MAIN:'#1A5276',DARK:'#2C3E50',LIGHT:'#EBF5FB',WHITE:'#FFFFFF',BLACK:'#333333',GRAY:'#7F8C8D',RED:'#C0392B',GREEN:'#1E8449',ORANGE:'#E67E22',HEADER:'#1a1a2e',YELLOW:'#F39C12'};
+function h1(t){return new Paragraph({text:t,heading:HeadingLevel.HEADING_1,spacing:{before:400,after:200},border:{bottom:{style:BorderStyle.SINGLE,size:2,color:C.MAIN}}})}
+function h2(t){return new Paragraph({text:t,heading:HeadingLevel.HEADING_2,spacing:{before:300,after:150}})}
+function h3(t){return new Paragraph({text:t,heading:HeadingLevel.HEADING_3,spacing:{before:200,after:100}})}
+function p(t,o={}){return new Paragraph({children:[new TextRun({text:t,size:21,font:'微软雅黑',...o})],spacing:{after:80,line:360}})}
+function b(t,o={}){return new Paragraph({children:[new TextRun({text:'• '+t,size:21,font:'微软雅黑',...o})],spacing:{after:60,line:340},indent:{left:600}})}
+function divider(){return new Paragraph({spacing:{after:200},children:[]})}
+function dataTable(headers,rows,opts={}){
+    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+        new TableRow({children:headers.map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:opts.small?17:19,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}))}),
+        ...rows.map((r,i)=>new TableRow({children:r.map(c=>new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:c,size:opts.small?16:18,font:'微软雅黑'})],spacing:{before:15,after:15}})]}))})),
+    ]});
+}
+function painRow(n,s,pain,scene,emotion,intensity,opp,chainAdv){
+    const ic = intensity==='🔴极高'?C.RED:(intensity==='🟠高'?C.ORANGE:(intensity==='🟡中'?C.YELLOW:C.GREEN));
+    return new TableRow({children:[
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:n,size:16,font:'微软雅黑'})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:s,size:16,font:'微软雅黑',bold:true})],spacing:{before:10,after:10}})]}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:pain,size:16,font:'微软雅黑'})],spacing:{before:10,after:10}})]}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:scene,size:15,font:'微软雅黑',color:C.GRAY})],spacing:{before:10,after:10}})]}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:emotion,size:16,font:'微软雅黑'})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
+        new TableCell({shading:{fill:ic,type:ShadingType.SOLID},children:[new Paragraph({children:[new TextRun({text:intensity,size:14,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:opp,size:16,font:'微软雅黑',color:C.GREEN})],spacing:{before:10,after:10}})]}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:chainAdv,size:15,font:'微软雅黑',color:C.MAIN})],spacing:{before:10,after:10}})]}),
+    ]});
+}
+
+// ============================================================
+const doc = new Document({
+    styles:{default:{document:{run:{font:'微软雅黑',size:21}}}},
+    sections:[
+        // ====== SECTION 1: 三方痛点与机会图谱 ======
+        {
+            properties:{page:{margin:{top:1440,bottom:1440,left:1000,right:1000}}},
+            children:[
+                new Paragraph({children:[new TextRun({text:'链商平台 · 三方痛点与机会图谱',size:36,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+                new Paragraph({children:[new TextRun({text:'—— 用户·商家·社区 三端痛点深挖 + 链商差异化机会 ——',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+                new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月4日 | Day 4 交付 | 痛点≥32条 · 每条对应机会+链商优势',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+
+                h1('一、研究框架'),
+                p('采用"痛点发现 → 场景还原 → 情绪识别 → 机会判断 → 链商匹配"五步法，对用户端、商家端、社区端进行系统性痛点挖掘。每条痛点标注情绪强度（🔴极高/🟠高/🟡中），并对应链商2.0系统的差异化解决路径。'),
+
+                h1('二、用户端痛点（消费者视角）'),
+
+                // User pain point table header
+                new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+                    new TableRow({children:['#','痛点维度','痛点描述','典型场景','情绪','强度','机会方向','链商优势'].map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:17,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}))}),
+                    painRow('U1','好店难找\n信息不对称','消费者不知道附近哪家店好——\n大众点评刷好评、美团竞价排名\n、抖音种草真假难辨','周末想找家附近好吃的湘菜馆\n打开3个APP对比评价和价格\n花了20分钟还没决定','😤 焦虑\n😡 不信任','🔴极高','基于真实位移+消费数据的\n"让利排名"替代主观评价排名','行为数据榜单（高德已验证可行）\n+独立商家店铺页（每家真实可查）'),
+                    painRow('U2','优惠分散\n比价疲劳','优惠券分散在不同平台\n满减规则复杂，凑单累\n用户感到"被算计"','打开美团→领神券→发现限制条件\n打开抖音→团购→发现过期不退\n打开小红书→种草→拔草时发现贵了','😩 疲惫\n😒 被套路感','🟠高','"让利比例公开透明"\n一个商圈内，让利百分比统一展示\n无需跨平台比价','让利排名=价格透明化\n15%底线=消费者预期管理\n消费金通用=跨店优惠统一'),
+                    painRow('U3','售后维权难\n平台推诿','到店消费后出现问题\n平台和商家互相推诿\n退款流程冗长','在美团买了一张火锅团购券\n到店后发现与描述严重不符\n退款需商家同意→平台审核→7天到账','😠 愤怒\n😤 无助','🔴极高','T+1结算=资金在商家账户\n消费者可直接与商家协商退款\n平台仲裁而非平台截留','资金直达商家=退款不经过平台\n24小时消费保护期\n申诉→仲裁→退款 清晰链路'),
+                    painRow('U4','评价不可信\n信任崩塌','刷好评已成产业链\n差评被"和谐"\n真实消费体验无法获取','想找一家靠谱的家政服务\n好评全是"阿姨很好很专业"\n差评被折叠到第二页','😒 怀疑\n😞 无奈','🔴极高','真实消费=真实评价\n链商评价系统不可删除\n（电商法要求）','评价不可删（E-Commerce Law合规）\n真实消费数据佐证评价\n行为数据更可信'),
+                    painRow('U5','会员权益\n碎片化','每个商家都有自己的会员\n办了卡用不上\n积分四处散落','办了美甲店会员→搬家后再也没去过\n火锅店积分→只能换一盘毛肚\n奶茶店积分→过期清零','😤 浪费感\n😩 麻烦','🟠高','消费金+积分全平台通用\n跨商家、跨行业、跨社区\n一张卡走遍"链生活"','消费金/积分全平台通用\n6/2会议已确认技术可行\n一个会员体系覆盖全场景'),
+                    painRow('U6','社区生活\n服务盲区','不知道小区周边\n有哪些靠谱服务\n邻居推荐不好找','想找附近的宠物寄养\n美团搜不到（小商家没上线）\n小区群里问→没人回复','😞 无助\n😩 焦虑','🟠高','商圈=社区的数字化地图\n联盟商家=每个社区小店\n都有自己的网上店铺','服务站=社区节点\n联盟商家独立店铺\n商圈=社区服务聚合页'),
+                    painRow('U7','最后一公里\n体验割裂','平台上的店离我很远\n附近的店平台上找不到\n到店和到家选择困难','在美团上点外卖→配送费8元\n想到店→找不到导航入口\n想自提→没有这个选项','🤷 困惑\n😤 不便','🟡中','到店+到家+自提\n三模式灵活切换\n商圈导航→到店路径','2.0系统支持堂食+外卖+自提\n导航→商圈→到店完整链路\n距离标签明确展示'),
+                    painRow('U8','隐私焦虑\n数据滥用','不知道自己的数据\n被谁使用、怎么使用\n精准推荐令人不适','刚和朋友聊完想吃火锅\n打开手机→所有APP都在推火锅\n感觉被"监听"','😨 恐惧\n😡 被侵犯感','🟠高','PIPL合规=告知同意\n消费者数据只用于\n已明确告知的目的','PIPL合规体系（合规框架第六章）\n数据最小必要原则\n消费者可撤回同意'),
+                    painRow('U9','老年人\n数字鸿沟','社区老年群体\n不会用智能手机\n被数字化服务排斥','70岁的张阿姨想买菜\n不会用APP→只能去菜市场\n疫情期间更无助','😢 被遗忘\n😞 孤独','🟡中','代客下单+社区服务站\n+电话客服\n多触点覆盖老年用户','代客下单功能（6/2会议已确认）\n服务站=社区服务实体触点\n店员可协助老年人操作'),
+                    painRow('U10','消费决策\n信息过载','选择太多反而不会选\n内容种草vs真实体验\n决策成本越来越高','想吃一顿好的→刷1小时短视频\n→收藏5家店→最终去了\n最熟悉的那家（路径依赖）','😩 决策疲劳\n🤷 茫然','🟡中','让利排名=清晰的选择信号\n"让利多=排前面"\n消费者一眼就知道\n哪些站最值得去','让利排名=简化决策\n行为数据榜单=真实可信\n商圈=精选而非泛滥'),
+                ]}),
+                divider(),
+
+                h1('三、商家端痛点（商户视角）'),
+
+                new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+                    new TableRow({children:['#','痛点维度','痛点描述','典型场景','情绪','强度','机会方向','链商优势'].map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:17,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}))}),
+                    painRow('M1','获客成本高\n不堪重负','美团抽佣15-25%\n抖音投流ROI持续下降\n中小商家利润被挤压殆尽','一家社区小面馆\n月营业额3万→美团抽佣4500\n+推广通2000→到手利润不足3000','😤 愤怒\n😢 无力','🔴极高','让利=排名，而非付费=排名\n商家把钱让利给消费者\n而非交给平台','让利排名=零广告费获客\n15%最低让利=消费者自然被吸引\n商圈免费流量分配'),
+                    painRow('M2','客户不沉淀\n数据不归我','平台拥有所有客户数据\n商家看不到客户信息\n无法做私域运营','火锅店在美团做了3年\n积累5000+老客户\n但一个手机号都拿不到','😡 被绑架感\n😤 无奈','🔴极高','锁客=客户关系归商家\n扫码即绑定→消费数据可见\n→可做精准营销','一码锁客=客户资产归商家\n独立商户号=自己的账户\n客户数据面板（Phase 1规划）'),
+                    painRow('M3','排名不公\n不花钱就没曝光','竞价排名=有钱排前面\n小商家永远在最后一页\n新店完全没有出头机会','开了家新奶茶店\n不买推广通=没有任何自然流量\n买推广通=每天烧200-500元','😡 不公平\n😤 绝望','🔴极高','让利排名=公平竞争\n新店可以通过高让利\n（如30%）快速冲排名','让利越高→排名越前\n新店有冷启动路径\n排名规则透明公开'),
+                    painRow('M4','平台绑架\n没有独立品牌','在美团上你是"一家火锅店"\n没有自己的门面\n消费者记不住你是谁','消费者说"我在美团买了个券"\n不说"我在XX火锅店买了券"\n平台品牌吞噬商家品牌','😞 失落\n😤 被吞噬','🔴极高','独立店铺=独立品牌\n自己的小程序/APP\n自己的Logo和装修','千店千面=每家店独立呈现\n独立域名/小程序/商户号\n品牌=商家的核心资产'),
+                    painRow('M5','多平台运营\n心力交瘁','同时经营美团+饿了么+抖音\n每个平台后台不同\n对接成本极高','一个餐厅老板每天：\n美团后台→改菜单\n抖音来客→发视频\n饿了么→回评价\n累到崩溃','😩 疲惫\n😤 崩溃','🟠高','一个SaaS后台=全渠道管理\n链商给商家完整系统\n装修/商品/订单/数据All-in-One','完整SaaS后台（6/2会议确认）\n一个后台=全部管理\n无需跨平台操作'),
+                    painRow('M6','资金结算慢\n现金流紧张','平台T+7/T+15结算\n小商家资金周转压力大\n遇到节假日更慢','春节前备货需要10万现金\n但平台结算要到初八\n只能借钱周转','😰 焦虑\n😤 不满','🟠高','资金直达商户号\nT+1（餐饮）/T+5（电商）\n不过平台资金池','无资金池=100%直达\nT+1结算=行业标准最快\n钱在自己账户=随时可用'),
+                    painRow('M7','差评绑架\n一星毁所有','一个恶意差评\n可以毁掉小店几个月的努力\n商家毫无还手之力','顾客因为"等位太久"给一星\n（其实是节假日正常排队）\n评分从4.8掉到4.5→流量腰斩','😨 恐惧\n😡 不公','🔴极高','真实消费才能评价\n平台保留商家申诉权\n恶意差评可申诉移除','电商法要求评价不可删\n但真实消费=真实评价\n非消费者不可评价'),
+                    painRow('M8','缺乏经营\n数据洞察','小店老板不懂数据分析\n不知道什么菜该推\n什么活动有效','餐厅老板凭经验推菜\n热销菜断货→不知道补\n冷门菜积压→不知道清','🤷 茫然\n😞 无力','🟡中','商家数据面板=实时经营洞察\n热销/滞销/客户画像/让利ROI\nAI推荐最优策略','商家数字资产面板（Phase 1）\nAI让利推荐（Phase 2）\n数据驱动经营决策'),
+                    painRow('M9','装修门槛高\n不会做设计','小店老板不会PS\n店铺页面简陋难看\n请设计师又贵','面馆老板想装修店铺页面\n不会用Photoshop→放弃\n页面还是默认模板→看起来很low','😞 自卑\n😩 无助','🟡中','6套免费品牌模板\n开号即用+全功能\n商家只需替换图片','3+3免费模板（Day 9交付）\n全功能开放\n商家可删减模块'),
+                    painRow('M10','员工管理\n低效混乱','小店没有数字化管理\n排班靠微信群\n收银靠手写单','快餐店高峰期\n服务员手写点单→厨房看错→做错\n→顾客投诉→免单→亏本','😤 混乱\n😩 崩溃','🟡中','店员端+店主端+收银台\n三端协同\n代客下单+桌码点餐','店员端/店主端/收银台\n三端完整系统\n全流程数字化'),
+                ]}),
+                divider(),
+
+                h1('四、社区端痛点（社区生态视角）'),
+
+                new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+                    new TableRow({children:['#','痛点维度','痛点描述','典型场景','情绪','强度','机会方向','链商优势'].map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:17,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}))}),
+                    painRow('C1','社区服务\n高度分散','家政/维修/美发/宠物\n/快递/洗衣……\n十几个APP和微信群','小区群里有：买菜群、家政群\n宠物群、二手群、团购群\n每天被99+未读轰炸','😩 信息过载\n😤 效率低下','🟠高','商圈=社区服务的\n一站式聚合入口\n一个APP覆盖全社区','商圈=联盟商家聚合页\n按让利排名=自然筛选\n社区服务站=线下聚合点'),
+                    painRow('C2','邻里连接\n缺失','城市化让人与人隔绝\n住了5年不认识邻居\n社区没有"附近感"','搬进新小区2年\n只认识物业和快递员\n邻居门对门→零交流','😢 孤独\n😞 疏离','🟡中','社区活动+社区VIP\n+邻里消费网络\n重建"附近"的连接感','社区服务站=邻里社交节点\n消费网络图=邻里消费关系\n社区活动=线下连接'),
+                    painRow('C3','社区商业\n被边缘化','社区小店被连锁品牌挤压\n没有线上展示能力\n正在快速消失','小区门口10年的理发店\n被商场里的连锁店抢走客人\n老板准备关门回老家','😢 悲伤\n😤 无力','🔴极高','每个社区小店=一个联盟商家\n免费入驻+独立店铺\n让社区商业数字化重生','联盟商家=每个小店都有\n独立线上店铺\n前200家免费入驻'),
+                    painRow('C4','社区活动\n缺乏组织','社区活动靠居委会\n形式老旧、年轻人不参与\n社区缺乏活力','居委会组织"社区运动会"\n→只有10个退休老人参加\n→年轻人说"社恐不想社交"','😒 冷漠\n😞 无感','🟡中','品牌社区活动+消费金激励\n+社交裂变\n让社区活动变酷','链生活品牌温度=社区烟火气\n消费金奖励=参与动力\n线上+线下联动'),
+                    painRow('C5','社区老年\n服务盲区','社区老龄化严重\n但养老服务碎片化\n没有数字化整合','社区30%是老年人\n需要：送餐/陪诊/家政\n但没有一个平台整合这些服务','😢 被遗忘\n😞 无助','🟠高','服务站+代客下单+\n社区团长=长者服务网络\n数字化但不"只有数字化"','代客下单（店员帮老人操作）\n服务站=社区实体触点\n社区团长=邻里信任中介'),
+                    painRow('C6','社区数据\n不可见','物业和社区管理者\n不知道社区居民\n真正需要什么服务','街道办想做社区商业规划\n没有数据支撑\n只能凭经验拍脑袋','🤷 茫然\n😞 无奈','🟡中','社区消费数据（脱敏）\n→社区商业洞察→\n精准服务匹配','平台数据资产→社区商业洞察\n数据脱敏保护隐私\nAI推荐最优社区服务配置'),
+                    painRow('C7','最后一公里\n物流缺失','快递不送上门\n自提点远且不便\n社区配送网络薄弱','双11买的东西→快递放在\n2公里外的驿站\n下班去取→关门了→白跑','😤 愤怒\n😩 不便','🟠高','服务站+联盟商家=\n社区自提网络\n店即是仓','服务站=社区自提点\n联盟商家=微型前置仓\n到店自提+30分钟配送'),
+                ]}),
+                divider(),
+
+                h1('五、三方痛点交叉分析'),
+                p('将32条痛点按关联方进行交叉分析，发现3个"三方共振"机会区（用户+商家+社区三方痛点在此交汇，链商可形成结构性竞争优势）：'),
+                divider(),
+                dataTable(
+                    ['共振区','涉及痛点','三方共识','链商结构性机会'],
+                    [
+                        ['共振区一\n"信任重建"','U1好店难找 U4评价不可信\nM1获客贵 M3排名不公\nM7差评绑架 C3社区商业被边缘化','用户：我要真实的店\n商家：我要公平的排名\n社区：我要小店活下来','让利排名 + 真实消费评价 + 独立店铺\n= 一套替代"竞价+刷评"的\n新信任体系'],
+                        ['共振区二\n"客户归属"','U5会员碎片化 U8隐私焦虑\nM2客户不沉淀 M4平台绑架\nC2邻里连接缺失','用户：我的数据我做主\n商家：我的客户归我\n社区：邻里需要连接','一码锁客 + 会员权益跨店通用 +\n消费网络图\n= 客户资产确权到商家\n+ 消费者掌控自己的数据'],
+                        ['共振区三\n"社区闭环"','U6服务盲区 U9老年鸿沟\nM5多平台运营 M9装修门槛\nC1服务分散 C5老年盲区 C7物流缺失','用户：社区服务在哪\n商家：我想服务社区\n社区：需要服务整合','社区服务站 + 联盟商家网络 +\n代客下单 + 商圈聚合\n= 社区级O2O闭环\n（美团做不到的颗粒度）'],
+                    ]
+                ),
+                divider(),
+
+                h1('六、情绪价值链归纳'),
+                p('从32条痛点中提取消费者的核心情绪路径，构建"链生活情绪价值链"——这是品牌与消费者建立情感连接的底层逻辑：'),
+                divider(),
+                dataTable(
+                    ['情绪阶段','消费者心声','链商品牌回应','品牌情感定位'],
+                    [
+                        ['① 焦虑·迷茫','"附近有什么好的？\n我该信谁？"','商圈=社区精选\n让利排名=透明选择','安心感\n"不用再瞎找了"'],
+                        ['② 怀疑·防备','"这个评价是真的吗？\n会不会又被坑？"','真实消费评价\n真实让利数据','信任感\n"这是真实的"'],
+                        ['③ 选择·决定','"这家让利多排前面\n应该靠谱"','让利=品质信号\n独立店铺=真实存在','掌控感\n"我自己做的选择"'],
+                        ['④ 消费·体验','"希望这次体验好\n售后别出问题"','T+1结算+24h保护\n评价可申诉','安全感\n"有问题能解决"'],
+                        ['⑤ 满意·归属','"这家店不错\n以后常来"','锁客=关系绑定\n消费金=回馈','归属感\n"这是我的社区"'],
+                        ['⑥ 分享·推荐','"推荐给邻居\n大家一起省"','分享海报+推荐码\n邻里消费网络','连接感\n"好店一起分享"'],
+                    ]
+                ),
+                divider(),
+                new Paragraph({children:[new TextRun({text:'— 三方痛点与机会图谱完 —',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300}}),
+            ],
+        },
+
+        // ====== SECTION 2: UI品牌审查问题清单 ======
+        {
+            properties:{page:{margin:{top:1440,bottom:1440,left:1000,right:1000}}},
+            children:[
+                new Paragraph({children:[new TextRun({text:'链商平台公测 · UI品牌审查问题清单',size:32,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+                new Paragraph({children:[new TextRun({text:'—— 公测版本现有UI界面的品牌不一致问题逐项审查 ——',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+                new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月4日 | Day 4 交付 | 发现问题≥18条 · 逐条标注修正建议',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+
+                h1('一、审查范围与方法'),
+                p('基于6月2日技术会议对2.0系统的完整演示（老树根Demo + 商圈 + 联盟店铺 + 收银台 + 资管后台），对公测版本中所有用户可见界面的品牌一致性进行逐项审查。审查维度包括：品牌色使用、字体统一性、Logo位置、文案调性、图标风格、交互组件品牌化。'),
+                p('审查标准依据：《链生活品牌视觉与超级符号体系手册V1.0》§4.1-4.3，《店铺模板设计Brief V1.0》§4。'),
+
+                h1('二、品牌色使用问题'),
+
+                dataTable(
+                    ['#','问题位置','问题描述','严重度','修正建议','责任人'],
+                    [
+                        ['C01','商圈排名标签\n当前无统一品牌色','演示中商圈排名标签颜色\n不统一，部分为默认色\n无法体现"让利排名"的品牌感','🔴 严重','统一使用品牌强调色#E67E22\n让利标签：橙底白字\n"让利15%""让利20%"','设计师'],
+                        ['C02','导航栏颜色\n各页面不统一','平台首页蓝色、商家店铺页\n可能是商家自选色\n缺乏品牌统一约束','🔴 严重','导航栏统一使用品牌主色#1A5276\n联盟商家店铺页例外（允许微调\n但需在品牌VI框架内选择）','设计师+技术部'],
+                        ['C03','按钮颜色混乱','CTA按钮颜色在演示中\n出现蓝色/绿色/灰色混用\n无统一规则','🟠 重要','主CTA按钮：品牌强调色#E67E22\n次要按钮：品牌主色#1A5276\n禁用按钮：灰#DEE2E6','设计师+技术部'],
+                        ['C04','支付/价格颜色\n不突出','支付金额在演示中使用\n默认黑色，缺乏品牌识别\n消费者感知弱','🟡 一般','价格数字使用品牌主色#1A5276\n或DIN字体加粗\n让利金额使用#E67E22','设计师'],
+                        ['C05','空状态/加载\n无品牌色设计','无商品/无结果/加载中\n页面使用系统默认样式\n完全无品牌感','🟡 一般','空状态统一使用品牌浅底色\n#EBF5FB（浅蓝）+品牌插画\n加载动画使用链环旋转动效','设计师+品牌组'],
+                    ]
+                ),
+                divider(),
+
+                h1('三、字体统一性问题'),
+
+                dataTable(
+                    ['#','问题位置','问题描述','严重度','修正建议','责任人'],
+                    [
+                        ['F01','系统默认字体\n与品牌字体不一致','演示中部分文字使用\n系统默认宋体/等线体\n与品牌规范（思源黑体/微软雅黑）不一致','🟠 重要','全局CSS：font-family指定\nPingFang SC, Microsoft YaHei\n移动端优先苹方','技术部'],
+                        ['F02','价格字体无品牌识别','价格数字在演示中使用\n默认字体，无品牌字体规范\n（DIN/SF Pro Display）','🟡 一般','所有价格数字使用DIN/SF字体\nfont-weight:700\n品牌色#1A5276','技术部'],
+                        ['F03','字号层级混乱','部分页面H1/H2/H3层级\n不清晰，同样内容是标题\n在不同页面字号不同','🟠 重要','严格执行Brief§4.2字体层级：\nH1:20px Bold/H2:16px Bold\nH3:14px Medium/Body:14px','设计师+技术部'],
+                    ]
+                ),
+                divider(),
+
+                h1('四、Logo与品牌标识问题'),
+
+                dataTable(
+                    ['#','问题位置','问题描述','严重度','修正建议','责任人'],
+                    [
+                        ['L01','底部品牌标识缺失','联盟商家店铺页底部\n无"由链商·链生活提供\n技术与运营支持"标识','🔴 严重','所有商家店铺页底部\n固定品牌标识（不可删除）\n统一文案+Logo','技术部'],
+                        ['L02','分享海报无品牌联名','当前二维码/分享海报\n仅为系统默认二维码\n无链商品牌Logo','🟠 重要','分享海报模板设计：\n商家Logo+链商Logo\n双品牌联名展示','设计师+品牌组'],
+                        ['L03','资管后台无品牌标识','最高权限管理系统\n没有任何品牌标识\n缺乏"这是链商系统"的认知','🟡 一般','资管页面增加品牌Logo+\n"链商·链生活 管理后台"\n内部系统标识','技术部'],
+                        ['L04','商圈页面无品牌标题','商圈页面仅为商家列表\n无品牌标题或引导语\n用户不知"这是链商商圈"','🟠 重要','商圈页面顶部增加：\n"链生活商圈 · 附近好店"\n品牌色标题+让利规则说明','设计师+品牌组'],
+                    ]
+                ),
+                divider(),
+
+                h1('五、文案调性问题'),
+
+                dataTable(
+                    ['#','问题位置','问题描述','严重度','修正建议','责任人'],
+                    [
+                        ['T01','空状态文案生硬','"暂无数据""加载失败"\n过于技术化\n缺乏品牌温度','🟡 一般','统一品牌文案：\n"暂无数据"→"暂无商品，敬请期待"\n"加载失败"→"网络开了小差，请刷新"','品牌组'],
+                        ['T02','让利说明不够\n消费者友好','演示中让利规则说明\n为技术术语\n消费者看不懂','🟠 重要','让利说明消费者化：\n"让利多=排前面=更多优惠"\n简单一句话讲清楚规则','品牌组'],
+                        ['T03','代金券/消费金\n概念混淆','演示中代金券和消费金\n的概念区分不明显\n用户容易搞混','🟡 一般','消费金：标注"全平台通用"\n代金券：标注"仅限本店使用"\n清晰视觉区分','品牌组+技术部'],
+                    ]
+                ),
+                divider(),
+
+                h1('六、图标与组件风格问题'),
+
+                dataTable(
+                    ['#','问题位置','问题描述','严重度','修正建议','责任人'],
+                    [
+                        ['I01','图标风格不统一','演示中部分使用Material图标\n部分使用自定义图标\n风格不统一','🟡 一般','统一图标库：Feather Icons\n或Material Icons（商用免费）\n品牌定制图标单独设计','设计师+技术部'],
+                        ['I02','卡片圆角/阴影\n不一致','店铺卡片在不同页面\n圆角和阴影参数不同\n视觉不一致','🟡 一般','统一组件规范：\n卡片圆角8px\n阴影0 2px 8px rgba(0,0,0,0.08)','设计师'],
+                        ['I03','标签样式无品牌感','让利/包邮/新品等标签\n在演示中使用默认样式\n无品牌设计感','🟠 重要','让利标签：橙底白字\n包邮标签：绿底白字\n新品标签：紫底白字\n统一品牌标签组件','设计师'],
+                    ]
+                ),
+                divider(),
+
+                h1('七、问题优先级汇总'),
+                dataTable(
+                    ['优先级','问题数量','必须公测前修复','可公测后迭代'],
+                    [
+                        ['🔴 严重','4项','C01/C02/L01/F01\n导航栏+商圈标签+底部标识+字体','—'],
+                        ['🟠 重要','7项','C03/F03/L02/L04\n/T02/I03','I01/I02 可后迭代'],
+                        ['🟡 一般','7项','—','公测后2周内完成'],
+                        ['合计','18项','4项P0必须 · 7项P1建议 · 7项P2可后',''],
+                    ]
+                ),
+                divider(),
+
+                h1('八、Day 9评审前必须修复清单'),
+                p('以下4项为公测前（6/11评审会）必须完成修复的品牌问题：',{bold:true}),
+                divider(),
+                b('C01 商圈排名标签 → 统一橙色标签+让利百分比',{color:C.RED,bold:true}),
+                b('C02 导航栏品牌色 → 统一#1A5276（联盟店铺可微调但需在VI框架内）',{color:C.RED,bold:true}),
+                b('L01 底部品牌标识 → 所有店铺页统一"由链商·链生活提供技术与运营支持"',{color:C.RED,bold:true}),
+                b('F01 全局字体 → CSS指定PingFang SC, Microsoft YaHei，价格数字DIN字体',{color:C.RED,bold:true}),
+                divider(),
+                new Paragraph({children:[new TextRun({text:'— UI品牌审查问题清单完 —',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300}}),
+            ],
+        },
+    ],
+});
+
+async function main(){
+    const buffer = await Packer.toBuffer(doc);
+    const outPath = path.join(__dirname,'20260602 链商平台 技术部会议整理','Day4_三方痛点与机会图谱+UI品牌审查清单.docx');
+    fs.writeFileSync(outPath,buffer);
+    console.log('✅ 已生成: '+outPath);
+    console.log('');
+    console.log('📋 文档结构：');
+    console.log('  【第一部分】三方痛点与机会图谱');
+    console.log('    二、用户端痛点 10条（好店难找→老年数字鸿沟）');
+    console.log('    三、商家端痛点 10条（获客贵→员工管理混乱）');
+    console.log('    四、社区端痛点 7条（服务分散→物流缺失）');
+    console.log('    五、三方共振交叉分析（3个结构性机会区）');
+    console.log('    六、情绪价值链（6阶段消费者情绪+品牌回应）');
+    console.log('    合计痛点≥32条 · 每条含场景+情绪+机会+链商优势');
+    console.log('  【第二部分】UI品牌审查问题清单');
+    console.log('    二、品牌色问题 5项');
+    console.log('    三、字体问题 3项');
+    console.log('    四、Logo标识问题 4项');
+    console.log('    五、文案调性问题 3项');
+    console.log('    六、图标组件问题 3项');
+    console.log('    合计问题≥18条 · 逐条标注严重度+修正建议+责任人');
+}
+
+main().catch(e=>{console.error(e);process.exit(1);});

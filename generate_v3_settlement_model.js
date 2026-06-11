@@ -1,0 +1,1339 @@
+const docx = require('docx');
+const fs = require('fs');
+const path = require('path');
+
+const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak } = docx;
+
+var C = {
+    MAIN:'#1A5276', DARK:'#2C3E50', LIGHT:'#EBF5FB', WHITE:'#FFFFFF',
+    BLACK:'#333333', GRAY:'#7F8C8D', RED:'#C0392B', GREEN:'#1E8449',
+    ORANGE:'#E67E22', HEADER:'#1a1a2e', YELLOW:'#F39C12',
+};
+
+var outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理');
+var outFile = path.join(outDir, '链商平台_分润核销模型_V3.2_跨店通兑版.docx');
+
+// ========== HELPERS ==========
+function h1(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_1, spacing:{before:400,after:200}, border:{bottom:{style:BorderStyle.SINGLE,size:2,color:C.MAIN}} }); }
+function h2(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_2, spacing:{before:300,after:150} }); }
+function h3(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_3, spacing:{before:200,after:100} }); }
+function p(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:o.after||80,line:o.line||360}, alignment:o.align, indent:o.indent }); }
+function b(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:'  • '+t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:60,line:340}, indent:{left:600} }); }
+function n(i,t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:i+'. '+t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:60,line:340}, indent:{left:600} }); }
+function divider() { return new Paragraph({spacing:{after:200},children:[]}); }
+function pageBreak() { return new Paragraph({children:[new PageBreak()]}); }
+function fmt(yuan) { return '¥' + yuan.toFixed(2); }
+function pct(rate) { return (rate * 100).toFixed(2) + '%'; }
+
+function infoTable(rows) {
+    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:rows.map(function(kv){return new TableRow({children:[
+        new TableCell({width:{size:18,type:WidthType.PERCENTAGE},shading:{fill:C.LIGHT},children:[new Paragraph({children:[new TextRun({text:kv[0],size:20,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.RIGHT,spacing:{before:30,after:30}})]}),
+        new TableCell({width:{size:82,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:kv[1],size:20,font:'微软雅黑'})],spacing:{before:30,after:30}})]}),
+    ]})})});
+}
+
+function dataTable(headers, rows, opts) {
+    opts = opts || {};
+    var hdrRow = new TableRow({children: headers.map(function(h){return new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:opts.small?17:19,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]})})});
+    var dataRows = rows.map(function(r,i){return new TableRow({children: r.map(function(c){return new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:String(c||'—'),size:opts.small?16:18,font:'微软雅黑'})],spacing:{before:15,after:15}})]})})})});
+    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[hdrRow].concat(dataRows)});
+}
+
+function flowBox(text, isRed) {
+    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+        new TableRow({children:[new TableCell({shading:{fill:isRed?'#FFF5F5':C.LIGHT},children:[new Paragraph({children:[new TextRun({text:text,size:18,font:'微软雅黑',bold:isRed,color:isRed?C.RED:C.DARK})],spacing:{before:15,after:15},alignment:AlignmentType.CENTER})],border:{top:{style:BorderStyle.SINGLE,size:1,color:isRed?C.RED:C.MAIN},bottom:{style:BorderStyle.SINGLE,size:1,color:isRed?C.RED:C.MAIN}}})]}),
+    ]});
+}
+
+function calloutBox(title, content, color) {
+    var paras = [new Paragraph({children:[new TextRun({text:title,size:19,font:'微软雅黑',bold:true,color:C.MAIN})],spacing:{before:15,after:5}})];
+    for (var i = 0; i < content.length; i++) {
+        paras.push(new Paragraph({children:[new TextRun({text:'  '+content[i],size:18,font:'微软雅黑'})],spacing:{after:4}}));
+    }
+    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+        new TableRow({children:[new TableCell({shading:{fill:color||C.LIGHT},children:paras,border:{left:{style:BorderStyle.SINGLE,size:4,color:C.MAIN,space:6}},spacing:{before:15,after:15}})]})
+    ]});
+}
+
+function redline(text) {
+    return new Paragraph({
+        children:[new TextRun({text:'⛔ '+text,size:21,font:'微软雅黑',bold:true,color:C.RED})],
+        spacing:{after:80,line:360}, indent:{left:300},
+        border:{left:{style:BorderStyle.SINGLE,size:6,color:C.RED,space:8}},
+    });
+}
+
+function greenCheck(text) {
+    return new Paragraph({
+        children:[new TextRun({text:'✅ '+text,size:21,font:'微软雅黑',color:C.GREEN})],
+        spacing:{after:60,line:340}, indent:{left:300},
+    });
+}
+
+// ========== MODEL PARAMETERS ==========
+
+// --- Payment channel costs by method (一次支付渠道成本) ---
+var CHANNEL_COST = {
+    huifu:    0.006,  // 汇付收单: 0.60% (微信/支付宝标准费率)
+    balance:  0.001,  // 余额支付: 0.10% (内部划转最低费率)
+    credit:   0.000,  // 消费金核销: 0.00% (预充值池，无新增渠道成本)
+};
+
+// --- 二次提现渠道成本 (各方从商户号提现→银行账户) ---
+var WITHDRAWAL_COST = {
+    rate:       0.001,  // 0.10% (微信商户号→银行账户标准费率)
+    appliesTo:  '平台商家/联盟商家/平台服务费/服务站管理费/推广者佣金/城市服务商提成/平台商家渠道费',
+    exemptFrom: '消费者权益(数字账户)/营销池(系统内部)/风控备用金(系统内部)/支付渠道(已一次性扣除)',
+    note:       '各方实际到手 = 分账金额 × (1 - 0.1%) — 各自独立承担提现成本',
+};
+
+// --- 营销三元体系参数 ---
+var MARKETING = {
+    // 代金券
+    voucherIssueRate: 0.05,    // 每笔消费发放代金券=消费额的5%
+    voucherMaxUse: 0.30,       // 单笔最多用代金券抵扣30%
+    voucherExpireDays: 90,     // 90天有效
+    voucherCostBearer: '平台营销池',
+    // 积分
+    pointEarnRate: 1.0,        // 每¥1消费=1积分
+    pointRedeemRate: 0.01,     // 100积分=¥1
+    pointMaxUse: 0.20,         // 单笔最多积分抵扣20%
+    pointCostBearer: '平台服务费',
+    pointExpireYears: 2,       // 2年有效
+    // 消费金
+    creditMaxUse: 0.30,        // 单笔最多消费金核销30%
+    creditExpireMonths: 12,    // 12个月有效
+    creditTransfer: '仅限直系亲属',
+};
+
+// --- Base distribution ratios for 汇付收单 (标准场景) ---
+// 【V3.1变更】新增城市服务商1%提成 → 营销池减少以容纳
+var PLATFORM_BASE = {
+    channelCost:          0.006,  //  0.60%  支付渠道
+    merchant:             0.754,  // 75.40%  平台商家
+    platformFee:          0.050,  //  5.00%  平台服务费(含积分成本)
+    stationPromoter:      0.090,  //  9.00%  服务站+推广者(管理关系池)
+    cityServiceProvider:  0.010,  //  1.00%  城市服务商(新增)🆕
+    consumerCredit:       0.030,  //  3.00%  消费者消费金
+    marketingPool:        0.040,  //  4.00%  代金券营销池(↓1%)
+    riskReserve:          0.020,  //  2.00%  风控备用金(汇付托管)
+};
+// Verify: 0.6+75.4+5+9+1+3+4+2 = 100.0 ✓
+
+var ALLIANCE_BASE = {
+    channelCost:          0.006,  //  0.60%  支付渠道
+    allianceMerchant:     0.714,  // 71.40%  联盟商家
+    platformMerchant:     0.045,  //  4.50%  平台商家渠道费(↓0.5%)
+    platformFee:          0.050,  //  5.00%  平台服务费
+    stationPromoter:      0.100,  // 10.00%  服务站+推广者
+    cityServiceProvider:  0.010,  //  1.00%  城市服务商(新增)🆕
+    consumerCredit:       0.020,  //  2.00%  消费者消费金
+    marketingPool:        0.035,  //  3.50%  代金券营销池(↓0.5%)
+    riskReserve:          0.020,  //  2.00%  风控备用金
+};
+// Verify: 0.6+71.4+4.5+5+10+1+2+3.5+2 = 100.0 ✓
+
+var ECOM_BASE = {
+    channelCost:          0.006,  //  0.60%  支付渠道
+    ecomMerchant:         0.779,  // 77.90%  综合商城(链邦直营)(↓0.5%)
+    platformFee:          0.060,  //  6.00%  平台服务费
+    stationPromoter:      0.060,  //  6.00%  服务站+推广者
+    cityServiceProvider:  0.010,  //  1.00%  城市服务商(新增)🆕
+    consumerCredit:       0.030,  //  3.00%  消费者消费金
+    marketingPool:        0.035,  //  3.50%  代金券营销池(↓0.5%)
+    riskReserve:          0.020,  //  2.00%  风控备用金
+};
+// Verify: 0.6+77.9+6+6+1+3+3.5+2 = 100.0 ✓
+
+// --- 服务站→推广者 管理关系内部分配 ---
+var STATION_PROMOTER_SPLIT = {
+    platform:  { station: 0.35, promoter: 0.65 },
+    alliance:  { station: 0.35, promoter: 0.65 },
+    ecom:      { station: 0.35, promoter: 0.65 },
+};
+
+// --- 城市服务商 → 服务站 管理层级 ---
+// 城市服务商是服务站的直接管理方/区域合伙方
+// ⚠️ 城市服务商1%提成来自交易分账（已包含在BASE比例中）
+// 城市服务商与服务站的利益不重叠——城市服务商拿区域提成，服务站拿管理费
+var CITY_SERVICE_STRUCTURE = {
+    hierarchy: '城市服务商(区域合伙人) → 服务站(社区节点管理者) → 推广者(一线推广)',
+    cityRevenue: '每笔交易1%提成——来自分账池，独立于服务站/推广者佣金池',
+    cityResponsibility: '区域招商、服务站招募与管理、城市级营销活动、政府关系维护',
+    stationRevenue: '服务站佣金池×35%管理费——来自服务站+推广者池',
+    promoterRevenue: '服务站佣金池×65%佣金——由服务站发放',
+};
+
+// --- Payment method adjustment: 余额支付 ---
+function adjustForBalance(base) {
+    var adj = {};
+    var keys = Object.keys(base);
+    var savedChannel = CHANNEL_COST.huifu - CHANNEL_COST.balance; // 0.5% saved
+    for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if (k === 'channelCost') { adj[k] = CHANNEL_COST.balance; }
+        else if (k === 'consumerCredit') { adj[k] = base[k] + savedChannel; }
+        else { adj[k] = base[k]; }
+    }
+    return adj;
+}
+
+// --- Payment method adjustment: 消费金核销 ---
+// 核销场景：¥30消费金池直付商家 + ¥70现金按比例分账
+// 全部分账参数等比缩放至现金部分(×0.70)——仅70%产生新增渠道费和新消费金
+function adjustForCredit(base) {
+    var creditRatio = MARKETING.creditMaxUse;
+    var cashRatio = 1 - creditRatio;
+    var adj = {};
+    var keys = Object.keys(base);
+    for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        adj[k] = base[k] * cashRatio;
+    }
+    return adj;
+}
+
+function calc(ratios) {
+    var result = {};
+    var keys = Object.keys(ratios);
+    for (var i = 0; i < keys.length; i++) {
+        result[keys[i]] = Math.round(100 * ratios[keys[i]] * 100) / 100;
+    }
+    return result;
+}
+
+var CONSUME = 100;
+
+// Build all 9 scenarios
+function buildScenario(base, adjFn, label) {
+    var ratios = adjFn(base);
+    var dist = calc(ratios);
+    return { label: label, ratios: ratios, dist: dist };
+}
+
+var PLAT_HUIFU   = buildScenario(PLATFORM_BASE, function(b){return b;}, '汇付收单');
+var PLAT_BALANCE = buildScenario(PLATFORM_BASE, adjustForBalance, '余额支付');
+var PLAT_CREDIT  = buildScenario(PLATFORM_BASE, adjustForCredit, '消费金核销');
+
+var ALLY_HUIFU   = buildScenario(ALLIANCE_BASE, function(b){return b;}, '汇付收单');
+var ALLY_BALANCE = buildScenario(ALLIANCE_BASE, adjustForBalance, '余额支付');
+var ALLY_CREDIT  = buildScenario(ALLIANCE_BASE, adjustForCredit, '消费金核销');
+
+var ECOM_HUIFU   = buildScenario(ECOM_BASE, function(b){return b;}, '汇付收单');
+var ECOM_BALANCE = buildScenario(ECOM_BASE, adjustForBalance, '余额支付');
+var ECOM_CREDIT  = buildScenario(ECOM_BASE, adjustForCredit, '消费金核销');
+
+// --- 服务站-推广者内部分配 ---
+function calcStationPromoter(merchantType, totalPool) {
+    var split = STATION_PROMOTER_SPLIT[merchantType];
+    return {
+        stationFee: Math.round(totalPool * split.station * 100) / 100,
+        promoterFee: Math.round(totalPool * split.promoter * 100) / 100,
+    };
+}
+
+// --- 二次提现成本计算: 各方提现到手金额 ---
+function calcNetAfterWithdrawal(amount, appliesWithdrawal) {
+    if (!appliesWithdrawal) return amount;
+    return Math.round(amount * (1 - WITHDRAWAL_COST.rate) * 100) / 100;
+}
+
+// --- 消费者权益计算 ---
+function calcConsumerBenefits(scenario, netSpend) {
+    return {
+        voucherIssued: Math.round(netSpend * MARKETING.voucherIssueRate * 100) / 100,
+        pointsEarned: Math.round(netSpend * MARKETING.pointEarnRate),
+        creditEarned: scenario.dist.consumerCredit || 0,
+    };
+}
+
+// ========== PLATFORM METRICS (V3.1 含城市服务商) ==========
+var monthlyFixedCosts = {
+    techInfra: 50000,
+    staff: 80000,
+    office: 20000,
+    marketing: 30000,
+    compliance: 10000,
+};
+var totalMonthlyFixed = 0;
+var costKeys = Object.keys(monthlyFixedCosts);
+for (var i = 0; i < costKeys.length; i++) {
+    totalMonthlyFixed += monthlyFixedCosts[costKeys[i]];
+}
+var assumedMonthlyTxns = 50000;
+
+// Platform fee per transaction (average across 3 merchant types, 汇付收单)
+var avgPlatformFeePerTxn = (PLATFORM_BASE.platformFee + ALLIANCE_BASE.platformFee + ECOM_BASE.platformFee) / 3 * 100;
+var avgChannelCostPerTxn = (PLATFORM_BASE.channelCost + ALLIANCE_BASE.channelCost + ECOM_BASE.channelCost) / 3 * 100;
+var avgGrossProfitPerTxn = avgPlatformFeePerTxn - avgChannelCostPerTxn;
+var fixedCostPerTxn = totalMonthlyFixed / assumedMonthlyTxns;
+var avgNetProfitPerTxn = avgGrossProfitPerTxn - fixedCostPerTxn;
+var breakEvenTxns = totalMonthlyFixed / avgGrossProfitPerTxn;
+
+// Platform withdrawal cost (from service fee revenue)
+var platformWithdrawalCost = avgPlatformFeePerTxn * WITHDRAWAL_COST.rate;
+var avgNetAfterWithdrawal = avgNetProfitPerTxn - platformWithdrawalCost;
+
+// ========== DOCUMENT ==========
+var doc = new Document({
+    styles:{default:{document:{run:{font:'微软雅黑',size:21}}}},
+    sections:[{
+        properties:{page:{margin:{top:1440,bottom:1440,left:1440,right:1440}}},
+        children:[
+
+            // ===== COVER =====
+            new Paragraph({children:[new TextRun({text:'链商2.0 · 链生活品牌',size:28,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'分润与核销模型 V3.2',size:40,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'跨店通兑版 · 千面千店 · 交易即分润',size:28,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
+            new Paragraph({children:[new TextRun({text:'—— 面向社区商业的数字经营平台：商户独立经营 · 生态会员互通 · 消费权益流转 · 真实交易激励 ——',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+            infoTable([
+                ['平台定位','链商2.0：面向社区商业的数字经营平台——商户独立经营·生态会员互通·消费权益流转·真实交易激励'],
+                ['文档性质','链商平台分润核销模型 V3.2 · 跨店通兑版 · 千面千店 · 交易即分润'],
+                ['文档版本','V3.2（基于 V3.1 新增：跨店通用权益结算 + 千面千店页面设计规范 + 交易即分润原则正式确立）'],
+                ['编制日期','2026年6月6日（内测反馈更新）'],
+                ['编制人','梁君衡（企业宣传部）'],
+                ['核心升级','① 跨店通用权益结算(代金券/积分/消费金全平台通用) ② 千面千店页面设计规范(三级信息密度) ③ 交易即分润原则正式确立 ④ 消费流转体系(平台→联盟→商城软性引导) ⑤ 全生态会员权益互通体系'],
+                ['合规基准','《法律合规框架》《非银行支付机构条例》《防范和处置非法集资条例》《禁止传销条例》《电子商务法》——跨店通兑不构成二清（汇付直清）'],
+                ['关联文档','V1.0分析报告 · V2.0修订模型 · V3.0去金融中心化 · V3.1城市服务商版 · V3.2跨店通兑版(本文档) · 法律合规框架 · 品牌执行手册 · 营销策略V2.0'],
+            ]),
+            divider(),
+
+            // ===== CHAPTER 1: 模型总纲 =====
+            h1('第一章  模型总纲与核心变更'),
+
+            h2('1.1  版本演进路线'),
+            dataTable(
+                ['版本','日期','核心特征','缺陷/局限'],
+                [
+                    ['V1.0','6月3日','12子模型(充值+消费×4场景)\n备付金账户中转\n3方分配','❌ 资金池+二清风险\n❌ 联盟充值0%缺陷\n❌ 术语不合规'],
+                    ['V2.0','6月4日\n(会议共识)','取消充值板块\n汇付直清\n6方分配\n渠道成本扣除','△ 支付方式单一(仅汇付)\n△ 无代金券/积分逻辑\n△ 服务站/推广者平行分配\n△ 无城市服务商层级'],
+                    ['V3.0','6月4日','9场景(3商家×3支付)\n代金券+积分+消费金三元体系\n服务站→推广者管理关系\n风控备用金汇付托管','△ 缺少城市服务商层级\n△ 未核算二次提现成本'],
+                    ['V3.1','6月5日','城市服务商1%区域提成🆕\n城市服务商→服务站→推广者三级管理🆕\n二次提现渠道成本(0.1%)独立核算🆕\n九方利益分配总图\n100%去金融中心化','△ 代金券未明确跨店通用\n△ 缺页面设计层级规范\n△ 未明确消费时序引导'],
+                    ['V3.2','6月6日\n(内测反馈)','跨店通用权益结算🆕\n千面千店页面设计🆕\n交易即分润原则🆕\n消费流转体系🆕\n全生态会员权益互通🆕\n链商2.0定位确立','✅ 当前最新'],
+                ]
+            ),
+            divider(),
+
+            h2('1.2  V3.1 十大核心升级（vs V3.0）——历史存档'),
+            n(1,'🆕 城市服务商新增：每笔交易1%城市服务商提成——城市服务商(区域合伙人) → 服务站(社区节点) → 推广者(一线)——三级管理体系',{bold:true}),
+            n(2,'🆕 二次提现渠道成本独立核算：各方从汇付/微信商户号提现至银行账户的0.1%成本独立计算——平台商家/联盟商家/平台/服务站/推广者/城市服务商各自承担',{bold:true}),
+            n(3,'🆕 九方利益分配：V3.0的八方向→V3.1九方向(新增城市服务商)——消费者、平台商家、联盟商家、链商平台、服务站、推广者、城市服务商、营销池、风控备用金',{bold:true}),
+            n(4,'三元营销体系：代金券(5%发放/30%抵扣) + 积分(1:1累积/100:1抵扣) + 消费金(3%返利/30%核销)——三者独立运作',{bold:true}),
+            n(5,'三支付方式：汇付收单(0.6%) / 余额支付(0.1%) / 消费金核销(30%池+70%现金)——9场景全覆盖',{bold:true}),
+            n(6,'服务站→推广者管理关系：服务站管理推广者团队，35:65内部佣金分配——平台→服务站→推广者',{bold:true}),
+            n(7,'风控备用金2%：汇付托管——退款/争议/合规赔付专用——平台不触碰',{bold:true}),
+            n(8,'100%去金融中心化：平台在任何环节不持有/滞留/归集消费者资金——汇付作为持牌支付机构完成全部清算',{bold:true}),
+            n(9,'营销池与平台服务费分离：营销池独立核算、汇付托管、仅用于代金券发放——平台不可挪作他用',{bold:true}),
+            n(10,'二次提现成本透明化：各方实际到手金额 = 分账金额 × (1-0.1%)——透明展示各参与方的真实净收入',{bold:true}),
+            divider(),
+
+            h2('1.3  V3.1 三级管理体系总览'),
+            calloutBox('城市服务商 → 服务站 → 推广者 管理层级', [
+                '城市服务商（区域合伙人）：按城市/区域签约——每笔交易获得1%区域提成——负责区域招商、服务站招募与管理、城市级营销、政府关系',
+                '  ↓ 管理关系',
+                '服务站（社区节点管理者）：每笔交易获得佣金池×35%管理费——负责社区推广者招募/培训/考核、社区营销、配送/自提/代客下单',
+                '  ↓ 管理关系',
+                '推广者（一线推广人员）：每笔交易获得佣金池×65%推广佣金——由服务站直接发放——负责扫码推广、社区地推、新客引流',
+                '',
+                '利益不重叠：城市服务商1%来自分账池(独立分账项)，服务站管理费和推广者佣金来自服务站+推广者佣金池——三者的收入来源独立、互不侵蚀',
+            ]),
+            divider(),
+
+            h2('1.4 🆕V3.2 链商2.0 五大核心升级（vs V3.1）'),
+            p('V3.2基于内测反馈，正式确立链商2.0定位：面向社区商业的数字经营平台。核心分账比例全部保持不变，仅新增跨店机制、页面规范和品牌叙事。',{bold:true}),
+            n(1,'🆕 跨店通用权益结算：代金券从"仅限本人"正式升级为"全平台通用"——与积分、消费金同等级别。消费者在任何商家获得的代金券可在全平台任意商家使用。营销池统一结算——接受商家从营销池获得等额结算，无论券来源。',{bold:true}),
+            n(2,'🆕 千面千店页面设计规范：平台商家(高信息密度+精品布局)→联盟商家(标准密度+模板化)→综合商城(极简密度+标准化)。搜索排序软性优先级(+2/0/-2位权重)——非硬性门槛。',{bold:true}),
+            n(3,'🆕 交易即分润原则正式确立：平台仅在实际交易发生时获取服务费——零固定费用、零预充值、零资金占用。"商家先盈利，平台后分润"——平台5-6%服务费仅在每笔交易分账时提取。',{bold:true}),
+            n(4,'🆕 消费流转体系：消费者自然浏览→平台商家优先展示(首页推荐+搜索加权)→联盟商家作为延伸履约网络→综合商城补充供给。每笔订单仍是单店结算——不支持跨店合并支付。',{bold:true}),
+            n(5,'核心参数不变：V3.1全部9场景分账比例保持100%精确——仅新增文档化、跨店机制说明、页面设计规范和链商2.0品牌叙事。',{bold:true}),
+            divider(),
+            pageBreak(),
+
+            // ===== CHAPTER 2: 支付方式与资金路径 =====
+            h1('第二章  三大支付方式与资金路径'),
+
+            h2('2.1  支付方式总览'),
+            dataTable(
+                ['支付方式','消费者端','资金来源','一次渠道成本','二次提现成本','适用场景'],
+                [
+                    ['汇付收单','微信/支付宝扫码支付','消费者银行卡/零钱','0.60%','各方提现时各自承担0.10%','主支付方式(约70%)'],
+                    ['余额支付','消费者平台余额扣款','历史退款/权益转换余额','0.10%','各方提现时各自承担0.10%','小额支付(约20%)'],
+                    ['消费金核销','消费金抵扣(≤30%)\n+余额/汇付补足','历史消费返利累积\n+当期现金补足','现金部分0.60%\n消费金部分0%','现金部分提现0.10%','复购场景(约10%)'],
+                ]
+            ),
+            divider(),
+
+            h2('2.2  汇付收单资金路径（主路径·占比约70%）'),
+            flowBox('消费者在商家小程序下单 ¥100', false),
+            p('↓ 微信/支付宝扫码支付',{alignment:AlignmentType.CENTER}),
+            flowBox('汇付天下监管账户（持牌支付机构·央行监管）', false),
+            p('↓ 扣除一次支付渠道费 ¥0.60 (0.6%)',{alignment:AlignmentType.CENTER}),
+            p('↓ 剩余 ¥99.40 按分账指令实时直清至九方',{alignment:AlignmentType.CENTER}),
+            p(''),
+            dataTable(
+                ['收款方','分账金额','二次提现成本\n(提现×0.1%)','实际到手\n(提现后)','结算周期','到账账户'],
+                [
+                    ['平台商家','¥75.40','-¥0.08','¥75.32','T+1','商家汇付商户号→银行'],
+                    ['平台服务费','¥5.00','-¥0.01','¥4.99','T+1','链邦汇付商户号→银行'],
+                    ['服务站+推广者池','¥9.00','—(内部再分配)','—','T+1','服务站汇付商户号'],
+                    ['   ↳服务站管理费','¥3.15','-¥0.003','¥3.15','服务站提现','服务站银行账户'],
+                    ['   ↳推广者佣金','¥5.85','-¥0.006','¥5.84','推广者提现','推广者银行账户'],
+                    ['🆕城市服务商','¥1.00','-¥0.001','¥1.00','T+1','城市服务商户号→银行'],
+                    ['消费者消费金','¥3.00','免提现成本(数字)','¥3.00','实时','消费金账户(汇付托管)'],
+                    ['代金券营销池','¥4.00','免提现成本(系统内)','¥4.00','T+1','营销池汇付托管账户'],
+                    ['风控备用金','¥2.00','免提现成本(系统内)','¥2.00','T+1','风控备用金汇付托管账户'],
+                    ['合计','¥100.00','—','—','—','—'],
+                ]
+            ),
+            p('注：二次提现成本仅在实际提现时发生。营销池和风控备用金资金不离开汇付托管账户体系，不产生提现成本。消费者消费金为数字权益，不提现。',{color:C.GRAY}),
+            divider(),
+
+            h2('2.3  余额支付资金路径（占比约20%）'),
+            p('前提：消费者账户中有可用余额（来源：历史退款/权益转换，非充值——充值板块已取消）。',{color:C.GRAY}),
+            flowBox('消费者余额扣款 ¥100 → 汇付内部划转 → 分账九方', false),
+            p('一次渠道成本仅0.10%（汇付内部划转最低费率），节省的0.50%→归入消费者消费金。二次提现成本规则同汇付收单。',{bold:true,color:C.GREEN}),
+            p(''),
+            dataTable(
+                ['差异项','汇付收单','余额支付','变化'],
+                [
+                    ['一次渠道成本','¥0.60 (0.60%)','¥0.10 (0.10%)','-¥0.50 (省出归消费者)'],
+                    ['消费者消费金','¥3.00 (3.00%)','¥3.50 (3.50%)','+¥0.50'],
+                    ['其他各方分账金额','不变','不变','—'],
+                    ['二次提现成本','各方提现×0.1%','同左','—'],
+                ]
+            ),
+            divider(),
+
+            h2('2.4  消费金核销资金路径（占比约10%）'),
+            p('前提：消费者已累积消费金（来自历史消费让利），本次使用消费金抵扣≤30%订单金额。',{color:C.GRAY}),
+            p('假设：消费¥100，使用¥30消费金核销 + ¥70汇付补足。'),
+            p(''),
+            flowBox('¥30 消费金核销（从消费金池直接划付商家） + ¥70 汇付收单（按标准分账）', false),
+            p(''),
+            dataTable(
+                ['维度','消费金核销部分(¥30)','现金补足部分(¥70)','合计效果'],
+                [
+                    ['资金来源','消费金池(历史累积)','消费者微信/支付宝','¥100'],
+                    ['一次渠道成本','¥0 (已预结算)','¥0.42 (0.6%×70)','¥0.42'],
+                    ['商家收入','¥30 (全额归商家)','¥52.78 (75.4%×70)','¥82.78'],
+                    ['平台服务费','—','¥3.50','¥3.50'],
+                    ['🆕城市服务商','—','¥0.70 (1%×70)','¥0.70'],
+                    ['新消费金','—','¥2.10 (3%×70)','¥2.10'],
+                    ['核销后消费金池','-¥30','+¥2.10','净消耗¥27.90'],
+                    ['二次提现成本','商家提现¥30×0.1%=¥0.03','各方提现×0.1%','—'],
+                ]
+            ),
+            p('关键数据：消费者本次核销¥30消费金 → 消费金池净消耗¥27.90（¥30核销-¥2.10新增）→ 核销后消费金余额减少。城市服务商仅从现金部分提取1%。',{bold:true}),
+            divider(),
+            pageBreak(),
+
+            // ===== CHAPTER 3: 三元营销体系 =====
+            h1('第三章  代金券·积分·消费金 三元营销体系'),
+
+            h2('3.1  体系设计原则'),
+            n(1,'三者独立：代金券、积分、消费金各有独立账户、独立规则、独立有效期——消费者可叠加使用',{bold:true}),
+            n(2,'均不可兑现：三者均为消费权益，不可兑换现金、不可购买金融产品——严守合规红线第1条',{bold:true}),
+            n(3,'成本有主：代金券成本→营销池(3.5-4%)；积分成本→平台服务费(平台承担)；消费金成本→消费金池(2-3%)',{bold:true}),
+            n(4,'去金融化：三者均定义为"消费营销权益"，不使用任何金融/投资/增值术语',{bold:true}),
+            divider(),
+
+            h2('3.2  代金券体系'),
+            calloutBox('代金券规则', [
+                '发放：每笔消费自动发放消费额5%的代金券（例：消费¥100→得¥5代金券）',
+                '使用：下次消费时可抵扣，单笔最多抵扣订单金额的30%',
+                '有效期：发放后90天，过期自动失效',
+                '成本来源：营销池（每笔交易提取3.5-4%），汇付托管',
+                '转让：不可转让、不可兑现——纯消费抵扣工具',
+                '商家结算：代金券抵扣部分，商家从营销池获得等额结算',
+            ]),
+            divider(),
+
+            h2('3.3  积分体系'),
+            calloutBox('积分规则', [
+                '累积：每¥1现金消费=1积分（消费金核销部分不计积分，仅现金部分计）',
+                '兑换：100积分=¥1抵扣，单笔最多抵扣订单金额的20%',
+                '有效期：获得后2年有效，滚动过期',
+                '成本来源：平台服务费（平台从5-6%服务费中承担），不对商家额外收费',
+                '不可兑现：积分仅限平台内消费抵扣——严守合规红线',
+                '账户独立：积分账户独立于消费金账户，两者可叠加使用',
+            ]),
+            divider(),
+
+            h2('3.4  消费金体系（消费者权益让利）'),
+            calloutBox('消费金规则', [
+                '获得：每笔现金消费的2-3%进入个人消费金账户（余额支付场景+0.5%）',
+                '核销：下次消费时可使用，单笔最多抵扣订单金额的30%',
+                '有效期：获得后12个月有效，过期自动失效',
+                '成本来源：消费金池（每笔交易提取2-3%），汇付托管',
+                '转让：可转让给直系亲属（父母/配偶/子女），不可转让给非亲属',
+                '不可兑现：消费金仅限消费核销——严守合规红线第1条',
+                '消费者权益：消费金是消费者在平台的权益积累，体现"消费即权益"理念',
+            ]),
+            divider(),
+
+            h2('3.5  三元叠加使用示例'),
+            p('消费者在平台商家消费¥100（第二次消费，已有代金券¥5 + 积分1000 + 消费金¥30）：'),
+            p(''),
+            dataTable(
+                ['步骤','操作','金额/数量','说明'],
+                [
+                    ['1.订单金额','商品原价','¥100.00','—'],
+                    ['2.代金券抵扣','使用¥5代金券','-¥5.00','≤30%订单额(¥30)，合法'],
+                    ['3.积分抵扣','使用1000积分=¥10','-¥10.00','≤20%订单额(¥20)，合法'],
+                    ['4.消费金核销','使用¥25.50消费金','-¥25.50','≤30%剩余额(¥85×30%=¥25.50)'],
+                    ['5.实付金额','汇付/余额支付','¥59.50','消费者实际支付'],
+                    ['6.本次获得','代金券¥2.98+积分60+消费金¥1.79','—','基于实付¥59.50计算'],
+                ]
+            ),
+            p('注：代金券→积分→消费金 按此顺序逐级抵扣，每级抵扣后重新计算下一级的可用上限，避免叠加超限。',{color:C.GRAY}),
+            divider(),
+            pageBreak(),
+
+            // ===== CHAPTER 4: 九场景分账模型 =====
+            h1('第四章  九场景详细分账模型（含城市服务商1%）'),
+            p('核心假设：消费者在各商家类型消费¥100（现金部分）。分配比例为基准方案。🆕 新增城市服务商1%提成。',{color:C.GRAY}),
+            divider(),
+
+            // --- 4.1 Platform Merchant ---
+            h2('4.1  平台商家场景（3支付方式）'),
+            p('平台商家例如：老树根餐饮、玖玖餐饮。拥有独立主体小程序。'),
+            divider(),
+
+            h3('4.1.1  汇付收单（标准场景）'),
+            dataTable(
+                ['分配方','比例','分账金额','二次提现后到手','性质','结算'],
+                [
+                    ['支付渠道','0.60%',fmt(PLAT_HUIFU.dist.channelCost),'—(已扣除)','硬成本','实时'],
+                    ['平台商家','75.40%',fmt(PLAT_HUIFU.dist.merchant),'¥75.32','商品/服务收入','T+1到汇付商户号'],
+                    ['平台服务费','5.00%',fmt(PLAT_HUIFU.dist.platformFee),'¥4.99','平台运营收入(含积分成本)','T+1到链邦汇付商户号'],
+                    ['服务站+推广者池','9.00%',fmt(PLAT_HUIFU.dist.stationPromoter),'—(内部再分配)','管理关系池','T+1到服务站汇付商户号'],
+                    ['  ↳服务站管理费','3.15%','¥3.15','¥3.15','服务站管理收入','服务站提现后'],
+                    ['  ↳推广者佣金','5.85%','¥5.85','¥5.84','推广者佣金(服务站发)','推广者提现后'],
+                    ['🆕城市服务商','1.00%','¥1.00','¥1.00','区域合伙人提成','T+1到城市服务商户号'],
+                    ['消费者消费金','3.00%',fmt(PLAT_HUIFU.dist.consumerCredit),'¥3.00(不提现)','消费者数字权益','实时到消费金账户'],
+                    ['代金券营销池','4.00%',fmt(PLAT_HUIFU.dist.marketingPool),'¥4.00(系统内)','下次发放代金券','T+1到营销池托管账户'],
+                    ['风控备用金','2.00%',fmt(PLAT_HUIFU.dist.riskReserve),'¥2.00(系统内)','退款/争议/合规备用','T+1到风控托管账户'],
+                    ['合计','100%','¥100.00','—','—','—'],
+                ]
+            ),
+            p('🆕 V3.1关键新增：城市服务商¥1.00(1%)来自分账，营销池从V3.0的5%调至4%以容纳城市服务商。',{bold:true,color:C.GREEN}),
+            divider(),
+
+            h3('4.1.2  余额支付'),
+            p('一次渠道成本降低0.5%→消费者消费金增加0.5%。城市服务商分账不变。',{color:C.GREEN}),
+            dataTable(
+                ['差异项','汇付收单','余额支付','说明'],
+                [
+                    ['一次渠道成本',fmt(PLAT_HUIFU.dist.channelCost),fmt(PLAT_BALANCE.dist.channelCost),'内部划转最低费率'],
+                    ['消费者消费金',fmt(PLAT_HUIFU.dist.consumerCredit),fmt(PLAT_BALANCE.dist.consumerCredit),'+¥0.50 (节省归消费者)'],
+                    ['城市服务商','¥1.00','¥1.00','不变'],
+                ]
+            ),
+            divider(),
+
+            h3('4.1.3  消费金核销（30%消费金+70%现金）'),
+            dataTable(
+                ['分配方','消费金核销部分(¥30)','现金部分(¥70)','合计','说明'],
+                [
+                    ['支付渠道','¥0','¥0.42','¥0.42','仅现金部分产生一次渠道费'],
+                    ['平台商家','¥30.00','¥52.78','¥82.78','消费金池直划+现金分账'],
+                    ['平台服务费','—','¥3.50','¥3.50','仅从现金部分提取'],
+                    ['服务站+推广者池','—','¥6.30','¥6.30','仅从现金部分提取'],
+                    ['🆕城市服务商','—','¥0.70','¥0.70','仅从现金部分提取'],
+                    ['消费者消费金','—','¥2.10','¥2.10','仅现金部分产生新消费金'],
+                    ['代金券营销池','—','¥2.80','¥2.80','仅从现金部分提取'],
+                    ['风控备用金','—','¥1.40','¥1.40','仅从现金部分提取'],
+                    ['合计','¥30.00','¥70.00','¥100.00','—'],
+                ]
+            ),
+            p('关键数据：消费者本次核销¥30消费金 → 消费金池净消耗¥27.90（¥30核销-¥2.10新增）。城市服务商仅从现金部分(¥70)提取1%=¥0.70。',{bold:true}),
+            divider(),
+            pageBreak(),
+
+            // --- 4.2 Alliance Merchant ---
+            h2('4.2  联盟商家场景（3支付方式）'),
+            p('联盟商家例如：XXX沐足、社区小店。独立店铺页+收银台，所属平台商家抽取渠道费。'),
+            divider(),
+
+            h3('4.2.1  汇付收单（标准场景）'),
+            dataTable(
+                ['分配方','比例','分账金额','二次提现后到手','说明'],
+                [
+                    ['支付渠道','0.60%',fmt(ALLY_HUIFU.dist.channelCost),'—(已扣除)','硬成本'],
+                    ['联盟商家','71.40%',fmt(ALLY_HUIFU.dist.allianceMerchant),'¥71.33','联盟商家直接收入'],
+                    ['平台商家渠道费','4.50%',fmt(ALLY_HUIFU.dist.platformMerchant),'¥4.49','平台商家(老树根等)引流管理费'],
+                    ['平台服务费','5.00%',fmt(ALLY_HUIFU.dist.platformFee),'¥4.99','平台运营收入'],
+                    ['服务站+推广者池','10.00%',fmt(ALLY_HUIFU.dist.stationPromoter),'—(内部再分配)','管理关系池(联盟最高)'],
+                    ['  ↳服务站管理费','3.50%','¥3.50','¥3.50','服务站管理收入'],
+                    ['  ↳推广者佣金','6.50%','¥6.50','¥6.49','联盟推广难度大，佣金更高'],
+                    ['🆕城市服务商','1.00%','¥1.00','¥1.00','区域合伙人提成'],
+                    ['消费者消费金','2.00%',fmt(ALLY_HUIFU.dist.consumerCredit),'¥2.00(不提现)','联盟利润空间小，让利略低'],
+                    ['代金券营销池','3.50%',fmt(ALLY_HUIFU.dist.marketingPool),'¥3.50(系统内)','联盟场景营销池'],
+                    ['风控备用金','2.00%',fmt(ALLY_HUIFU.dist.riskReserve),'¥2.00(系统内)','统一风控比例'],
+                    ['合计','100%','¥100.00','—','—'],
+                ]
+            ),
+            p('🆕 联盟场景变化：平台商家渠道费从5%→4.5%、营销池从4%→3.5%，腾出1%给城市服务商。',{bold:true,color:C.GREEN}),
+            divider(),
+
+            h3('4.2.2  余额支付'),
+            dataTable(
+                ['差异项','汇付收单','余额支付','说明'],
+                [
+                    ['一次渠道成本',fmt(ALLY_HUIFU.dist.channelCost),fmt(ALLY_BALANCE.dist.channelCost),'内部划转'],
+                    ['消费者消费金',fmt(ALLY_HUIFU.dist.consumerCredit),fmt(ALLY_BALANCE.dist.consumerCredit),'+¥0.50'],
+                    ['城市服务商','¥1.00','¥1.00','不变'],
+                ]
+            ),
+            divider(),
+
+            h3('4.2.3  消费金核销'),
+            dataTable(
+                ['分配方','消费金核销部分(¥30)','现金部分(¥70)','合计'],
+                [
+                    ['支付渠道','¥0','¥0.42','¥0.42'],
+                    ['联盟商家','¥30.00','¥49.98','¥79.98'],
+                    ['平台商家渠道费','—','¥3.15','¥3.15'],
+                    ['平台服务费','—','¥3.50','¥3.50'],
+                    ['服务站+推广者池','—','¥7.00','¥7.00'],
+                    ['🆕城市服务商','—','¥0.70','¥0.70'],
+                    ['消费者消费金','—','¥1.40','¥1.40'],
+                    ['代金券营销池','—','¥2.45','¥2.45'],
+                    ['风控备用金','—','¥1.40','¥1.40'],
+                    ['合计','¥30.00','¥70.00','¥100.00'],
+                ]
+            ),
+            divider(),
+            pageBreak(),
+
+            // --- 4.3 E-commerce ---
+            h2('4.3  综合商城场景（3支付方式）'),
+            p('综合商城为链邦科技直营电商业务（链邦子户），无平台商家中介，结构最简洁。'),
+            divider(),
+
+            h3('4.3.1  汇付收单（标准场景）'),
+            dataTable(
+                ['分配方','比例','分账金额','二次提现后到手','说明'],
+                [
+                    ['支付渠道','0.60%',fmt(ECOM_HUIFU.dist.channelCost),'—(已扣除)','硬成本'],
+                    ['综合商城(链邦直营)','77.90%',fmt(ECOM_HUIFU.dist.ecomMerchant),'¥77.82','最高商家分成(↓0.5%让给城市服务商)'],
+                    ['平台服务费','6.00%',fmt(ECOM_HUIFU.dist.platformFee),'¥5.99','平台运营收入'],
+                    ['服务站+推广者池','6.00%',fmt(ECOM_HUIFU.dist.stationPromoter),'—(内部再分配)','电商场景推广依赖低'],
+                    ['  ↳服务站管理费','2.10%','¥2.10','¥2.10','服务站管理收入'],
+                    ['  ↳推广者佣金','3.90%','¥3.90','¥3.90','电商自带流量，佣金较低'],
+                    ['🆕城市服务商','1.00%','¥1.00','¥1.00','区域合伙人提成'],
+                    ['消费者消费金','3.00%',fmt(ECOM_HUIFU.dist.consumerCredit),'¥3.00(不提现)','—'],
+                    ['代金券营销池','3.50%',fmt(ECOM_HUIFU.dist.marketingPool),'¥3.50(系统内)','↓0.5%'],
+                    ['风控备用金','2.00%',fmt(ECOM_HUIFU.dist.riskReserve),'¥2.00(系统内)','—'],
+                    ['合计','100%','¥100.00','—','—'],
+                ]
+            ),
+            p('🆕 综合商城变化：商家分成从78.4%→77.9%、营销池从4%→3.5%，腾出1%给城市服务商。',{bold:true,color:C.GREEN}),
+            divider(),
+
+            h3('4.3.2  余额支付'),
+            dataTable(
+                ['差异项','汇付收单','余额支付','说明'],
+                [
+                    ['一次渠道成本',fmt(ECOM_HUIFU.dist.channelCost),fmt(ECOM_BALANCE.dist.channelCost),'内部划转'],
+                    ['消费者消费金',fmt(ECOM_HUIFU.dist.consumerCredit),fmt(ECOM_BALANCE.dist.consumerCredit),'+¥0.50'],
+                    ['城市服务商','¥1.00','¥1.00','不变'],
+                ]
+            ),
+            divider(),
+
+            h3('4.3.3  消费金核销'),
+            dataTable(
+                ['分配方','消费金核销部分(¥30)','现金部分(¥70)','合计'],
+                [
+                    ['支付渠道','¥0','¥0.42','¥0.42'],
+                    ['综合商城','¥30.00','¥54.53','¥84.53'],
+                    ['平台服务费','—','¥4.20','¥4.20'],
+                    ['服务站+推广者池','—','¥4.20','¥4.20'],
+                    ['🆕城市服务商','—','¥0.70','¥0.70'],
+                    ['消费者消费金','—','¥2.10','¥2.10'],
+                    ['代金券营销池','—','¥2.45','¥2.45'],
+                    ['风控备用金','—','¥1.40','¥1.40'],
+                    ['合计','¥30.00','¥70.00','¥100.00'],
+                ]
+            ),
+            divider(),
+            pageBreak(),
+
+            // ===== CHAPTER 5: 九场景对比 =====
+            h1('第五章  九场景横比与消费者权益一览'),
+
+            h2('5.1  九场景分账对比（分账金额·未扣除二次提现）'),
+            dataTable(
+                ['场景','渠道\n成本','商家\n收入','平台\n服务费','站+推\n池','🆕城市\n服务商','消费\n金','营销\n池','风控\n备用'],
+                [
+                    ['平台·汇付','¥0.60','¥75.40','¥5.00','¥9.00','¥1.00','¥3.00','¥4.00','¥2.00'],
+                    ['平台·余额','¥0.10','¥75.40','¥5.00','¥9.00','¥1.00','¥3.50','¥4.00','¥2.00'],
+                    ['平台·核销','¥0.42','¥82.78','¥3.50','¥6.30','¥0.70','¥2.10','¥2.80','¥1.40'],
+                    ['联盟·汇付','¥0.60','¥71.40','¥5.00','¥10.00','¥1.00','¥2.00','¥3.50','¥2.00'],
+                    ['联盟·余额','¥0.10','¥71.40','¥5.00','¥10.00','¥1.00','¥2.50','¥3.50','¥2.00'],
+                    ['联盟·核销','¥0.42','¥79.98','¥3.50','¥7.00','¥0.70','¥1.40','¥2.45','¥1.40'],
+                    ['综合·汇付','¥0.60','¥77.90','¥6.00','¥6.00','¥1.00','¥3.00','¥3.50','¥2.00'],
+                    ['综合·余额','¥0.10','¥77.90','¥6.00','¥6.00','¥1.00','¥3.50','¥3.50','¥2.00'],
+                    ['综合·核销','¥0.42','¥84.53','¥4.20','¥4.20','¥0.70','¥2.10','¥2.45','¥1.40'],
+                ]
+            ),
+            p('🆕 V3.1关键变化：新增城市服务商1%列。平台商家营销池5%→4%；联盟营销池4%→3.5%、平台商家渠道费5%→4.5%；综合商城分成78.4%→77.9%、营销池4%→3.5%。',{bold:true,color:C.GREEN}),
+            divider(),
+
+            h2('5.2  城市服务商收入一览（九场景）'),
+            dataTable(
+                ['场景','分账金额','月收入预估\n(50单/天/城)','年收入预估\n(50单/天/城)','说明'],
+                [
+                    ['平台商家·汇付','¥1.00/笔','¥1,500','¥18,000','标准场景'],
+                    ['平台商家·余额','¥1.00/笔','¥1,500','¥18,000','不变'],
+                    ['平台商家·核销','¥0.70/笔','¥1,050','¥12,600','仅现金部分提取'],
+                    ['联盟商家·汇付','¥1.00/笔','¥1,500','¥18,000','标准场景'],
+                    ['联盟商家·余额','¥1.00/笔','¥1,500','¥18,000','不变'],
+                    ['联盟商家·核销','¥0.70/笔','¥1,050','¥12,600','仅现金部分提取'],
+                    ['综合商城·汇付','¥1.00/笔','¥1,500','¥18,000','标准场景'],
+                    ['综合商城·余额','¥1.00/笔','¥1,500','¥18,000','不变'],
+                    ['综合商城·核销','¥0.70/笔','¥1,050','¥12,600','仅现金部分提取'],
+                ]
+            ),
+            p('注：月收入基于客单价¥100、每城市日均50单。城市服务商若覆盖5个活跃城市，日均250单→月收入约¥7,500。覆盖20个城市→月收入约¥30,000。',{color:C.GRAY}),
+            divider(),
+
+            h2('5.3  消费者每¥100消费获得权益一览'),
+            dataTable(
+                ['商家类型','支付方式','代金券(下次)','积分','消费金(本次)','合计权益价值\n(≈)'],
+                [
+                    ['平台商家','汇付收单','¥5.00','100积分(≈¥1)','¥3.00','¥9.00'],
+                    ['平台商家','余额支付','¥5.00','100积分(≈¥1)','¥3.50','¥9.50'],
+                    ['平台商家','消费金核销','¥3.50','70积分(≈¥0.70)','¥2.10','¥6.30'],
+                    ['联盟商家','汇付收单','¥4.00','100积分(≈¥1)','¥2.00','¥7.00'],
+                    ['联盟商家','余额支付','¥4.00','100积分(≈¥1)','¥2.50','¥7.50'],
+                    ['联盟商家','消费金核销','¥2.80','70积分(≈¥0.70)','¥1.40','¥4.90'],
+                    ['综合商城','汇付收单','¥4.00','100积分(≈¥1)','¥3.00','¥8.00'],
+                    ['综合商城','余额支付','¥4.00','100积分(≈¥1)','¥3.50','¥8.50'],
+                    ['综合商城','消费金核销','¥2.80','70积分(≈¥0.70)','¥2.10','¥5.60'],
+                ]
+            ),
+            p('注：合计权益价值为代金券+积分换算值+消费金的简单加总。积分按100:1换算。消费金核销场景因消费者已使用¥30消费金抵扣，现金消费仅¥70，故各项权益按¥70基准计算。',{color:C.GRAY}),
+            divider(),
+            pageBreak(),
+
+            // ===== CHAPTER 6: 三级管理体系 =====
+            h1('第六章  城市服务商→服务站→推广者 三级管理体系'),
+
+            h2('6.1  三级管理关系模型'),
+            p('V3.1核心新增：在城市/区域层面引入城市服务商（区域合伙人），形成完整的三级管理体系。'),
+            p(''),
+            flowBox('平台 → 🆕城市服务商(区域合伙人) → 服务站(社区管理者) → 推广者(一线推广)', false),
+            p(''),
+            calloutBox('三级管理关系要点', [
+                '🆕 城市服务商（第一级·区域合伙人）：按城市/区域签约授权——每笔交易1%提成(来自分账池)——负责区域招商、服务站招募/培训/考核、城市级营销活动、政府关系维护',
+                '  收入来源：每笔交易1%提成（独立于服务站佣金池）——例如日均500单的城市→月收入约¥15,000',
+                '  准入条件：需具备区域商业资源+团队管理能力+平台审核签约——非免费入驻',
+                '  ↓ 管理关系',
+                '服务站（第二级·社区节点管理者）：每笔交易佣金池×35%管理费——负责推广者招募/培训/考核、社区营销活动、配送/自提/代客下单',
+                '  收入来源：服务站佣金池×35%管理费——由城市服务商协管，平台统一结算',
+                '  ↓ 管理关系',
+                '推广者（第三级·一线推广）：每笔交易佣金池×65%佣金——由服务站直接发放——负责扫码推广、社区地推、新客引流',
+                '  收入来源：服务站佣金池×65%推广佣金——由服务站制定标准(平台备案)并发放',
+                '',
+                '⚠️ 利益不重叠：城市服务商1%来自独立分账项，服务站管理费和推广者佣金来自"服务站+推广者佣金池"——三者的收入来源独立、互不侵蚀、合法合规',
+                '⚠️ 层级合规：平台→城市服务商→服务站→推广者，共3层分润——符合《禁止传销条例》≤3层要求',
+            ]),
+            divider(),
+
+            h2('6.2  各商家类型的服务站-推广者-城市服务商收入模型'),
+            dataTable(
+                ['商家类型','站+推\n佣金池','服务站\n管理费','推广者\n佣金','🆕城市\n服务商','推广者月收入\n(10单/天)','服务站月收入\n(50单/天)','城市服务商月收入\n(500单/天/城)'],
+                [
+                    ['平台商家','9.00%/笔','3.15%/笔\n(35%)','5.85%/笔\n(65%)','1.00%/笔','¥1,755','¥4,725','¥15,000'],
+                    ['联盟商家','10.00%/笔','3.50%/笔\n(35%)','6.50%/笔\n(65%)','1.00%/笔','¥1,950','¥5,250','¥15,000'],
+                    ['综合商城','6.00%/笔','2.10%/笔\n(35%)','3.90%/笔\n(65%)','1.00%/笔','¥1,170','¥3,150','¥15,000'],
+                ]
+            ),
+            p('注：月收入基于客单价¥100、30天/月。城市服务商假设覆盖1个中等活跃城市(日均500单)。推广者日均10单，服务站日均50单。城市服务商收入与城市活跃度直接相关。',{color:C.GRAY}),
+            divider(),
+
+            h2('6.3  三级管理 vs 两级管理 vs 平行关系 对比'),
+            dataTable(
+                ['维度','V2.0(平行关系)','V3.0(两级管理)','V3.1(三级管理)🆕','优势'],
+                [
+                    ['管理层级','平台→服务站\n平台→推广者','平台→服务站→推广者','平台→城市服务商\n→服务站→推广者','区域化管理+属地化运营'],
+                    ['城市/区域覆盖','无专门角色','无专门角色','城市服务商专职区域','解决跨城市扩张的管理瓶颈'],
+                    ['结算路径','2条独立路径','1条路径','1条路径+城市服务商独立分账','清晰、合规、可审计'],
+                    ['推广者招募','平台统一','服务站属地化','城市服务商+服务站双层','最快覆盖+质量把关'],
+                    ['政府关系','无专人','无专人','城市服务商专职','关键合规资源'],
+                    ['激励对齐','各自独立','服务站=推广者管理者','城市服务商=区域增长负责人\n服务站=社区运营负责人','三层利益对齐、协同'],
+                    ['合规风险','推广者可能被认定\n为平台雇佣','服务站-推广者\n独立合作','三层独立合作\n无雇佣/传销风险','最低用工风险'],
+                ]
+            ),
+            divider(),
+            pageBreak(),
+
+            // ===== CHAPTER 7: 九方利益关系总图 =====
+            h1('第七章  九方利益关系总图（含二次提现成本）'),
+
+            h2('7.1  利益流向全景图（以平台商家·汇付收单为例）'),
+            p('消费者支付¥100 → 汇付监管账户 → 实时分账至九方：'),
+            p(''),
+            dataTable(
+                ['利益方','分账金额','二次提现后\n实际到手','利益形式','获得条件','用途/去向','限制'],
+                [
+                    ['①消费者','¥3.00消费金\n+¥5.00代金券\n+100积分','¥3.00+¥5.00\n+100积分\n(不提现)','消费权益(三元)','实际消费','下次消费抵扣/核销','不可兑现\n不可买金融产品'],
+                    ['②平台商家','¥75.40','¥75.32','汇付商户号→银行','提供商品/服务','经营、提现、采购','T+1结算'],
+                    ['③联盟商家\n(联盟场景)','¥71.40','¥71.33','汇付商户号→银行','提供商品/服务','经营、提现、采购','T+1结算'],
+                    ['④链商平台','¥5.00','¥4.99','平台服务费收入','提供技术+运营服务','技术开发、人员、运营\n承担积分成本','—'],
+                    ['⑤城市服务商🆕','¥1.00','¥1.00','区域合伙人提成','区域招商+服务站管理\n+城市营销+政府关系','团队建设、城市运营\n市场拓展','不可跨区经营'],
+                    ['⑥服务站','¥3.15','¥3.15','管理费(从佣金池分)','管理推广者团队\n提供社区服务','站点运营、推广者管理\n配送/自提/代客下单','不可跨区管理'],
+                    ['⑦推广者','¥5.85','¥5.84','佣金(服务站发放)','推广引流成交','提现、继续推广','不可跨级抽佣\n不可发展下线'],
+                    ['⑧支付渠道','¥0.60','—(已扣除)','一次支付手续费\n+二次提现费0.1%/方','提供支付/提现服务','—','不可调'],
+                    ['⑨营销池','¥4.00','¥4.00(系统内)','汇付托管','每笔交易提取','发放消费者代金券','仅限营销用途'],
+                    ['⑩风控备用金','¥2.00','¥2.00(系统内)','汇付托管','每笔交易提取','退款/争议赔付','仅限特定用途'],
+                ]
+            ),
+            divider(),
+
+            h2('7.2  各方激励与收益模型（含二次提现后到手）'),
+            dataTable(
+                ['角色','激励目标','分账收入/笔','二次提现后\n到手/笔','预估月收入\n(提现后)','成长路径'],
+                [
+                    ['消费者','省钱+攒权益','≈¥9.00权益','≈¥9.00(不提现)','¥90-285/月\n(日消1笔)','普通会员→银卡→金卡→钻石'],
+                    ['推广者','分享赚佣金','¥3.90-6.50','¥3.90-6.49','¥1,170-1,949/月\n(10单/天)','推广者→高级推广者→推广队长'],
+                    ['服务站','服务社区赚管理费','¥2.10-3.50','¥2.10-3.50','¥3,150-5,250/月\n(50单/天)','社区站→区域站→城市合伙人'],
+                    ['🆕城市服务商','区域增长赚提成','¥1.00','¥1.00','¥15,000/月\n(500单/天/城)','单城→多城→省级代理'],
+                    ['平台商家','经营收入+联盟渠道费','¥75.40','¥75.32','取决于客流×客单价','单店→连锁→区域代理'],
+                    ['联盟商家','平台获客+低成本运营','¥71.40','¥71.33','取决于客流×客单价','联盟→平台商家(升级)'],
+                    ['链商平台','服务费+生态价值','¥5.00-6.00','¥4.99-5.99','取决于总GMV','盈亏平衡→盈利→规模化'],
+                ]
+            ),
+            p('注：二次提现成本0.1%看似微小但影响各方净收益。以平台商家月GMV ¥500,000计，每月提现成本约¥500；以城市服务商月收入¥15,000计，每月提现成本约¥15。',{color:C.GRAY}),
+            divider(),
+            pageBreak(),
+
+            // ===== CHAPTER 8: 平台经营指标体系 =====
+            h1('第八章  平台经营指标体系（V3.1·含城市服务商+二次提现成本）'),
+
+            h2('8.1  单笔交易模型（三商家×汇付收单）'),
+            dataTable(
+                ['指标','平台商家','联盟商家','综合商城','三场景平均'],
+                [
+                    ['GMV','¥100.00','¥100.00','¥100.00','¥100.00'],
+                    ['一次支付渠道成本','¥0.60','¥0.60','¥0.60','¥0.60'],
+                    ['平台服务费收入','¥5.00','¥5.00','¥6.00','¥5.33'],
+                    ['平台毛利润(一次)','¥4.40','¥4.40','¥5.40','¥4.73'],
+                    ['平台毛利率(一次)','4.40%','4.40%','5.40%','4.73%'],
+                    ['平台二次提现成本','-¥0.005','-¥0.005','-¥0.006','-¥0.005'],
+                    ['平台净利润(含二次提现)','¥4.395','¥4.395','¥5.394','¥4.728'],
+                    ['平台Take Rate','5.00%','5.00%','6.00%','5.33%'],
+                ]
+            ),
+            p('注：平台Take Rate 5.33%处于行业中等偏低水平（美团15-25%、抖音2-5%、有赞2-8%），有利于吸引商家入驻。二次提现成本对平台净利影响约0.1%。',{color:C.GRAY}),
+            divider(),
+
+            h2('8.2  月度盈亏模型（50,000笔/月假设）'),
+            p('假设：月交易50,000笔，客单价¥100，三种商家类型各占1/3，汇付收单70%+余额20%+核销10%。'),
+            divider(),
+            dataTable(
+                ['指标','计算公式','月度数值','年度数值'],
+                [
+                    ['月GMV','50,000 × ¥100','¥5,000,000','¥60,000,000'],
+                    ['加权平台服务费率','(汇付70%+余额20%+核销10%)','≈5.17%','—'],
+                    ['平台服务费收入','GMV × 5.17%','+¥258,700','+¥3,104,000'],
+                    ['一次支付渠道成本(综合)','汇付35k×0.6+余额10k×0.1+核销5k×0.42','-¥24,100','-¥289,200'],
+                    ['毛利润(一次)','服务费 - 一次渠道费','¥234,600','¥2,814,800'],
+                    ['平台二次提现成本','服务费收入 × 0.1%','-¥259','-¥3,104'],
+                    ['毛利润(含二次提现)','—','¥234,300','¥2,811,700'],
+                    ['营销池收入(平台可调度)','GMV × ~3.83%','+¥191,500','+¥2,298,000'],
+                    ['  (注:营销池独立核算)','用于代金券发放','—','—'],
+                    ['固定成本合计','技术+人员+办公+营销+合规','-¥190,000','-¥2,280,000'],
+                    ['  技术基础设施','云服务器/CDN/数据库','-¥50,000','-¥600,000'],
+                    ['  人员成本','5-8人团队','-¥80,000','-¥960,000'],
+                    ['  办公场地','—','-¥20,000','-¥240,000'],
+                    ['  品牌营销','—','-¥30,000','-¥360,000'],
+                    ['  法务合规','—','-¥10,000','-¥120,000'],
+                    ['净利润(不含营销池)','毛利(含二次提现) - 固定成本','¥44,300','¥531,700'],
+                    ['净利率','净利润 / GMV','0.89%','0.89%'],
+                ]
+            ),
+            p('⚠️ V3.2平台利润率偏低(0.89%），核心原因：1)城市服务商1%从营销池和商家端腾挪；2)二次提现成本额外侵蚀约0.01%；3)三元营销体系让利消费者。建议公测后逐步优化费率。',{bold:true,color:C.ORANGE}),
+            p('营销池月度收入¥191,500为平台可调度的增长工具——虽不直接计入净利润，但为平台提供了强大的用户增长和复购驱动引擎。',{color:C.GRAY}),
+            divider(),
+
+            h2('8.3  盈亏平衡点分析'),
+            dataTable(
+                ['指标','数值','说明'],
+                [
+                    ['每笔平台毛利润(一次)','¥4.69','加权平均(含支付方式混合)'],
+                    ['每笔平台二次提现成本','¥0.005','服务费×0.1%'],
+                    ['每笔平台毛利润(含二次提现)','¥4.686','¥4.69 - ¥0.005'],
+                    ['每笔固定成本','¥3.80','¥190,000 / 50,000笔'],
+                    ['每笔净利润(含二次提现)','¥0.886','¥4.686 - ¥3.80'],
+                    ['盈亏平衡点(月度·一次)','40,500笔/月','¥190,000 / ¥4.69'],
+                    ['盈亏平衡点(月度·含提现)','40,500笔/月','¥190,000 / ¥4.686'],
+                    ['盈亏平衡GMV','¥4,050,000/月','40,500 × ¥100'],
+                    ['当前预测安全边际','1.23×','50,000 / 40,500'],
+                ]
+            ),
+            p('结论：V3.2盈亏平衡点约40,500笔/月（日均约1,350笔）。安全边际1.23×偏低——建议公测后重点监控交易量增长。注：上述盈亏平衡基于加权精确计算（汇付70%+余额20%+核销10%）。',{bold:true,color:C.ORANGE}),
+            divider(),
+
+            h2('8.4  综合经营指标看板'),
+            dataTable(
+                ['指标类别','指标名称','数值','行业对标','评价'],
+                [
+                    ['规模指标','月GMV','¥5,000,000','小型平台','公测起步期'],
+                    ['规模指标','月交易笔数','50,000','—','—'],
+                    ['规模指标','客单价','¥100','美团≈¥45 抖音≈¥65','偏高(餐饮业态)'],
+                    ['效率指标','平台Take Rate','5.17%','美团15-25% 抖音2-5%','中等偏低✅'],
+                    ['效率指标','商家实得率','75.40%','美团≈75-80%','持平✅'],
+                    ['效率指标','消费者权益率','~9%','美团≈0% 抖音≈5%','行业领先✅'],
+                    ['效率指标','🆕城市服务商提成率','1.00%','城代理通常1-3%','合理✅'],
+                    ['盈利指标','毛利率(一次)','4.69%','—','—'],
+                    ['盈利指标','毛利率(含二次提现)','4.69%','—','偏低⚠️'],
+                    ['盈利指标','净利率','0.89%','拼多多≈30% 美团≈5%','偏低⚠️'],
+                    ['风控指标','风控备用金率','2.00%','支付机构备付金≈10%','审慎✅'],
+                    ['风控指标','盈亏平衡安全边际','1.23×','>1.5×为健康','偏低⚠️'],
+                ]
+            ),
+            divider(),
+            pageBreak(),
+
+            // ===== CHAPTER 9: 二次提现成本独立分析 =====
+            h1('第九章  二次支付提现渠道成本独立核算'),
+
+            h2('9.1  二次提现成本模型'),
+            p('一次渠道成本(汇付收单0.6%/余额0.1%)已在分账时扣除。二次提现成本(0.1%)在各方从商户号提现至银行账户时发生，由各提现方自行承担。'),
+            divider(),
+            dataTable(
+                ['利益方','分账金额\n(每笔)','是否产生\n二次提现','二次提现\n成本/笔','提现后\n实际到手','月提现成本\n(50,000笔)'],
+                [
+                    ['平台商家','¥75.40','✅ 是','-¥0.075','¥75.32','-¥3,770'],
+                    ['联盟商家(联盟场景)','¥71.40','✅ 是','-¥0.071','¥71.33','-¥3,570'],
+                    ['平台商家渠道费\n(联盟场景)','¥4.50','✅ 是','-¥0.005','¥4.49','-¥225'],
+                    ['平台服务费','¥5.00-6.00','✅ 是','-¥0.005-0.006','¥4.99-5.99','-¥255'],
+                    ['城市服务商','¥1.00','✅ 是','-¥0.001','¥1.00','-¥50'],
+                    ['服务站管理费','¥2.10-3.50','✅ 是','-¥0.002-0.004','¥2.10-3.50','-¥117'],
+                    ['推广者佣金','¥3.90-6.50','✅ 是','-¥0.004-0.007','¥3.90-6.49','-¥225'],
+                    ['消费者消费金','¥2.00-3.00','❌ 否(数字权益)','¥0','全额保留','—'],
+                    ['营销池','¥3.50-4.00','❌ 否(系统内)','¥0','全额保留','—'],
+                    ['风控备用金','¥2.00','❌ 否(系统内)','¥0','全额保留','—'],
+                ]
+            ),
+            p('全平台月二次提现成本总计 ≈ ¥8,212（50,000笔）。其中平台商家承担最大份额(约46%)，属正常经营成本。营销池、风控备用金和消费者权益不产生提现成本——资金在汇付托管体系内流转。',{bold:true}),
+            divider(),
+
+            h2('9.2  二次提现成本对各方净收益的影响'),
+            dataTable(
+                ['利益方','月分账收入\n(50,000笔)','二次提现成本\n(月)','月净收入\n(提现后)','提现成本\n占比'],
+                [
+                    ['平台商家(1/3量)','¥1,256,667','-¥1,257','¥1,255,410','0.10%'],
+                    ['联盟商家(1/3量)','¥1,190,000','-¥1,190','¥1,188,810','0.10%'],
+                    ['平台服务费','¥266,500','-¥255','¥266,245','0.10%'],
+                    ['城市服务商(1城)','¥50,000','-¥50','¥49,950','0.10%'],
+                    ['服务站(1站)','¥5,250','-¥5','¥5,245','0.10%'],
+                    ['推广者(1人)','¥1,950','-¥2','¥1,948','0.10%'],
+                ]
+            ),
+            p('结论：二次提现成本对各方的净收益影响统一为0.1%（线性比例）。虽然单笔金额微小，但在规模化后需纳入财务模型。月GMV ¥5M时全平台提现成本约¥8,212，年化约¥98,544。',{color:C.GRAY}),
+            divider(),
+            pageBreak(),
+
+            // ===== CHAPTER 10: 敏感性分析 =====
+            h1('第十章  参数调优与敏感性分析'),
+
+            h2('10.1  可调参数一览'),
+            dataTable(
+                ['参数','当前值','可调范围','调整影响','调整权限'],
+                [
+                    ['一次支付渠道费率(汇付)','0.6%','0.38%-1.0%','影响所有分配基数','不可调(渠道定价)'],
+                    ['二次提现费率','0.1%','0-0.2%','影响各方净收益','不可调(渠道定价)'],
+                    ['平台服务费率','5-6%','3-8%','直接影响平台盈亏平衡','管理层审批'],
+                    ['🆕城市服务商提成率','1.0%','0.5-2.0%','影响城市服务商积极性','管理层+城市服务商协商'],
+                    ['服务站+推广者佣金池','6-10%','3-12%','影响推广动力和商家收入','运营部门'],
+                    ['服务站:推广者内部分配','35:65','20:80-50:50','影响服务站管理积极性','运营+服务站协商'],
+                    ['消费者消费金率','2-3%','1-5%','影响消费者复购率','品牌部门'],
+                    ['代金券营销池率','3.5-4%','2-8%','影响营销活动力度','品牌+运营'],
+                    ['风控备用金率','2%','1-5%','影响平台抗风险能力','财务+法务'],
+                    ['代金券发放率','5%','3-10%','影响消费者获得感','品牌部门'],
+                ]
+            ),
+            divider(),
+
+            h2('10.2  敏感性分析：平台服务费率 ±1%'),
+            dataTable(
+                ['服务费率','每笔平台收入','月度收入(50k笔)','月度净利润\n(含二次提现)','盈亏平衡点'],
+                [
+                    ['4.20%(-1pp)','¥4.20','¥210,200','-¥4,200','51,100笔/月'],
+                    ['5.17%(当前)','¥5.17','¥258,700','¥44,300','40,500笔/月'],
+                    ['6.14%(+1pp)','¥6.14','¥307,200','¥92,700','33,600笔/月'],
+                ]
+            ),
+            p('分析：平台服务费率每提升1个百分点，月度净利润增加约¥48,000-50,000，盈亏平衡点下降约7,000-8,000笔/月。建议公测后根据实际交易量和商家反馈逐步优化费率结构。',{bold:true}),
+            divider(),
+
+            h2('10.3  敏感性分析：交易量变动'),
+            dataTable(
+                ['月交易笔数','月GMV','平台服务费收入','净利润\n(含二次提现)','净利率','状态'],
+                [
+                    ['20,000','¥2,000,000','¥103,400','-¥96,300','-4.82%','🔴 大幅亏损'],
+                    ['30,000','¥3,000,000','¥155,100','-¥49,500','-1.65%','🟡 小幅亏损'],
+                    ['40,500','¥4,050,000','¥209,400','¥0','0%','⚪ 盈亏平衡'],
+                    ['50,000','¥5,000,000','¥258,700','¥44,300','0.89%','🟢 微利'],
+                    ['80,000','¥8,000,000','¥413,600','¥184,600','2.31%','🟢 健康'],
+                    ['100,000','¥10,000,000','¥517,300','¥278,600','2.79%','🟢 良好'],
+                ]
+            ),
+            p('结论：平台需在公测后3个月内达到月均80,000笔交易量（日均约2,667笔），方可进入健康盈利区间（净利率约2.3%）。盈亏平衡点约40,500笔/月（日均约1,350笔）。',{bold:true}),
+            divider(),
+
+            h2('10.4  敏感性分析：城市服务商提成率变动'),
+            dataTable(
+                ['城市服务商提成率','每笔城市服务商收入','平台净利润(50k笔)','城市服务商月收入\n(500单/天)','影响'],
+                [
+                    ['0.5%(降低)','¥0.50','¥44,800','¥7,500','城市服务商动力不足⚠️'],
+                    ['1.0%(当前)','¥1.00','¥44,300','¥15,000','平衡✅'],
+                    ['1.5%(提升)','¥1.50','¥43,800','¥22,500','需从营销池/商家端再腾挪0.5%'],
+                    ['2.0%(提升)','¥2.00','¥43,300','¥30,000','需从营销池/商家端再腾挪1.0%'],
+                ]
+            ),
+            p('结论：当前1%城市服务商提成率是平衡各方利益的最优解。若提升至1.5-2%，需进一步压缩营销池(最低2%)或降低商家分成(市场竞争力下降)。',{bold:true}),
+            divider(),
+            pageBreak(),
+
+            // ===== CHAPTER 11: 合规审查 =====
+            h1('第十一章  合规审查清单'),
+
+            h2('11.1  三大合规红线逐条检查'),
+            dataTable(
+                ['红线','V3.1状态','合规措施','审查结论'],
+                [
+                    ['①积分/消费金\n不可兑现','✅ 合规','代金券/积分/消费金均定义为"消费营销权益"\n三者均不可兑现、不可购买金融产品\n消费金仅限直系亲属间转让','✅ 通过'],
+                    ['②不可形成\n资金池','✅ 合规','全部资金由汇付天下托管\n平台不经手任何消费者资金\n分账指令→汇付执行直清\n风控备用金+营销池均由汇付托管\n城市服务商1%提成由汇付直清','✅ 通过'],
+                    ['③不可承诺\n收益','✅ 合规','代金券="营销优惠"\n积分="会员回馈"\n消费金="消费让利"\n城市服务商="区域服务费"\n推广者佣金="推广服务费"\n无任何"收益/返利/赚钱"暗示','✅ 通过'],
+                ]
+            ),
+            divider(),
+
+            h2('11.2  去金融中心化检查'),
+            dataTable(
+                ['检查项','V3.1实现方式','合规状态'],
+                [
+                    ['平台是否持有消费者资金','否——汇付直清，平台仅传递分账指令','✅'],
+                    ['是否有资金归集账户','否——所有账户均为汇付托管商户号','✅'],
+                    ['是否有"备付金"术语','否——全部替换为"汇付托管账户"','✅'],
+                    ['是否有"金融"暗示','否——术语体系已全面合规化','✅'],
+                    ['充值板块','已取消——余额仅来自历史退款/权益转换','✅'],
+                    ['消费金是否可提现','否——仅限消费核销','✅'],
+                    ['代金券是否可转让','否——仅限本人使用','✅'],
+                    ['积分是否可兑换现金','否——仅限平台内消费抵扣','✅'],
+                    ['风控备用金归属','汇付托管——平台无权单方动用','✅'],
+                    ['营销池归属','汇付托管——按既定规则核销','✅'],
+                    ['🆕城市服务商1%提成','汇付直清至城市服务商户号——平台不截留','✅'],
+                ]
+            ),
+            divider(),
+
+            h2('11.3  禁止传销检查（含三级管理）'),
+            dataTable(
+                ['检查项','V3.1状态','说明'],
+                [
+                    ['是否以发展人员数量计酬','否','推广者佣金基于实际消费额%，非人头费\n城市服务商提成基于区域交易额，非人头费'],
+                    ['是否收取入门费','否','推广者/服务站/城市服务商均免费入驻'],
+                    ['分润层级是否≤3','是','平台→城市服务商→服务站→推广者\n共3层分配(含平台=4节点3层)✅'],
+                    ['是否允许多级抽佣','否','推广者不可发展下级推广者\n服务站不可发展下级服务站\n城市服务商不可发展下级城市服务商'],
+                    ['城市服务商-服务站-推广者\n是否为雇佣/传销','否','三级独立合作关系，非雇佣/传销\n各级收入来源独立、互不侵蚀'],
+                ]
+            ),
+            divider(),
+            pageBreak(),
+
+            // ===== CHAPTER 12: 技术架构与支付体系 =====
+            h1('第十二章  技术架构与支付体系 🆕'),
+            p('链商2.0的技术架构以汇付天下为支付清算核心，以六大系统模块为业务支撑，确保100%去金融中心化、资金不落地、分账全自动。',{bold:true}),
+            divider(),
+
+            h2('12.1  支付基础设施'),
+            dataTable(
+                ['组件','角色','核心功能','合规保障'],
+                [
+                    ['汇付天下','支付收单','微信/支付宝扫码支付收单\n支持汇付收单(0.6%)+余额支付(0.1%)','持牌支付机构·央行监管'],
+                    ['汇付天下','分账清算','接收平台分账指令→实时直清至九方\n平台仅传递指令、不经手资金','汇付直清·平台零经手'],
+                    ['汇付天下','资金托管','营销池+消费金池+风控备用金托管\n平台无权单方动用','独立托管账户体系'],
+                    ['微信商户号','二次提现通道','各方从汇付商户号提现至银行账户\n提现费率0.1%','微信支付标准费率'],
+                ]
+            ),
+            divider(),
+
+            h2('12.2  账户体系架构'),
+            dataTable(
+                ['账户类型','账户主体','资金来源','用途/去向','提现规则'],
+                [
+                    ['消费者数字权益账户','消费者','积分/代金券/消费金发放','消费抵扣/核销','不可提现·仅限消费'],
+                    ['商家结算账户','平台/联盟/商城商家','交易分账(75.4%/71.4%/77.9%)','经营收入','T+1·提现费0.1%'],
+                    ['服务站管理账户','服务站','佣金池×35%管理费','站点运营','T+1·提现费0.1%'],
+                    ['推广者佣金账户','推广者','佣金池×65%佣金','推广收入','T+1·提现费0.1%'],
+                    ['城市服务商提成账户','城市服务商','每笔交易1%提成','区域运营收入','T+1·提现费0.1%'],
+                    ['平台服务费账户','链邦科技','平台服务费(5%-6%)','技术/运营/人员成本','T+1·提现费0.1%'],
+                    ['营销池托管账户','汇付托管','全平台交易3.5%-4%注资','代金券发放与结算','系统内流转·不提现'],
+                    ['消费金池托管账户','汇付托管','全平台交易2%-3%注资','消费金核销结算','系统内流转·不提现'],
+                    ['风控备用金托管账户','汇付托管','全平台交易2%注资','退款/争议/合规赔付','系统内流转·不提现'],
+                ]
+            ),
+            p('关键设计：消费者权益账户(积分/代金券/消费金)与资金账户完全分离——消费者权益为数字权益记录，不可提现、不可购买金融产品。营销池/消费金池/风控备用金为汇付托管账户，平台无权单方动用。',{bold:true}),
+            divider(),
+
+            h2('12.3  核心系统模块'),
+            dataTable(
+                ['系统模块','功能定位','关键能力','优先级'],
+                [
+                    ['千面千店CMS','三级商家页面管理系统','平台商家Premium布局/联盟商家模板选择/综合商城标准化\n品牌色自定义/相册/视频/故事模块','P0·公测必备'],
+                    ['营销池管理系统','三券发行·核销·结算','代金券发放(5%/笔)/积分累计(1:1)/消费金计算(2-3%)\n跨店通兑结算·营销池余额监控·核销率统计','P0·公测必备'],
+                    ['消费权益引擎','消费者数字权益生命周期管理','积分计算/代金券生成/消费金累积\n有效期管理·到期提醒·使用优先级排序','P0·公测必备'],
+                    ['风控合规引擎','交易监控·反欺诈·合规审计','反洗钱(AML)·异常交易检测·资金流向审计\n合规术语自动检测·三条红线实时监控','P1·公测后1月'],
+                    ['三级管理后台','城市服务商/服务站/推广者分级管理','团队管理·业绩看板·佣金结算·考核统计\n城市→服务站→推广者 三级数据权限隔离','P1·公测后1月'],
+                    ['数据分析平台','商家/用户/交易 三方数据分析','商家经营看板·用户行为分析·交易漏斗\n盈亏平衡实时监控·敏感性模拟·KPI仪表盘','P1·公测后2月'],
+                ]
+            ),
+            divider(),
+
+            h2('12.4  资金流转全路径'),
+            p('以下为链商2.0平台核心资金流转路径（三阶段）：'),
+            divider(),
+            h3('阶段1：消费者支付 → 汇付收单 → 实时分账'),
+            flowBox('消费者扫码支付 ¥100 → 汇付天下监管账户 → 扣除渠道费 ¥0.60 → 按分账指令实时直清至九方账户', false),
+            p(''),
+            h3('阶段2：消费者用券 → 营销池结算 → 商家等额到账（跨店通兑核心）'),
+            flowBox('消费者在B店使用A店获得的¥5代金券 → B店扣除¥5 → 营销池向B店结算¥5 → B店收到完整¥100 (¥95现金+¥5营销池)', false),
+            p('关键：汇付直接向接受商家结算，平台不经手券结算资金——跨店通兑不构成二清。',{color:C.GREEN}),
+            p(''),
+            h3('阶段3：各方提现 → 微信商户号 → 银行账户（0.1%成本）'),
+            flowBox('各方从汇付商户号发起提现 → 微信商户号转出 → 到达银行账户（每笔扣0.1%提现费）', false),
+            p(''),
+            dataTable(
+                ['资金类型','是否产生提现成本','资金留存位置','管理方'],
+                [
+                    ['商家经营收入','✅ 是 (0.1%)','商家银行账户','商家自主管理'],
+                    ['平台服务费','✅ 是 (0.1%)','链邦银行账户','链邦财务管理'],
+                    ['服务站/推广者佣金','✅ 是 (0.1%)','个人银行账户','个人自主管理'],
+                    ['城市服务商提成','✅ 是 (0.1%)','城市服务商银行账户','城市服务商自主管理'],
+                    ['消费者权益(三券)','❌ 否','汇付托管·数字权益账户','汇付托管·平台管理规则'],
+                    ['营销池资金','❌ 否','汇付托管·营销池账户','汇付托管·平台按规则使用'],
+                    ['消费金池资金','❌ 否','汇付托管·消费金池账户','汇付托管·消费者权益记录'],
+                    ['风控备用金','❌ 否','汇付托管·风控账户','汇付托管·财务+法务联合审批'],
+                ]
+            ),
+            p('设计原则：消费者权益类资金（数字权益+三池资金）全部留存汇付托管体系内，不产生二次提现成本。经营类资金（商家/平台/服务站/推广者/城市服务商）提现至银行账户时各自承担0.1%提现成本。',{bold:true}),
+            divider(),
+            pageBreak(),
+
+            // ===== CHAPTER 13: KPI Scorecard =====
+            h1('第十三章  关键指标体系（KPI Scorecard）🆕'),
+            p('链商2.0 面向社区商业的数字经营平台——以下KPI体系覆盖商家增长、用户增长、交易指标、营销效率和合规风控五大维度，按优先级P0/P1/P2分级管理。',{bold:true}),
+            divider(),
+
+            h2('13.1  商家增长指标'),
+            dataTable(
+                ['KPI指标','当前目标','公测阶段(6-8月)','增长阶段(9-12月)','成熟阶段(次年)','优先级'],
+                [
+                    ['平台商家入驻数','50家/月','累计50家','累计200家','累计500家','P0'],
+                    ['联盟商家入驻数','200家/月','累计200家','累计800家','累计2,000家','P0'],
+                    ['综合商城SKU','500+','累计500','累计2,000','累计5,000','P1'],
+                    ['商家留存率(90日)','>85%','>80%','>85%','>90%','P0'],
+                    ['商家活跃率(月有交易)','>70%','>60%','>70%','>80%','P0'],
+                ]
+            ),
+            divider(),
+
+            h2('13.2  用户增长指标'),
+            dataTable(
+                ['KPI指标','当前目标','公测阶段','增长阶段','成熟阶段','优先级'],
+                [
+                    ['月活用户(MAU)','50,000+','10,000','50,000','200,000','P0'],
+                    ['注册转化率','>30%','>20%','>30%','>40%','P0'],
+                    ['首单转化率','>50%','>40%','>50%','>60%','P0'],
+                    ['用户留存率(30日)','>60%','>50%','>60%','>70%','P0'],
+                    ['用户月消费频次','3次/月','2次/月','3次/月','4次/月','P1'],
+                ]
+            ),
+            divider(),
+
+            h2('13.3  交易指标'),
+            dataTable(
+                ['KPI指标','当前目标','公测阶段','增长阶段','成熟阶段','优先级'],
+                [
+                    ['月交易笔数','50,000笔','15,000笔','50,000笔','200,000笔','P0'],
+                    ['月GMV','¥5,000,000','¥1,500,000','¥5,000,000','¥20,000,000','P0'],
+                    ['客单价(均单)','¥100','¥100','¥100','¥100','P1'],
+                    ['盈亏平衡点','40,500笔/月','—','40,500笔/月','40,500笔/月','P0'],
+                    ['净利润率','0.89%','亏损期','0.89%','2.79%@100k笔','P0'],
+                    ['毛利率(含二次提现)','4.69%','—','4.69%','5.2%@规模效应','P1'],
+                ]
+            ),
+            divider(),
+
+            h2('13.4  营销效率指标'),
+            dataTable(
+                ['KPI指标','当前目标','行业对标','计算公式','优先级'],
+                [
+                    ['代金券核销率','>40%','美团≈50%','已核销代金券金额/发放总金额','P0'],
+                    ['积分使用率','>30%','京东≈25%','已使用积分/累计积分','P1'],
+                    ['消费金核销率','>35%','—','已核销消费金/累计消费金','P1'],
+                    ['跨店使用率','>25%','—','跨店使用券数/总核销券数','P0🆕'],
+                    ['ROI(营销支出/GMV增量)','>5x','行业3-8x','GMV增量/营销总支出','P1'],
+                    ['消费者权益获得感','≈9%/笔','—','(代金券+积分+消费金)/消费金额','P1'],
+                    ['营销池月度余额','>0 (不亏损)','—','营销池注入-营销池支出','P0'],
+                ]
+            ),
+            divider(),
+
+            h2('13.5  合规风控指标'),
+            dataTable(
+                ['KPI指标','目标值','监控频率','预警阈值','优先级'],
+                [
+                    ['风控备用金充足率','2.00%','日','<1.5%触发预警','P0'],
+                    ['合规术语命中率','0% (零禁用词)','周','>0次即触发整改','P0'],
+                    ['用户投诉率','<0.1%','周','>0.3%触发预警','P0'],
+                    ['资金结算时效','T+1','日','>T+2触发预警','P0'],
+                    ['退款处理时效','<24小时','日','>48小时触发预警','P1'],
+                    ['系统可用率','>99.5%','实时','<99%触发预警','P0'],
+                    ['三方审计通过率','100%','季','任何不通过即整改','P1'],
+                ]
+            ),
+            divider(),
+
+            h2('13.6  KPI综合看板（月度监控）'),
+            p('以下为链商2.0平台月度KPI综合看板——每月5日前更新上月数据，对比目标值进行差异分析。'),
+            divider(),
+            dataTable(
+                ['维度','核心指标','目标值','上月实际','差异','趋势','责任人'],
+                [
+                    ['商家','平台商家入驻数','50家/月','—','—','—','运营部'],
+                    ['商家','联盟商家入驻数','200家/月','—','—','—','运营部'],
+                    ['商家','商家留存率','>85%','—','—','—','运营部'],
+                    ['用户','月活用户(MAU)','50,000','—','—','—','增长部'],
+                    ['用户','注册转化率','>30%','—','—','—','增长部'],
+                    ['用户','用户留存率(30日)','>60%','—','—','—','增长部'],
+                    ['交易','月交易笔数','50,000笔','—','—','—','运营部'],
+                    ['交易','月GMV','¥5,000,000','—','—','—','财务部'],
+                    ['交易','净利润率','0.89%','—','—','—','财务部'],
+                    ['营销','代金券核销率','>40%','—','—','—','品牌部'],
+                    ['营销','跨店使用率','>25%','—','—','—','品牌部'],
+                    ['合规','合规术语命中率','0%','—','—','—','法务部'],
+                    ['合规','用户投诉率','<0.1%','—','—','—','客服部'],
+                    ['合规','系统可用率','>99.5%','—','—','—','技术部'],
+                ]
+            ),
+            divider(),
+            pageBreak(),
+
+            // ===== APPENDICES =====
+            h1('附录A  术语规范（V3.2全面合规版）'),
+            dataTable(
+                ['禁用术语','合规替代术语','适用范围','合规依据'],
+                [
+                    ['备付金','汇付托管账户','全部文档','避免与央行备付金混淆'],
+                    ['链商金融','链商平台服务','全部文档','去除"金融"暗示'],
+                    ['消费福利','消费让利','全部文档','"福利"可能被误解为固定承诺'],
+                    ['分润','分账/服务费分配','全部文档','"分润"可能涉嫌收益承诺'],
+                    ['数字资产','消费权益/会员权益','全部文档','"资产"暗示所有权和可交易性'],
+                    ['数字信用债券','商家营销额度','全部文档','"债券"受《证券法》监管'],
+                    ['资产增值','权益升级','全部文档','"增值"暗示投资回报'],
+                    ['消费信用分','消费活跃度指数','全部文档','"信用分"由央行征信中心专属'],
+                    ['生态贡献值','会员成长值','全部文档','"贡献"暗示经济回报'],
+                    ['城市代理费','城市服务商区域服务费','全部文档','"代理费"可能被误解为入门费'],
+                    ['代金券','代金券','全部文档','✅ 合规——标准营销术语'],
+                    ['积分','积分','全部文档','✅ 合规——通用会员回馈术语'],
+                    ['消费金','消费金','全部文档','✅ 合规——预充值消费权益'],
+                    ['🆕城市服务商','城市服务商(区域合伙人)','全部文档','✅ 合规——区域技术服务合作'],
+                ]
+            ),
+            divider(),
+
+            h1('附录B  参数调整记录表'),
+            dataTable(
+                ['日期','版本','调整内容','调整原因','审批人'],
+                [
+                    ['2026/6/3','V1.0','初始分析：12子模型还原+12问题识别','模型分析','梁君衡'],
+                    ['2026/6/4','V2.0','取消充值+汇付直清+六方分配+渠道成本','6/4会议共识','待确认'],
+                    ['2026/6/4','V3.0','9场景+三元营销体系+服务站管理关系+风控备用金','深化合规设计','待确认'],
+                    ['2026/6/5','V3.1','🆕城市服务商1%提成+二次提现成本核算+九方利益分配+三级管理体系','完善区域管理层级','待确认'],
+                    ['','','','',''],
+                ]
+            ),
+            divider(),
+
+            h1('附录C  风控备用金使用规则'),
+            dataTable(
+                ['使用场景','触发条件','审批流程','上限'],
+                [
+                    ['消费者退款','消费者申请退款→商家确认/平台裁定','系统自动执行(已确认退款)','单笔退款全额'],
+                    ['消费争议赔付','平台裁定商家责任→消费者应获赔付','运营审核→主管审批→风控放款','单笔≤¥5,000'],
+                    ['商家违规罚款','商家违反平台规则→按规则罚款','运营审核→法务确认→风控执行','按规则约定'],
+                    ['系统异常赔付','平台系统故障导致消费者/商家损失','技术确认→运营评估→主管审批→风控放款','单笔≤¥10,000'],
+                    ['不可抗力','自然灾害/政策变化等不可抗力','管理层集体审批','一事一议'],
+                ]
+            ),
+            p('风控备用金按月审计，余额超出月交易额5%的部分可释放至营销池。审计由财务+法务联合执行。',{color:C.GRAY}),
+            divider(),
+
+            h1('附录D  🆕城市服务商合作协议要点'),
+            calloutBox('城市服务商（区域合伙人）核心条款', [
+                '合作性质：技术服务与市场推广合作（非雇佣、非加盟、非代理）',
+                '授权范围：单一城市/区域的非独家市场推广授权——平台保留在该城市发展其他服务商的权利',
+                '收入模式：区域内所有交易额的1%作为区域服务费——由汇付按分账指令自动结算至城市服务商户号',
+                '结算周期：T+1自动结算——城市服务商可随时提现至银行账户（二次提现成本0.1%自担）',
+                '考核指标：月度最低GMV目标、服务站招募数量、推广者活跃度——连续3月不达标可解除合作',
+                '禁止行为：不可跨区经营、不可发展下级城市服务商、不可以平台名义收取商家费用、不可承诺收益',
+                '合规义务：遵守《禁止传销条例》、遵守《电子商务法》、遵守平台合规红线——违规即解除合作',
+                '合同期限：1年一签——期满可续约——提前30天通知解约',
+                '退出机制：合作解除后，已结算收入不追回——未结算部分正常结算——不产生任何"回购"或"退款"义务',
+            ]),
+            divider(),
+            divider(),
+
+            new Paragraph({children:[new TextRun({text:'—— 文档结束 ——',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:200}}),
+            new Paragraph({children:[new TextRun({text:'本报告为链商2.0·链生活品牌 V3.2 分润核销模型（跨店通兑版），链商2.0定位：面向社区商业的数字经营平台——商户独立经营·生态会员互通·消费权益流转·真实交易激励。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'所有分配比例均为建议值，可根据实际运营数据调优。任何参数调整需经运营提案→品牌评估→技术确认→法务审核→管理层审批。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'V3.1新增城市服务商1%提成（区域合伙人），形成城市服务商→服务站→推广者三级管理体系。代金券/积分/消费金均不可兑现，严守三条合规红线。',size:16,font:'微软雅黑',color:C.RED})],alignment:AlignmentType.CENTER}),
+
+        ]} // end children
+    ]} // end sections
+); // end Document
+
+// ========== GENERATE ==========
+Packer.toBuffer(doc).then(function(buf) {
+    fs.writeFileSync(outFile, buf);
+    console.log('✅ 生成完成: ' + outFile);
+    console.log('   文件大小: ' + (buf.length / 1024).toFixed(0) + ' KB');
+    console.log('');
+    console.log('📋 V3.2 文档结构（13章+6附录）：');
+    console.log('   第一章  模型总纲与核心变更（V1→V2→V3→V3.1→V3.2演进 + 1.4链商2.0五大升级🆕 + 三级管理体系总览）');
+    console.log('   第二章  三大支付方式与资金路径（汇付/余额/消费金核销 + 九方分账表）');
+    console.log('   第三章  代金券·积分·消费金 三元营销体系（含跨店通用权益结算机制🆕）');
+    console.log('   第四章  九场景详细分账模型（含城市服务商1% + 二次提现后到手金额）');
+    console.log('   第五章  九场景横比 + 城市服务商收入一览 + 消费者权益一览');
+    console.log('   第六章  城市服务商→服务站→推广者 三级管理体系');
+    console.log('   第七章  九方利益关系总图（含二次提现后实际到手）');
+    console.log('   第八章  平台经营指标体系（含二次提现成本 + 月度盈亏 + 盈亏平衡 + 综合看板）');
+    console.log('   第九章  二次支付提现渠道成本独立核算');
+    console.log('   第十章  参数调优与敏感性分析（费率±1% + 交易量变动 + 城市服务商提成率变动）');
+    console.log('   第十一章 合规审查（3红线+11项去金融化+5项禁止传销+跨店通兑不构成二清🆕）');
+    console.log('   第十二章 技术架构与支付体系 🆕（支付基础设施+账户体系+6大系统模块+资金流转3阶段）');
+    console.log('   第十三章 关键指标体系 KPI Scorecard 🆕（5大维度34项KPI+月度综合看板）');
+    console.log('   附录A  术语规范（14项禁用→合规替换 V3.2版）');
+    console.log('   附录B  参数调整记录');
+    console.log('   附录C  风控备用金使用规则');
+    console.log('   附录D  城市服务商合作协议要点');
+    console.log('   附录E  千面千店页面设计规范 🆕（三级页面标准+软性优先级+品牌统一中的差异化）');
+    console.log('   附录F  交易即分润原则 🆕（三方利益关系+消费时序引导+可持续商业模型）');
+    console.log('');
+    console.log('🔑 V3.2 vs V3.1 关键差异（链商2.0定位升级）：');
+    console.log('   ★ 定位升级：链商2.0——面向社区商业的数字经营平台');
+    console.log('   ★ 四大核心机制：商户独立经营·生态会员互通·消费权益流转·真实交易激励');
+    console.log('   ★ 跨店通用权益结算：代金券/积分/消费金全平台通用（V3.2核心升级）');
+    console.log('   ★ 千面千店页面设计规范：平台(精品)+联盟(标准)+商城(极简) 三级差异化');
+    console.log('   ★ 交易即分润原则正式确立：零固定费用·零预充值·零资金占用');
+    console.log('   ★ 消费流转体系：平台商家→联盟商家→综合商城 软性引导');
+    console.log('   ★ 全生态会员权益互通体系：一次消费、全平台受益');
+    console.log('   ★ 核心分账参数100%不变——仅新增文档化与品牌叙事');
+}).catch(function(e) { console.error(e); });
