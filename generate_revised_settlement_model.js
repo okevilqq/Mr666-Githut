@@ -1,70 +1,17 @@
-const docx = require('docx');
 const fs = require('fs');
 const path = require('path');
-
-const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak } = docx;
-
-const C = {
-    MAIN:'#1A5276', DARK:'#2C3E50', LIGHT:'#EBF5FB', WHITE:'#FFFFFF',
-    BLACK:'#333333', GRAY:'#7F8C8D', RED:'#C0392B', GREEN:'#1E8449',
-    ORANGE:'#E67E22', HEADER:'#1a1a2e', YELLOW:'#F39C12',
-};
+const {
+    docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+    WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
+    C, h1, h2, h3, p, b, n, divider, pageBreak,
+    dataTable, infoTable, flowBox, calloutBox, redline, greenCheck,
+    fmt, pct,
+} = require('./lib/docx-helpers');
 
 const outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理');
 const outFile = path.join(outDir, '链商平台_修订版分润核销模型_V2.0.docx');
 
-// ========== HELPERS ==========
-function h1(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_1, spacing:{before:400,after:200}, border:{bottom:{style:BorderStyle.SINGLE,size:2,color:C.MAIN}} }); }
-function h2(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_2, spacing:{before:300,after:150} }); }
-function h3(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_3, spacing:{before:200,after:100} }); }
-function p(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:t,size:21,font:'微软雅黑',...o})], spacing:{after:80,line:360} }); }
-function b(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:'  • '+t,size:21,font:'微软雅黑',...o})], spacing:{after:60,line:340}, indent:{left:600} }); }
-function n(i,t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:i+'. '+t,size:21,font:'微软雅黑',...o})], spacing:{after:60,line:340}, indent:{left:600} }); }
-function divider() { return new Paragraph({spacing:{after:200},children:[]}); }
-function pageBreak() { return new Paragraph({children:[new PageBreak()]}); }
-
-function infoTable(rows) {
-    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:rows.map(function(kv){return new TableRow({children:[
-        new TableCell({width:{size:18,type:WidthType.PERCENTAGE},shading:{fill:C.LIGHT},children:[new Paragraph({children:[new TextRun({text:kv[0],size:20,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.RIGHT,spacing:{before:30,after:30}})]}),
-        new TableCell({width:{size:82,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:kv[1],size:20,font:'微软雅黑'})],spacing:{before:30,after:30}})]}),
-    ]})})});
-}
-
-function dataTable(headers, rows, opts) {
-    opts = opts || {};
-    var hdrRow = new TableRow({children: headers.map(function(h){return new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:opts.small?17:19,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]})})});
-    var dataRows = rows.map(function(r,i){return new TableRow({children: r.map(function(c){return new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:String(c||'—'),size:opts.small?16:18,font:'微软雅黑'})],spacing:{before:15,after:15}})]})})})});
-    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[hdrRow].concat(dataRows)});
-}
-
-function flowBox(text, isRed) {
-    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
-        new TableRow({children:[new TableCell({shading:{fill:isRed?'#FFF5F5':C.LIGHT},children:[new Paragraph({children:[new TextRun({text:text,size:18,font:'微软雅黑',bold:isRed,color:isRed?C.RED:C.DARK})],spacing:{before:15,after:15},alignment:AlignmentType.CENTER})],border:{top:{style:BorderStyle.SINGLE,size:1,color:isRed?C.RED:C.MAIN},bottom:{style:BorderStyle.SINGLE,size:1,color:isRed?C.RED:C.MAIN}}})]}),
-    ]});
-}
-
-function calloutBox(title, content, color) {
-    var paras = [new Paragraph({children:[new TextRun({text:title,size:19,font:'微软雅黑',bold:true,color:C.MAIN})],spacing:{before:15,after:5}})];
-    for (var i = 0; i < content.length; i++) {
-        paras.push(new Paragraph({children:[new TextRun({text:'  '+content[i],size:18,font:'微软雅黑'})],spacing:{after:4}}));
-    }
-    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
-        new TableRow({children:[new TableCell({
-            shading:{fill:color||C.LIGHT},
-            children: paras,
-            border:{left:{style:BorderStyle.SINGLE,size:4,color:C.MAIN,space:6}},
-            spacing:{before:15,after:15}
-        })]})
-    ]});
-}
-
-function redline(text) {
-    return new Paragraph({
-        children:[new TextRun({text:'⛔ '+text,size:21,font:'微软雅黑',bold:true,color:C.RED})],
-        spacing:{after:80,line:360}, indent:{left:300},
-        border:{left:{style:BorderStyle.SINGLE,size:6,color:C.RED,space:8}},
-    });
-}
+// ========== HELPERS (imported from lib/docx-helpers.js) ==========
 
 // ========== MODEL PARAMETERS ==========
 // Payment channel cost (WeChat/Alipay standard rate)
@@ -115,8 +62,6 @@ function calc(ratios) {
     }
     return result;
 }
-
-function fmt(yuan) { return '¥' + yuan.toFixed(2); }
 
 var platCalc = calc(PLATFORM_RATIOS);
 var allianceCalc = calc(ALLIANCE_RATIOS);

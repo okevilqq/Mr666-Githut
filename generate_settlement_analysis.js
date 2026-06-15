@@ -1,43 +1,22 @@
-const docx = require('docx');
 const fs = require('fs');
 const path = require('path');
+const {
+    docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+    WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
+    C, h1, h2, h3, p, b, n, divider, pageBreak,
+    dataTable, infoTable, flowBox, calloutBox, redline, greenCheck,
+    fmt, pct,
+} = require('./lib/docx-helpers');
 
-const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak } = docx;
-
-const C = {
-    MAIN:'#1A5276', DARK:'#2C3E50', LIGHT:'#EBF5FB', WHITE:'#FFFFFF',
-    BLACK:'#333333', GRAY:'#7F8C8D', RED:'#C0392B', GREEN:'#1E8449',
-    ORANGE:'#E67E22', HEADER:'#1a1a2e', YELLOW:'#F39C12',
-    P0:'#C0392B', P1:'#E67E22', P2:'#F39C12',
-};
+// Extend C with script-specific severity colors
+C.P0 = '#C0392B'; C.P1 = '#E67E22'; C.P2 = '#F39C12';
 
 const outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理');
 const outFile = path.join(outDir, '链商平台_分账与核销模型分析报告_V1.0.docx');
 
-// ========== HELPERS ==========
-function h1(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_1, spacing:{before:400,after:200}, border:{bottom:{style:BorderStyle.SINGLE,size:2,color:C.MAIN}} }); }
-function h2(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_2, spacing:{before:300,after:150} }); }
-function h3(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_3, spacing:{before:200,after:100} }); }
-function p(t,o={}) { return new Paragraph({ children:[new TextRun({text:t,size:21,font:'微软雅黑',...o})], spacing:{after:80,line:360} }); }
-function b(t,o={}) { return new Paragraph({ children:[new TextRun({text:'  • '+t,size:21,font:'微软雅黑',...o})], spacing:{after:60,line:340}, indent:{left:600} }); }
-function n(i,t,o={}) { return new Paragraph({ children:[new TextRun({text:`${i}. ${t}`,size:21,font:'微软雅黑',...o})], spacing:{after:60,line:340}, indent:{left:600} }); }
-function divider() { return new Paragraph({spacing:{after:200},children:[]}); }
-function pageBreak() { return new Paragraph({children:[new PageBreak()]}); }
+// ========== HELPERS (common helpers from lib/docx-helpers.js) ==========
 
-function infoTable(rows) {
-    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:rows.map(([l,v])=>new TableRow({children:[
-        new TableCell({width:{size:18,type:WidthType.PERCENTAGE},shading:{fill:C.LIGHT},children:[new Paragraph({children:[new TextRun({text:l,size:20,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.RIGHT,spacing:{before:30,after:30}})]}),
-        new TableCell({width:{size:82,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:v,size:20,font:'微软雅黑'})],spacing:{before:30,after:30}})]}),
-    ]}))});
-}
-
-function dataTable(headers, rows, opts={}) {
-    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
-        new TableRow({children:headers.map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:opts.small?17:19,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}))}),
-        ...rows.map((r,i)=>new TableRow({children:r.map(c=>new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:String(c||'—'),size:opts.small?16:18,font:'微软雅黑'})],spacing:{before:15,after:15}})]}))})),
-    ]});
-}
-
+// Script-specific helpers:
 function thCell(w, txt) {
     return new TableCell({
         width: {size: w, type: WidthType.PERCENTAGE},
@@ -83,33 +62,10 @@ function buildIssueTable(headers, issues) {
     return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[hdrRow].concat(dataRows)});
 }
 
-function flowBox(text, isRed) {
-    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
-        new TableRow({children:[new TableCell({shading:{fill:isRed?'#FFF5F5':C.LIGHT},children:[new Paragraph({children:[new TextRun({text:text,size:18,font:'微软雅黑',bold:isRed,color:isRed?C.RED:C.DARK})],spacing:{before:15,after:15},alignment:AlignmentType.CENTER})],border:{top:{style:BorderStyle.SINGLE,size:1,color:isRed?C.RED:C.MAIN},bottom:{style:BorderStyle.SINGLE,size:1,color:isRed?C.RED:C.MAIN}}})]}),
-    ]});
-}
-
 function recTable(headers, rows) {
     return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
         new TableRow({children:headers.map(h=>new TableCell({shading:{fill:C.MAIN},children:[new Paragraph({children:[new TextRun({text:h,size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}))}),
         ...rows.map((r,i)=>new TableRow({children:r.map(c=>new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:String(c||'—'),size:17,font:'微软雅黑'})],spacing:{before:12,after:12}})]}))})),
-    ]});
-}
-
-function redline(text) {
-    return new Paragraph({
-        children:[new TextRun({text:'⛔ '+text,size:21,font:'微软雅黑',bold:true,color:C.RED})],
-        spacing:{after:80,line:360}, indent:{left:300},
-        border:{left:{style:BorderStyle.SINGLE,size:6,color:C.RED,space:8}},
-    });
-}
-
-function calloutBox(title, content, color) {
-    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
-        new TableRow({children:[new TableCell({shading:{fill:color||C.LIGHT},children:[
-            new Paragraph({children:[new TextRun({text:title,size:19,font:'微软雅黑',bold:true,color:C.MAIN})],spacing:{before:15,after:5}}),
-            ...content.map(c=>new Paragraph({children:[new TextRun({text:'  '+c,size:18,font:'微软雅黑'})],spacing:{after:4}})),
-        ],border:{left:{style:BorderStyle.SINGLE,size:4,color:C.MAIN,space:6}},spacing:{before:15,after:15}})]}),
     ]});
 }
 
