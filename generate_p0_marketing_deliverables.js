@@ -3,8 +3,18 @@ const path = require('path');
 const {
     docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak, Header, Footer,
-    C, h1, h2, h3, p, b, n, divider, pageBreak, dataTable, calloutInline,
+    C, h1, h2, h3, p, b, n, divider, pageBreak, dataTable, calloutInline, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 // C extensions
 C.LIGHTGRAY = '#F5F6FA';
@@ -19,8 +29,8 @@ const calloutBox = calloutInline;
 function quoteBlock(text, attribution) {
     return new Paragraph({
         children: [
-            new TextRun({ text: `"${text}"`, size: 24, font: '微软雅黑', italics: true, color: C.MAIN }),
-            attribution ? new TextRun({ text: `\n—— ${attribution}`, size: 18, font: '微软雅黑', color: C.GRAY }) : new TextRun({ text: '' })
+            new TextRun({ text: `"${text}"`, size: 24, font:FONT.body, italics: true, color: C.MAIN }),
+            attribution ? new TextRun({ text: `\n—— ${attribution}`, size: 18, font:FONT.body, color: C.GRAY }) : new TextRun({ text: '' })
         ],
         spacing: { before: 120, after: 120 }, indent: { left: 800, right: 800 },
         border: { left: { style: BorderStyle.SINGLE, size: 3, color: C.ORANGE } }
@@ -29,7 +39,7 @@ function quoteBlock(text, attribution) {
 
 function tagBox(tags) {
     return new Paragraph({
-        children: tags.map(t => new TextRun({ text: ` ${t} `, size: 18, font: '微软雅黑', bold: true, color: C.WHITE })),
+        children: tags.map(t => new TextRun({ text: ` ${t} `, size: 18, font:FONT.body, bold: true, color: C.WHITE })),
         spacing: { after: 60 }
     });
 }
@@ -41,7 +51,7 @@ function storyStep(num, title, body, emotion) {
     ];
     if (emotion) {
         items.push(new Paragraph({
-            children: [new TextRun({ text: '💭 ' + emotion, size: 18, font: '微软雅黑', italics: true, color: C.ORANGE })],
+            children: [new TextRun({ text: '💭 ' + emotion, size: 18, font:FONT.body, italics: true, color: C.ORANGE })],
             spacing: { after: 80 }, indent: { left: 400 }
         }));
     } else {
@@ -60,10 +70,10 @@ if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true });
 function buildBrandAnchorChapter() {
     return [
         // Cover
-        new Paragraph({ children: [new TextRun({ text: '链商2.0 · 链生活品牌', size: 36, font: '微软雅黑', bold: true, color: C.MAIN })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
-        new Paragraph({ children: [new TextRun({ text: 'P0 紧急营销交付物', size: 28, font: '微软雅黑', bold: true, color: C.ORANGE })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
-        new Paragraph({ children: [new TextRun({ text: '品牌锚点 + 跨店通兑用户故事 + 公测落地页策略', size: 20, font: '微软雅黑', color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
-        new Paragraph({ children: [new TextRun({ text: '编制：梁君衡 | 2026年6月8日 | 公测倒计时4天 | 机密文件', size: 18, font: '微软雅黑', color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+        new Paragraph({ children: [new TextRun({ text: '链商2.0 · 链生活品牌', size: 36, font:FONT.body, bold: true, color: C.MAIN })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
+        new Paragraph({ children: [new TextRun({ text: 'P0 紧急营销交付物', size: 28, font:FONT.body, bold: true, color: C.ORANGE })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
+        new Paragraph({ children: [new TextRun({ text: '品牌锚点 + 跨店通兑用户故事 + 公测落地页策略', size: 20, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+        new Paragraph({ children: [new TextRun({ text: '编制：梁君衡 | 2026年6月8日 | 公测倒计时4天 | 机密文件', size: 18, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
         divider(),
 
         calloutBox('P0 紧急背景：距离6/12公测仅剩4天。当前品牌一句话介绍过长（75+字）、缺少跨店通兑的消费者故事、尚无公测落地页文案。以下三份交付物直接解决这三个阻断性问题。', 'danger'),
@@ -216,16 +226,16 @@ function buildBrandAnchorChapter() {
 
         h3('1. 午间·平台商家A「老广州茶楼」消费 ¥120'),
         p('小陈和家人在社区附近的“老广州茶楼”（平台商家·品牌认证蓝标）吃午茶。在链商APP上看到该店在搜索第一位（搜索加权+2），点进去——店铺页面像品牌官网一样精致（千面千店·Premium Layout），有完整的菜单、故事、环境照片。小陈下单 ¥120，使用汇付支付。'),
-        new Paragraph({ children: [new TextRun({ text: '💭 这店在链商上比美团好看多了，跟官网似的。', size: 18, font: '微软雅黑', italics: true, color: C.ORANGE })], spacing: { after: 80 }, indent: { left: 400 } }),
+        new Paragraph({ children: [new TextRun({ text: '💭 这店在链商上比美团好看多了，跟官网似的。', size: 18, font:FONT.body, italics: true, color: C.ORANGE })], spacing: { after: 80 }, indent: { left: 400 } }),
         h3('2. 付款后·获得消费权益'),
         p('付款完成后，小陈的链商APP弹出提示：“🎉 本次消费获得：代金券 ¥6（全城通用）+ 积分 120 + 消费金 ¥12”。小陈注意到一个细节——代金券下面写着“全城任意商家可用”，而不是像美团那样“仅限本店使用”。'),
-        new Paragraph({ children: [new TextRun({ text: '💭 等等，这个券“全城通用”？不是在茶楼才能用？', size: 18, font: '微软雅黑', italics: true, color: C.ORANGE })], spacing: { after: 80 }, indent: { left: 400 } }),
+        new Paragraph({ children: [new TextRun({ text: '💭 等等，这个券“全城通用”？不是在茶楼才能用？', size: 18, font:FONT.body, italics: true, color: C.ORANGE })], spacing: { after: 80 }, indent: { left: 400 } }),
         h3('3. 下午·联盟商家B「邻里鲜果坊」消费 ¥80'),
         p('下午路过社区另一条街，小陈想买水果。打开链商APP搜索“水果”，“邻里鲜果坊”（联盟商家·社区好店绿标）排在结果页。选中 ¥80 的水果，结算时系统自动提示：“可使用「老广州茶楼」消费获得的 ¥6 代金券”，小陈点击使用，实付 ¥74。'),
-        new Paragraph({ children: [new TextRun({ text: '💭 哇，中午吃茶楼得的券，下午买水果真的能用！——这才是“消费有回响”。', size: 18, font: '微软雅黑', italics: true, color: C.ORANGE })], spacing: { after: 80 }, indent: { left: 400 } }),
+        new Paragraph({ children: [new TextRun({ text: '💭 哇，中午吃茶楼得的券，下午买水果真的能用！——这才是“消费有回响”。', size: 18, font:FONT.body, italics: true, color: C.ORANGE })], spacing: { after: 80 }, indent: { left: 400 } }),
         h3('4. 傍晚·综合商城C「优选生活馆」网购 ¥200'),
         p('晚上在家，小陈想买一些居家用品。链商APP切换到综合商城，“优选生活馆”（平台自营灰标）展示标准化商品。选购 ¥200 家居用品，结算时系统提示可用的消费权益：代金券余额 ¥0（已用）+ 积分可抵扣 ¥40（20%上限）+ 消费金可抵扣 ¥60（30%上限）。小陈使用积分抵扣，实付 ¥160。'),
-        new Paragraph({ children: [new TextRun({ text: '💭 中午茶楼→下午水果→晚上家居——一次消费，整整一天都在受益。', size: 18, font: '微软雅黑', italics: true, color: C.ORANGE })], spacing: { after: 80 }, indent: { left: 400 } }),
+        new Paragraph({ children: [new TextRun({ text: '💭 中午茶楼→下午水果→晚上家居——一次消费，整整一天都在受益。', size: 18, font:FONT.body, italics: true, color: C.ORANGE })], spacing: { after: 80 }, indent: { left: 400 } }),
 
         divider(),
         h3('故事的"Aha Moment"'),
@@ -496,7 +506,7 @@ function buildBrandAnchorChapter() {
             ['角色', '定位', '收入来源', '预期月收入'],
             [
                 ['推广者', '一线推广——商家拓展+用户拉新', '佣金池65%（按交易计）', '灵活副业·多劳多得'],
-                ['服务站', '社区实体节点——线下触达+服务', '佣金池35%', '社区资源变现·稳定'],
+                ['服务站', '社区实体节点——线下触达+服务', '佣金池35%', '社区资源转化·稳定'],
                 ['城市服务商', '区域合伙人——招商+运营+服务', '城市级交易额1%', '长期区域经营收益'],
             ]
         ),
@@ -586,36 +596,19 @@ function buildBrandAnchorChapter() {
         calloutBox('建议：品牌主Slogan选「消费有回响」· 消费者端公测期选「消费不浪费，笔笔有回响」· 商户端功能表达选「全城一券通」· 社区地推场景选「小店大权益」。四个场景四个锚点，但共享"回响"核心关键词。', 'success'),
 
         divider(),
-        new Paragraph({ children: [new TextRun({ text: '— 文档结束 —', size: 18, font: '微软雅黑', color: C.GRAY, italics: true })], alignment: AlignmentType.CENTER, spacing: { before: 300 } }),
+        new Paragraph({ children: [new TextRun({ text: '— 文档结束 —', size: 18, font:FONT.body, color: C.GRAY, italics: true })], alignment: AlignmentType.CENTER, spacing: { before: 300 } }),
     ];
 }
 
 // ══════════════════════════════════════════════════════════════════
 // BUILD DOCUMENT
 // ══════════════════════════════════════════════════════════════════
-const doc = new Document({
-    properties: {
-        title: '链商2.0 P0紧急营销交付物 — 品牌锚点+跨店通兑用户故事+公测落地页策略',
-        creator: '梁君衡',
-        description: '公测倒计时4天P0紧急交付：品牌锚点5选1方案、跨店通兑消费者故事（小陈的一天）、三端公测落地页文案（C+B+P）、倒计时行动清单。'
-    },
-    styles: {
-        default: { document: { run: { size: 21, font: '微软雅黑' } } }
-    },
-    sections: [{
-        properties: {
-            page: {
-                margin: { top: 1200, bottom: 1200, left: 1100, right: 1100 }
-            }
-        },
-        children: buildBrandAnchorChapter()
-    }]
-});
-
-// ── Output ──
 const outPath = path.join(OUT, '链商平台_P0紧急营销交付物_品牌锚点+用户故事+公测LP.docx');
-Packer.toBuffer(doc).then(buf => {
-    fs.writeFileSync(outPath, buf);
+
+buildAndWrite(buildBrandAnchorChapter(), outPath, {
+    title: '链商2.0 P0紧急营销交付物 — 品牌锚点+跨店通兑用户故事+公测落地页策略',
+    margins: { top: 1200, bottom: 1200, left: 1100, right: 1100 }
+}).then(outPath => {
     console.log(`✅ 已生成: ${outPath}`);
     console.log(`   包含: 品牌锚点5选1 + 跨店通兑用户故事"小陈的一天" + 三端公测LP文案 + 倒计时行动清单`);
 }).catch(err => console.error('生成失败:', err));

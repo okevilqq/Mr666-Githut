@@ -3,8 +3,18 @@ const path = require('path');
 const {
     docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
-    C, h1, h2, h3, p, b, n, divider, dataTable, infoTable, redline,
+    C, h1, h2, h3, p, b, n, divider, dataTable, infoTable, redline, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 // ========== SCRIPT-SPECIFIC HELPERS ==========
 
@@ -13,26 +23,22 @@ function risk(type,title,level,law,desc,action) {
     return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
         new TableRow({children:[
             new TableCell({width:{size:8,type:WidthType.PERCENTAGE},shading:{fill:levelColor},children:[new Paragraph({children:[new TextRun({text:level.split(' ')[0],size:20})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
-            new TableCell({width:{size:22,type:WidthType.PERCENTAGE},shading:{fill:C.LIGHT},children:[new Paragraph({children:[new TextRun({text:title,size:19,font:'微软雅黑',bold:true})],spacing:{before:30,after:30}})]}),
+            new TableCell({width:{size:22,type:WidthType.PERCENTAGE},shading:{fill:C.LIGHT},children:[new Paragraph({children:[new TextRun({text:title,size:19,font:FONT.body,bold:true})],spacing:{before:30,after:30}})]}),
             new TableCell({width:{size:70,type:WidthType.PERCENTAGE},children:[
-                new Paragraph({children:[new TextRun({text:'风险点：'+desc,size:19,font:'微软雅黑'})],spacing:{before:15,after:6}}),
-                new Paragraph({children:[new TextRun({text:'法律依据：'+law,size:18,font:'微软雅黑',color:C.GRAY})],spacing:{after:6}}),
-                new Paragraph({children:[new TextRun({text:'✅ 合规方案：'+action,size:19,font:'微软雅黑',color:C.GREEN})],spacing:{after:15}}),
+                new Paragraph({children:[new TextRun({text:'风险点：'+desc,size:19,font:FONT.body})],spacing:{before:15,after:6}}),
+                new Paragraph({children:[new TextRun({text:'法律依据：'+law,size:18,font:FONT.body,color:C.GRAY})],spacing:{after:6}}),
+                new Paragraph({children:[new TextRun({text:'✅ 合规方案：'+action,size:19,font:FONT.body,color:C.GREEN})],spacing:{after:15}}),
             ]}),
         ]}),
     ]});
 }
 // ============================================================
-const doc = new Document({
-    styles:{default:{document:{run:{font:'微软雅黑',size:21}}}},
-    sections:[{
-        properties:{page:{margin:{top:1440,bottom:1440,left:1440,right:1440}}},
-        children:[
+var children = [
 
             // === COVER ===
-            new Paragraph({children:[new TextRun({text:'链商平台 · 链生活品牌',size:28,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'品牌策划工作 法律合规框架',size:38,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'—— 所有商业模型推演的法律边界与合规基准 ——',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+            new Paragraph({children:[new TextRun({text:'链商平台 · 链生活品牌',size:28,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'品牌策划工作 法律合规框架',size:38,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'—— 所有商业模型推演的法律边界与合规基准 ——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
             infoTable([
                 ['文档性质','法律合规基准文件 · 所有品牌策划工作的前置审查依据'],
                 ['文档版本','V1.0'],
@@ -315,18 +321,15 @@ const doc = new Document({
             p('所有品牌策划工作，须在此框架内推演。任何突破框架的"创新"，须先获得法务部书面合规确认，方可继续。'),
             divider(),
 
-            new Paragraph({children:[new TextRun({text:'— 合规框架完 —',size:20,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:400}}),
-            new Paragraph({children:[new TextRun({text:'编制：梁君衡（企业宣传部） | 2026年6月2日 | 链邦科技',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{before:100}}),
-            new Paragraph({children:[new TextRun({text:'本文件为策划部门的合规自查框架，不构成正式法律意见。所有涉及法律判断的事项，以法务部/合规部的正式意见为准。',size:16,font:'微软雅黑',color:C.RED})],alignment:AlignmentType.CENTER,spacing:{before:100}}),
-        ],
-    }],
-});
+            new Paragraph({children:[new TextRun({text:'— 合规框架完 —',size:20,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:400}}),
+            new Paragraph({children:[new TextRun({text:'编制：梁君衡（企业宣传部） | 2026年6月2日 | 链邦科技',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{before:100}}),
+            new Paragraph({children:[new TextRun({text:'本文件为策划部门的合规自查框架，不构成正式法律意见。所有涉及法律判断的事项，以法务部/合规部的正式意见为准。',size:16,font:FONT.body,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{before:100}}),
+];
 
 async function main() {
-    const buffer = await Packer.toBuffer(doc);
     const outPath = path.join(__dirname,'20260602 链商平台 技术部会议整理','链商平台_品牌策划工作_法律合规框架.docx');
-    fs.writeFileSync(outPath,buffer);
-    console.log('✅ 合规框架已生成: '+outPath);
+    var resultPath = await buildAndWrite(children, outPath, { title: '链商平台 品牌策划工作 法律合规框架' });
+    console.log('✅ 合规框架已生成: '+resultPath);
     console.log('');
     console.log('📋 文档结构：');
     console.log('   第一章 总则（法律法规清单9大领域）');

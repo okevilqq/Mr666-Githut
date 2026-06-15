@@ -5,8 +5,18 @@ const {
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
     C, h1, h2, h3, p, b, n, divider, pageBreak,
     dataTable, infoTable, flowBox, calloutBox, redline, greenCheck,
-    fmt, pct,
+    fmt, pct, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 // Extend C with script-specific severity colors
 C.P0 = '#C0392B'; C.P1 = '#E67E22'; C.P2 = '#F39C12';
@@ -22,7 +32,7 @@ function thCell(w, txt) {
         width: {size: w, type: WidthType.PERCENTAGE},
         shading: {fill: C.HEADER},
         children: [new Paragraph({
-            children: [new TextRun({text: txt, size: 16, font: '微软雅黑', bold: true, color: C.WHITE})],
+            children: [new TextRun({text: txt, size: 16, font:FONT.body, bold: true, color: C.WHITE})],
             alignment: AlignmentType.CENTER
         })]
     });
@@ -32,7 +42,7 @@ function tdCell(w, txt, opts) {
     var cellObj = {
         width: {size: w, type: WidthType.PERCENTAGE},
         children: [new Paragraph({
-            children: [new TextRun({text: txt, size: opts.sz || 16, font: '微软雅黑', bold: opts.b || false, color: opts.c || C.BLACK})],
+            children: [new TextRun({text: txt, size: opts.sz || 16, font:FONT.body, bold: opts.b || false, color: opts.c || C.BLACK})],
             alignment: opts.align || AlignmentType.LEFT,
             spacing: {before: opts.before || 10, after: opts.after || 10}
         })]
@@ -64,8 +74,8 @@ function buildIssueTable(headers, issues) {
 
 function recTable(headers, rows) {
     return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
-        new TableRow({children:headers.map(h=>new TableCell({shading:{fill:C.MAIN},children:[new Paragraph({children:[new TextRun({text:h,size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}))}),
-        ...rows.map((r,i)=>new TableRow({children:r.map(c=>new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:String(c||'—'),size:17,font:'微软雅黑'})],spacing:{before:12,after:12}})]}))})),
+        new TableRow({children:headers.map(h=>new TableCell({shading:{fill:C.MAIN},children:[new Paragraph({children:[new TextRun({text:h,size:18,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}))}),
+        ...rows.map((r,i)=>new TableRow({children:r.map(c=>new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:String(c||'—'),size:17,font:FONT.body})],spacing:{before:12,after:12}})]}))})),
     ]});
 }
 
@@ -96,17 +106,13 @@ var P2_ISSUES = [
 ];
 
 // ========== DOCUMENT ==========
-const doc = new Document({
-    styles:{default:{document:{run:{font:'微软雅黑',size:21}}}},
-    sections:[{
-        properties:{page:{margin:{top:1440,bottom:1440,left:1440,right:1440}}},
-        children:[
+var children = [
 
             // ===== COVER =====
-            new Paragraph({children:[new TextRun({text:'链商平台 · 链生活品牌',size:28,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'分账与核销模型',size:40,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-            new Paragraph({children:[new TextRun({text:'分析报告与调整建议方案',size:36,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
-            new Paragraph({children:[new TextRun({text:'—— 平台商家 · 联盟商家 · 综合商家 三模型合理性评估 ——',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+            new Paragraph({children:[new TextRun({text:'链商平台 · 链生活品牌',size:28,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'分账与核销模型',size:40,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'分析报告与调整建议方案',size:36,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
+            new Paragraph({children:[new TextRun({text:'—— 平台商家 · 联盟商家 · 综合商家 三模型合理性评估 ——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
             infoTable([
                 ['文档性质','分账与核销模型专业分析报告 · 含合规审查与调整建议'],
                 ['文档版本','V1.0'],
@@ -603,32 +609,32 @@ const doc = new Document({
 
             new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
                 new TableRow({children:[
-                    new TableCell({width:{size:5,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'红线',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
-                    new TableCell({width:{size:20,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'红线内容',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
-                    new TableCell({width:{size:25,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'本模型相关风险',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
-                    new TableCell({width:{size:25,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'当前状态',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
-                    new TableCell({width:{size:25,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'整改措施',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
+                    new TableCell({width:{size:5,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'红线',size:18,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
+                    new TableCell({width:{size:20,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'红线内容',size:18,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
+                    new TableCell({width:{size:25,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'本模型相关风险',size:18,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
+                    new TableCell({width:{size:25,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'当前状态',size:18,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
+                    new TableCell({width:{size:25,type:WidthType.PERCENTAGE},shading:{fill:C.RED},children:[new Paragraph({children:[new TextRun({text:'整改措施',size:18,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}),
                 ]}),
                 new TableRow({children:[
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'1',size:24,font:'微软雅黑',bold:true,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
-                    new TableCell({shading:{fill:'#FFF5F5'},children:[new Paragraph({children:[new TextRun({text:'积分不可兑现',size:19,font:'微软雅黑',bold:true})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'消费金核销后如果支持提现/转让为现金，则构成变相兑现。目前消费金限定在平台内核销使用，不涉及现金兑换，风险可控。',size:17,font:'微软雅黑'})],spacing:{before:15,after:15}})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'✅ 当前合规\n消费金仅限消费核销\n不支持提现/转让',size:17,font:'微软雅黑',color:C.GREEN})],spacing:{before:15,after:15}})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'维持现状\n持续监控是否有"转让/兑现"功能需求',size:17,font:'微软雅黑'})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'1',size:24,font:FONT.body,bold:true,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
+                    new TableCell({shading:{fill:'#FFF5F5'},children:[new Paragraph({children:[new TextRun({text:'积分不可兑现',size:19,font:FONT.body,bold:true})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'消费金核销后如果支持提现/转让为现金，则构成变相兑现。目前消费金限定在平台内核销使用，不涉及现金兑换，风险可控。',size:17,font:FONT.body})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'✅ 当前合规\n消费金仅限消费核销\n不支持提现/转让',size:17,font:FONT.body,color:C.GREEN})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'维持现状\n持续监控是否有"转让/兑现"功能需求',size:17,font:FONT.body})],spacing:{before:15,after:15}})]}),
                 ]}),
                 new TableRow({children:[
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'2',size:24,font:'微软雅黑',bold:true,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
-                    new TableCell({shading:{fill:'#FFF5F5'},children:[new Paragraph({children:[new TextRun({text:'不可形成\n资金池',size:19,font:'微软雅黑',bold:true})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'🔴 当前存在风险：链邦核销备付金账户作为资金汇集节点，构成事实上的资金池。消费者资金在备付金账户停留期间形成沉淀。',size:17,font:'微软雅黑',color:C.RED})],spacing:{before:15,after:15}})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'🔴 需整改\n备付金账户模式\n构成资金池特征',size:17,font:'微软雅黑',color:C.RED})],spacing:{before:15,after:15}})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'公测前：改为汇付监管分账账户\n由支付机构（非平台）托管资金\n资金不经平台直接结算到商家',size:17,font:'微软雅黑'})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'2',size:24,font:FONT.body,bold:true,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
+                    new TableCell({shading:{fill:'#FFF5F5'},children:[new Paragraph({children:[new TextRun({text:'不可形成\n资金池',size:19,font:FONT.body,bold:true})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'🔴 当前存在风险：链邦核销备付金账户作为资金汇集节点，构成事实上的资金池。消费者资金在备付金账户停留期间形成沉淀。',size:17,font:FONT.body,color:C.RED})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'🔴 需整改\n备付金账户模式\n构成资金池特征',size:17,font:FONT.body,color:C.RED})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'公测前：改为汇付监管分账账户\n由支付机构（非平台）托管资金\n资金不经平台直接结算到商家',size:17,font:FONT.body})],spacing:{before:15,after:15}})]}),
                 ]}),
                 new TableRow({children:[
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'3',size:24,font:'微软雅黑',bold:true,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
-                    new TableCell({shading:{fill:'#FFF5F5'},children:[new Paragraph({children:[new TextRun({text:'不可承诺\n收益',size:19,font:'微软雅黑',bold:true})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'消费让利（20%/15%）如果对外宣传为"消费返利""消费赚钱"，可能被认定为收益承诺。当前excel/drawio中未出现此类表述，但对外话术需严格控制。',size:17,font:'微软雅黑'})],spacing:{before:15,after:15}})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'✅ 当前合规\n内部文档无承诺收益\n需监控对外话术',size:17,font:'微软雅黑',color:C.GREEN})],spacing:{before:15,after:15}})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'持续监控对外话术\n禁止"消费返利/消费赚钱"\n统一表述为"消费让利"',size:17,font:'微软雅黑'})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'3',size:24,font:FONT.body,bold:true,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
+                    new TableCell({shading:{fill:'#FFF5F5'},children:[new Paragraph({children:[new TextRun({text:'不可承诺\n收益',size:19,font:FONT.body,bold:true})],alignment:AlignmentType.CENTER,spacing:{before:30,after:30}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'消费让利（20%/15%）如果对外宣传为"消费返利""消费赚钱"，可能被认定为收益承诺。当前excel/drawio中未出现此类表述，但对外话术需严格控制。',size:17,font:FONT.body})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'✅ 当前合规\n内部文档无承诺收益\n需监控对外话术',size:17,font:FONT.body,color:C.GREEN})],spacing:{before:15,after:15}})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'持续监控对外话术\n禁止"消费返利/消费赚钱"\n统一表述为"消费让利"',size:17,font:FONT.body})],spacing:{before:15,after:15}})]}),
                 ]}),
             ]}),
             divider(),
@@ -648,17 +654,14 @@ const doc = new Document({
             divider(),
             divider(),
 
-            new Paragraph({children:[new TextRun({text:'—— 文档结束 ——',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:200}}),
-            new Paragraph({children:[new TextRun({text:'本报告为链商平台·链生活品牌内部分析文件，不构成正式法律意见。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-            new Paragraph({children:[new TextRun({text:'所有合规判断建议经持牌法律专业人士复核确认后方可作为决策依据。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}),
+            new Paragraph({children:[new TextRun({text:'—— 文档结束 ——',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:200}}),
+            new Paragraph({children:[new TextRun({text:'本报告为链商平台·链生活品牌内部分析文件，不构成正式法律意见。',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'所有合规判断建议经持牌法律专业人士复核确认后方可作为决策依据。',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}),
 
-        ]} // end children
-    ]} // end sections
-); // end Document
+
+]; // end children
 
 // ========== GENERATE ==========
-Packer.toBuffer(doc).then(buf => {
-    fs.writeFileSync(outFile, buf);
-    console.log('✅ 生成完成: ' + outFile);
-    console.log('   文件大小: ' + (buf.length / 1024).toFixed(0) + ' KB');
-}).catch(e => console.error(e));
+buildAndWrite(children, outFile, { title: '链商平台 分账与核销模型分析报告 V1.0' }).then(function(outPath) {
+    console.log('✅ 生成完成: ' + outPath);
+}).catch(function(e) { console.error('❌ 生成失败:', e); process.exit(1); });

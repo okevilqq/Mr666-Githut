@@ -8,6 +8,14 @@ const {
     fmt, pct, createDoc, buildAndWrite,
 } = require('./lib/docx-helpers');
 
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
+
 var outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理');
 var outFile = path.join(outDir, '链商平台_分润核销模型_V3.2_跨店通兑版.docx');
 
@@ -218,17 +226,13 @@ var platformWithdrawalCost = avgPlatformFeePerTxn * WITHDRAWAL_COST.rate;
 var avgNetAfterWithdrawal = avgNetProfitPerTxn - platformWithdrawalCost;
 
 // ========== DOCUMENT ==========
-var doc = new Document({
-    styles:{default:{document:{run:{font:'微软雅黑',size:21}}}},
-    sections:[{
-        properties:{page:{margin:{top:1440,bottom:1440,left:1440,right:1440}}},
-        children:[
+var children = [
 
             // ===== COVER =====
-            new Paragraph({children:[new TextRun({text:'链商2.0 · 链生活品牌',size:28,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'分润与核销模型 V3.2',size:40,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-            new Paragraph({children:[new TextRun({text:'跨店通兑版 · 千面千店 · 交易即分润',size:28,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
-            new Paragraph({children:[new TextRun({text:'—— 面向社区商业的数字经营平台：商户独立经营 · 生态会员互通 · 消费权益流转 · 真实交易激励 ——',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+            new Paragraph({children:[new TextRun({text:'链商2.0 · 链生活品牌',size:28,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'分润与核销模型 V3.2',size:40,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'跨店通兑版 · 千面千店 · 交易即分润',size:28,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
+            new Paragraph({children:[new TextRun({text:'—— 面向社区商业的数字经营平台：商户独立经营 · 生态会员互通 · 消费权益流转 · 真实交易激励 ——',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
             infoTable([
                 ['平台定位','链商2.0：面向社区商业的数字经营平台——商户独立经营·生态会员互通·消费权益流转·真实交易激励'],
                 ['文档性质','链商平台分润核销模型 V3.2 · 跨店通兑版 · 千面千店 · 交易即分润'],
@@ -1234,20 +1238,17 @@ var doc = new Document({
             divider(),
             divider(),
 
-            new Paragraph({children:[new TextRun({text:'—— 文档结束 ——',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:200}}),
-            new Paragraph({children:[new TextRun({text:'本报告为链商2.0·链生活品牌 V3.2 分润核销模型（跨店通兑版），链商2.0定位：面向社区商业的数字经营平台——商户独立经营·生态会员互通·消费权益流转·真实交易激励。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-            new Paragraph({children:[new TextRun({text:'所有分配比例均为建议值，可根据实际运营数据调优。任何参数调整需经运营提案→品牌评估→技术确认→法务审核→管理层审批。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-            new Paragraph({children:[new TextRun({text:'V3.1新增城市服务商1%提成（区域合伙人），形成城市服务商→服务站→推广者三级管理体系。代金券/积分/消费金均不可兑现，严守三条合规红线。',size:16,font:'微软雅黑',color:C.RED})],alignment:AlignmentType.CENTER}),
+            new Paragraph({children:[new TextRun({text:'—— 文档结束 ——',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:200}}),
+            new Paragraph({children:[new TextRun({text:'本报告为链商2.0·链生活品牌 V3.2 分润核销模型（跨店通兑版），链商2.0定位：面向社区商业的数字经营平台——商户独立经营·生态会员互通·消费权益流转·真实交易激励。',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'所有分配比例均为建议值，可根据实际运营数据调优。任何参数调整需经运营提案→品牌评估→技术确认→法务审核→管理层审批。',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'V3.1新增城市服务商1%提成（区域合伙人），形成城市服务商→服务站→推广者三级管理体系。代金券/积分/消费金均不可兑现，严守三条合规红线。',size:16,font:FONT.body,color:C.RED})],alignment:AlignmentType.CENTER}),
 
-        ]} // end children
-    ]} // end sections
-); // end Document
+
+]; // end children
 
 // ========== GENERATE ==========
-Packer.toBuffer(doc).then(function(buf) {
-    fs.writeFileSync(outFile, buf);
-    console.log('✅ 生成完成: ' + outFile);
-    console.log('   文件大小: ' + (buf.length / 1024).toFixed(0) + ' KB');
+buildAndWrite(children, outFile, { title: '链商平台 分润核销模型 V3.2 跨店通兑版' }).then(function(outPath) {
+    console.log('✅ 生成完成: ' + outPath);
     console.log('');
     console.log('📋 V3.2 文档结构（13章+6附录）：');
     console.log('   第一章  模型总纲与核心变更（V1→V2→V3→V3.1→V3.2演进 + 1.4链商2.0五大升级🆕 + 三级管理体系总览）');

@@ -3,23 +3,28 @@ var path = require('path');
 var {
     docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
-    C, h2, h3, b: _b, n: _n, divider, pageBreak, infoTable, dataTable, calloutBox,
+    C, h1, h2, h3, p, b, n, divider, pageBreak, infoTable, dataTable, calloutBox, buildAndWrite,
 } = require('./lib/docx-helpers');
 
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
+C.WARM_ORANGE = '#F27E34'; // Local: warmer variant than COLORS.WARM_ORANGE
+
 // C extensions
-C.BRAND_RED = '#D62828'; C.TECH_BLUE = '#1F5EFF'; C.GOLD = '#D4A843';
-C.WARM_ORANGE = '#F27E34'; C.DEEP_GREEN = '#0E6655';
 
 var outDir = path.join(__dirname, '20260610 链商新品牌命名方案');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 var outFile = path.join(outDir, '链商平台_品牌命名方案提案_V2.0.docx');
 
-// ========== LOCAL OVERRIDES ==========
-function h1(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_1, spacing:{before:500,after:240}, border:{bottom:{style:BorderStyle.SINGLE,size:3,color:C.MAIN}} }); }
-function p(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:o.after||80,line:o.line||360}, alignment:o.align, indent:o.indent }); }
-function pt(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:t,size:19,font:'微软雅黑',color:o.color||C.GRAY})], spacing:{after:60,line:320}, alignment:o.align }); }
-function b(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:'  • '+t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:60,line:340}, indent:{left:600} }); }
-function n(i,t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:i+'. '+t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:60,line:340}, indent:{left:600} }); }
+// ========== SCRIPT-SPECIFIC HELPERS ==========
+function pt(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:t,size:19,font:FONT.body,color:o.color||C.GRAY})], spacing:{after:60,line:320}, alignment:o.align }); }
 
 function riskBadge(level) {
     var map = {
@@ -28,7 +33,7 @@ function riskBadge(level) {
         'high':   { text:'🔴 高风险 — 存在重大在先权利障碍', color:C.RED },
     };
     var m = map[level] || map.low;
-    return new Paragraph({children:[new TextRun({text:m.text,size:20,font:'微软雅黑',bold:true,color:m.color})],spacing:{after:60}});
+    return new Paragraph({children:[new TextRun({text:m.text,size:20,font:FONT.body,bold:true,color:m.color})],spacing:{after:60}});
 }
 
 function proposalHeader(name, en, tagline, colorHex) {
@@ -37,9 +42,9 @@ function proposalHeader(name, en, tagline, colorHex) {
         new Paragraph({spacing:{before:200},children:[]}),
         new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
             new TableRow({children:[new TableCell({shading:{fill:c},children:[
-                new Paragraph({children:[new TextRun({text:name,size:48,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:30,after:5}}),
-                new Paragraph({children:[new TextRun({text:en,size:28,font:'微软雅黑',color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:5,after:10}}),
-                new Paragraph({children:[new TextRun({text:tagline,size:20,font:'微软雅黑',color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:5,after:30}}),
+                new Paragraph({children:[new TextRun({text:name,size:48,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:30,after:5}}),
+                new Paragraph({children:[new TextRun({text:en,size:28,font:FONT.body,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:5,after:10}}),
+                new Paragraph({children:[new TextRun({text:tagline,size:20,font:FONT.body,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:5,after:30}}),
             ],border:{top:{style:BorderStyle.SINGLE,size:2,color:c},bottom:{style:BorderStyle.SINGLE,size:2,color:c}}})]}),
         ]}),
     ];
@@ -51,19 +56,19 @@ var children = [];
 // ===== COVER PAGE =====
 children.push(
     new Paragraph({spacing:{before:2000},children:[]}),
-    new Paragraph({children:[new TextRun({text:'链商平台',size:28,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
-    new Paragraph({children:[new TextRun({text:'品牌命名方案提案',size:44,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:100}}),
-    new Paragraph({children:[new TextRun({text:'Brand Naming Proposal  V2.0',size:26,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+    new Paragraph({children:[new TextRun({text:'链商平台',size:28,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
+    new Paragraph({children:[new TextRun({text:'品牌命名方案提案',size:44,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:100}}),
+    new Paragraph({children:[new TextRun({text:'Brand Naming Proposal  V2.0',size:26,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
     new Paragraph({spacing:{before:500},children:[]}),
-    new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:18,font:'微软雅黑',color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:180}}),
-    new Paragraph({children:[new TextRun({text:'三套完整方案 · 命名方法论驱动 · 深度商标检索 · 风险评估',size:20,font:'微软雅黑',color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:120}}),
-    new Paragraph({children:[new TextRun({text:'公司属性：管理运营中心 · 企业数字化转型 · 本地生活平台生态',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
-    new Paragraph({children:[new TextRun({text:'命名模型：联盟共营型 + 商家经营型 + 位置互通型',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
-    new Paragraph({children:[new TextRun({text:'方法论：6大核心维度 × 6种命名模型 × 6维度商标检索',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+    new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:18,font:FONT.body,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:180}}),
+    new Paragraph({children:[new TextRun({text:'三套完整方案 · 命名方法论驱动 · 深度商标检索 · 风险评估',size:20,font:FONT.body,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:120}}),
+    new Paragraph({children:[new TextRun({text:'公司属性：管理运营中心 · 企业数字化转型 · 本地生活平台生态',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
+    new Paragraph({children:[new TextRun({text:'命名模型：联盟共营型 + 商家经营型 + 位置互通型',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
+    new Paragraph({children:[new TextRun({text:'方法论：6大核心维度 × 6种命名模型 × 6维度商标检索',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
     new Paragraph({spacing:{before:400},children:[]}),
-    new Paragraph({children:[new TextRun({text:'链邦科技  |  2026年6月  |  V2.0',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'编制：梁君衡  ·  企业宣传策划专员',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'V2.0更新：整合命名方法论 · 6类行业对标 · 新增联盟共营型方案 · Slogan体系 · 视觉方向建议',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}),
+    new Paragraph({children:[new TextRun({text:'链邦科技  |  2026年6月  |  V2.0',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'编制：梁君衡  ·  企业宣传策划专员',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'V2.0更新：整合命名方法论 · 6类行业对标 · 新增联盟共营型方案 · Slogan体系 · 视觉方向建议',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}),
     pageBreak()
 );
 
@@ -252,7 +257,7 @@ children.push(
 children.push(
     h1('第四章  方案一：链邦域营  LinkBond LocalOps  🆕'),
 
-    ...proposalHeader('链邦域营', 'LinkBond LocalOps', '链接本地商家 · 构建共营生态', C.TECH_BLUE),
+    ...proposalHeader('链邦域营', 'LinkBond LocalOps', '链接本地商家 · 构建共营生态', COLORS.TECH_BLUE),
 
     h2('4.1  命名模型分类'),
     calloutBox('📌 联盟共营型（差异化蓝海）', [
@@ -356,7 +361,7 @@ children.push(
 children.push(
     h1('第五章  方案二：店智汇  DianSmart Hub'),
 
-    ...proposalHeader('店智汇', 'DianSmart Hub', '门店智慧经营 · 汇聚增长力量', C.DEEP_GREEN),
+    ...proposalHeader('店智汇', 'DianSmart Hub', '门店智慧经营 · 汇聚增长力量', COLORS.DEEP_GREEN),
 
     h2('5.1  命名模型分类'),
     calloutBox('📌 商家经营型（B端属性最强）', [
@@ -747,7 +752,7 @@ children.push(
 
     h2('10.3  决策速查'),
     p('✓ 如果你追求"最低风险、最快过审" → 选店智汇', {bold:true,color:C.GREEN}),
-    p('✓ 如果你追求"最大差异化、品牌公司统一" → 选链邦域营（需确认链邦商标权属）', {bold:true,color:C.TECH_BLUE}),
+    p('✓ 如果你追求"最大差异化、品牌公司统一" → 选链邦域营（需确认链邦商标权属）', {bold:true,color:COLORS.TECH_BLUE}),
     p('✓ 如果你追求"最佳场景锚定、跨店互通契合度" → 选邻汇通（需准备驳回复审预案）', {bold:true,color:C.ORANGE}),
     divider(),
     p('⚠️ 无论最终选择哪个方案，建议在本周内完成决策并启动商标申请流程。商标注册遵循"申请在先"原则，每一天的延迟都可能增加被他人抢注的风险。', {bold:true,color:C.RED}),
@@ -922,31 +927,24 @@ children.push(
 // ===== FINAL PAGE =====
 children.push(
     new Paragraph({spacing:{before:2500},children:[]}),
-    new Paragraph({children:[new TextRun({text:'— 文档结束 —',size:24,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:120}}),
-    new Paragraph({children:[new TextRun({text:'链邦科技 · 品牌命名方案提案 V2.0',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'编制：梁君衡 · 企业宣传策划专员  |  2026年6月10日',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'V2.0更新说明：',size:18,font:'微软雅黑',bold:true,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-    new Paragraph({children:[new TextRun({text:'① 新增第二章"品牌命名方法论——6大核心维度"（源自《新品牌命名核心元素》）',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
-    new Paragraph({children:[new TextRun({text:'② 新增第三章"本地生活平台命名逻辑与行业对标"（源自《本地生活平台的命名逻辑》）',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
-    new Paragraph({children:[new TextRun({text:'③ 新增方案一"链邦域营 LinkBond LocalOps"（联盟共营型）取代原方案三"商聚云"',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
-    new Paragraph({children:[new TextRun({text:'④ 新增第八章"Slogan体系建议"（源自《本地生活平台Slogan制定方法》）',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
-    new Paragraph({children:[new TextRun({text:'⑤ 新增附录C"品牌视觉设计方向建议"（源自《本地生活平台品牌视觉设计全流程标准》）',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
-    new Paragraph({children:[new TextRun({text:'⑥ 候选名称排查清单从22项扩展至24项（新增链邦域营/链邦共营/链邦数管/本域优营/店域共营）',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
-    new Paragraph({children:[new TextRun({text:'⑦ 推荐排序调整为分场景推荐（链邦商标权属已确认/未确认/追求场景锚定）',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'本文件为内部决策参考材料，仅供链邦科技内部使用。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'商标检索结果基于公开数据库，最终可注册性以国家知识产权局商标局审查为准。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}),
+    new Paragraph({children:[new TextRun({text:'— 文档结束 —',size:24,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:120}}),
+    new Paragraph({children:[new TextRun({text:'链邦科技 · 品牌命名方案提案 V2.0',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'编制：梁君衡 · 企业宣传策划专员  |  2026年6月10日',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'V2.0更新说明：',size:18,font:FONT.body,bold:true,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+    new Paragraph({children:[new TextRun({text:'① 新增第二章"品牌命名方法论——6大核心维度"（源自《新品牌命名核心元素》）',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
+    new Paragraph({children:[new TextRun({text:'② 新增第三章"本地生活平台命名逻辑与行业对标"（源自《本地生活平台的命名逻辑》）',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
+    new Paragraph({children:[new TextRun({text:'③ 新增方案一"链邦域营 LinkBond LocalOps"（联盟共营型）取代原方案三"商聚云"',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
+    new Paragraph({children:[new TextRun({text:'④ 新增第八章"Slogan体系建议"（源自《本地生活平台Slogan制定方法》）',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
+    new Paragraph({children:[new TextRun({text:'⑤ 新增附录C"品牌视觉设计方向建议"（源自《本地生活平台品牌视觉设计全流程标准》）',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
+    new Paragraph({children:[new TextRun({text:'⑥ 候选名称排查清单从22项扩展至24项（新增链邦域营/链邦共营/链邦数管/本域优营/店域共营）',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
+    new Paragraph({children:[new TextRun({text:'⑦ 推荐排序调整为分场景推荐（链邦商标权属已确认/未确认/追求场景锚定）',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'本文件为内部决策参考材料，仅供链邦科技内部使用。',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'商标检索结果基于公开数据库，最终可注册性以国家知识产权局商标局审查为准。',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}),
 );
 
 // ========== BUILD DOCUMENT ==========
-var doc = new Document({
-    styles: { default: { document: { run: { size: 21, font: '微软雅黑' } } } },
-    sections: [{ children: children }],
-});
-
-Packer.toBuffer(doc).then(function(buf) {
-    fs.writeFileSync(outFile, buf);
-    console.log('✅ 品牌命名方案提案 V2.0 已生成: ' + outFile);
-    console.log('   文件大小: ' + (buf.length / 1024).toFixed(0) + ' KB');
+buildAndWrite(children, outFile, { title: '链商平台 品牌命名方案提案 V2.0' }).then(function(outPath) {
+    console.log('✅ 品牌命名方案提案 V2.0 已生成: ' + outPath);
     console.log('');
     console.log('📋 V2.0 主要更新：');
     console.log('  ① 新增"品牌命名方法论——6大核心维度"（第二章）');

@@ -5,10 +5,12 @@ const outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理
 const outFile = path.join(outDir, '链商2.0_商业模式全景图_思维导图与动态指标.html');
 
 // ========== DATA FROM V3.2 MODEL ==========
+const { COLORS, META } = require('./lib/constants');
+
 const C = {
-    MAIN: '#1A5276', DARK: '#2C3E50', LIGHT: '#EBF5FB', WHITE: '#FFFFFF',
-    BLACK: '#333333', GRAY: '#7F8C8D', RED: '#C0392B', GREEN: '#1E8449',
-    ORANGE: '#E67E22', HEADER: '#1a1a2e', YELLOW: '#F39C12',
+    MAIN: COLORS.DEEP_BLUE, DARK: '#2C3E50', LIGHT: COLORS.LIGHT_BG, WHITE: COLORS.WHITE,
+    BLACK: COLORS.DARK_GRAY, GRAY: COLORS.MID_GRAY, RED: COLORS.RED, GREEN: COLORS.GREEN,
+    ORANGE: COLORS.WARM_ORANGE, HEADER: '#1a1a2e', YELLOW: COLORS.YELLOW,
     LIGHT_ORANGE: '#FFF5F0', LIGHT_RED: '#FFF5F5', LIGHT_GREEN: '#F0FFF4',
     PURPLE: '#8E44AD', TEAL: '#16A085',
 };
@@ -25,7 +27,7 @@ const html = `<!DOCTYPE html>
 /* ====== CSS RESET & BASE ====== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;font-size:16px}
-body{font-family:'微软雅黑','Microsoft YaHei','PingFang SC',sans-serif;color:${C.BLACK};background:#0a0a14;line-height:1.7;overflow-x:hidden}
+body{font-family:'${FONT.body}','Microsoft YaHei','PingFang SC',sans-serif;color:${C.BLACK};background:#0a0a14;line-height:1.7;overflow-x:hidden}
 
 /* ====== PARTICLES BG ====== */
 #particles-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:0.3}

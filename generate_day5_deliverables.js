@@ -6,6 +6,16 @@ const {
     C, h1, h2, h3, p, b, n, divider, dataTable,
 } = require('./lib/docx-helpers');
 
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
+
 const OUT = '20260602 链商平台 技术部会议整理';
 
 // ============================================================
@@ -16,9 +26,9 @@ function buildFeasibilityReport() {
         properties:{page:{margin:{top:1440,bottom:1440,left:1200,right:1200}}},
         children:[
             // Cover
-            new Paragraph({children:[new TextRun({text:'链商平台 · 市场机会与可行性报告',size:36,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'—— 本地生活赛道进入判断：是否值得做 / 切入点选择 / 风险可控性 ——',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
-            new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月5日 | Day 5 交付 | 机密文件',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'链商平台 · 市场机会与可行性报告',size:36,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'—— 本地生活赛道进入判断：是否值得做 / 切入点选择 / 风险可控性 ——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+            new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月5日 | Day 5 交付 | 机密文件',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
 
             h1('执行摘要'),
             p('本报告基于第1周（6/1-6/5）赛道调研、竞品分析、三方痛点挖掘、技术能力评估和合规框架审查，对链商平台进入本地生活赛道的市场机会与可行性做出系统性判断。',{bold:true}),
@@ -155,10 +165,10 @@ function buildChecklist() {
     return {
         properties:{page:{margin:{top:1440,bottom:1440,left:1200,right:1200}}},
         children:[
-            new Paragraph({children:[new TextRun({text:'链商平台 · 公测品牌准备清单',size:36,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'—— 四大模块：模板设计 / 知识库内容 / 入驻指南 / 品牌触点 ——',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
-            new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月5日 | Day 5 交付 | 公测倒计时7天',size:18,font:'微软雅黑',color:C.RED})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
-            new Paragraph({children:[new TextRun({text:'⏰ 公测上线日：2026年6月12日（星期五） | 从明天起进入公测冲刺周',size:20,font:'微软雅黑',bold:true,color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+            new Paragraph({children:[new TextRun({text:'链商平台 · 公测品牌准备清单',size:36,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'—— 四大模块：模板设计 / 知识库内容 / 入驻指南 / 品牌触点 ——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月5日 | Day 5 交付 | 公测倒计时7天',size:18,font:FONT.body,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'⏰ 公测上线日：2026年6月12日（星期五） | 从明天起进入公测冲刺周',size:20,font:FONT.body,bold:true,color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
 
             h1('一、清单总览'),
             dataTable(
@@ -277,9 +287,9 @@ function buildWeeklyReport() {
     return {
         properties:{page:{margin:{top:1440,bottom:1440,left:1200,right:1200}}},
         children:[
-            new Paragraph({children:[new TextRun({text:'链商平台 · 第1周工作总结与第2周计划',size:36,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'—— 品牌地基期 · 赛道调研与竞品分析阶段完成 · 进入公测冲刺 ——',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
-            new Paragraph({children:[new TextRun({text:'汇报人：梁君衡 | 2026年6月5日 | 周报（6/1-6/5）| 部门周会汇报',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+            new Paragraph({children:[new TextRun({text:'链商平台 · 第1周工作总结与第2周计划',size:36,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'—— 品牌地基期 · 赛道调研与竞品分析阶段完成 · 进入公测冲刺 ——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'汇报人：梁君衡 | 2026年6月5日 | 周报（6/1-6/5）| 部门周会汇报',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
 
             h1('第一部分：本周工作总结（6/1-6/5）'),
 
@@ -328,7 +338,7 @@ function buildWeeklyReport() {
 
             h1('第二部分：第2周工作计划（6/8-6/12）'),
             divider(),
-            new Paragraph({children:[new TextRun({text:'🔥 公测冲刺周 —— 主题："品牌定位 + 平台上线准备"',size:24,font:'微软雅黑',bold:true,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'🔥 公测冲刺周 —— 主题："品牌定位 + 平台上线准备"',size:24,font:FONT.body,bold:true,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
 
             h2('2.1 每日计划'),
             dataTable(
@@ -403,7 +413,7 @@ function buildWeeklyReport() {
 // 构建文档 — 三合一
 // ============================================================
 const doc = new Document({
-    styles:{default:{document:{run:{font:'微软雅黑',size:21}}}},
+    styles:{default:{document:{run:{font:FONT.body,size:FONT.bodySize}}}},
     sections:[
         buildFeasibilityReport(),
         buildChecklist(),

@@ -5,8 +5,18 @@ const {
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
     C, h1, h2, h3, p, b, n, divider, pageBreak,
     dataTable, infoTable, flowBox, calloutBox, redline, greenCheck,
-    fmt, pct,
+    fmt, pct, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 var outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理');
 var outFile = path.join(outDir, '链商品牌手册V2.2画册_合规审查与修改方案.docx');
@@ -16,13 +26,13 @@ var outFile = path.join(outDir, '链商品牌手册V2.2画册_合规审查与修
 // ========== DOCUMENT ==========
 var children = [
     // COVER
-    new Paragraph({children:[new TextRun({text:'',size:21})],spacing:{after:200}}),
-    new Paragraph({children:[new TextRun({text:'链商品牌手册（第二版画册）',size:36,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'合规审查 · 逻辑校对 · 设计评审 · 修改方案',size:28,font:'微软雅黑',bold:true,color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
-    new Paragraph({children:[new TextRun({text:'审查基准：V3.1分润核销模型（城市服务商版）+ 法律合规框架',size:21,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-    new Paragraph({children:[new TextRun({text:'审查日期：2026年6月5日',size:21,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-    new Paragraph({children:[new TextRun({text:'编制：梁君衡 · 企业宣传策划专员',size:21,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-    new Paragraph({children:[new TextRun({text:'广东链邦科技有限公司',size:21,font:'微软雅黑',color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:400}}),
+    new Paragraph({children:[new TextRun({text:'',size:FONT.bodySize})],spacing:{after:200}}),
+    new Paragraph({children:[new TextRun({text:'链商品牌手册（第二版画册）',size:36,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'合规审查 · 逻辑校对 · 设计评审 · 修改方案',size:28,font:FONT.body,bold:true,color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
+    new Paragraph({children:[new TextRun({text:'审查基准：V3.1分润核销模型（城市服务商版）+ 法律合规框架',size:FONT.bodySize,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+    new Paragraph({children:[new TextRun({text:'审查日期：2026年6月5日',size:FONT.bodySize,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+    new Paragraph({children:[new TextRun({text:'编制：梁君衡 · 企业宣传策划专员',size:FONT.bodySize,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+    new Paragraph({children:[new TextRun({text:'广东链邦科技有限公司',size:FONT.bodySize,font:FONT.body,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:400}}),
 
     divider(),
     pageBreak(),
@@ -567,20 +577,13 @@ var children = [
     divider(),
 
     // Final metadata
-    new Paragraph({children:[new TextRun({text:'审查人：梁君衡',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.RIGHT,spacing:{after:10}}),
-    new Paragraph({children:[new TextRun({text:'审查日期：2026年6月5日',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.RIGHT,spacing:{after:10}}),
-    new Paragraph({children:[new TextRun({text:'文档性质：内部审查报告 · 仅供内部使用',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.RIGHT,spacing:{after:10}}),
-    new Paragraph({children:[new TextRun({text:'本报告部分内容由AI辅助生成，已由人工核验',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.RIGHT,spacing:{after:10}}),
+    new Paragraph({children:[new TextRun({text:'审查人：梁君衡',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.RIGHT,spacing:{after:10}}),
+    new Paragraph({children:[new TextRun({text:'审查日期：2026年6月5日',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.RIGHT,spacing:{after:10}}),
+    new Paragraph({children:[new TextRun({text:'文档性质：内部审查报告 · 仅供内部使用',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.RIGHT,spacing:{after:10}}),
+    new Paragraph({children:[new TextRun({text:'本报告部分内容由AI辅助生成，已由人工核验',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.RIGHT,spacing:{after:10}}),
 ];
 
-var doc = new Document({
-    styles:{default:{document:{run:{font:'微软雅黑'}}}},
-    sections:[{children:children}]
-});
-
-Packer.toBuffer(doc).then(function(buf){
-    fs.writeFileSync(outFile, buf);
-    console.log('✅ 画册审查修改方案已生成: ' + outFile);
+buildAndWrite(children, outFile, { title: '链商品牌手册V2.2画册 合规审查与修改方案', margins: { top: 1440, bottom: 1440, left: 1440, right: 1440 } }).then(function(outPath){
+    console.log('✅ 画册审查修改方案已生成: ' + outPath);
     console.log('   共8章+3附录，41项审查发现（18 P0 + 15 P1 + 8 P2）');
-    console.log('   文件大小: ' + (buf.length/1024).toFixed(1) + ' KB');
-});
+}).catch(function(err) { console.error('❌ 生成失败:', err); process.exit(1); });

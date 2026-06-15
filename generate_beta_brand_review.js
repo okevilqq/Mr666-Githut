@@ -3,8 +3,18 @@ const path = require('path');
 const {
     docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak,
-    C, h1, h2, h3, p, b, n, divider, dataTable,
+    C, h1, h2, h3, p, b, n, divider, dataTable, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 // C extensions
 C.LIGHTGRAY = '#F5F6FA';
@@ -16,7 +26,7 @@ function statusCell(text, status) {
     const colors = {
         pass: C.GREEN, fail: C.RED, warn: C.ORANGE, na: C.GRAY, pending: C.YELLOW
     };
-    return new Paragraph({children:[new TextRun({text, size:18, font:'微软雅黑', bold:true, color: colors[status] || C.GRAY})], spacing:{before:15,after:15}});
+    return new Paragraph({children:[new TextRun({text, size:18, font:FONT.body, bold:true, color: colors[status] || C.GRAY})], spacing:{before:15,after:15}});
 }
 
 // Severity-aware row for review table
@@ -39,7 +49,7 @@ function reviewTable(headers, rows) {
             // Header row
             new TableRow({children: headers.map(h => new TableCell({
                 shading: { fill: C.HEADER },
-                children: [new Paragraph({children: [new TextRun({text: h, size: 17, font: '微软雅黑', bold: true, color: C.WHITE})], alignment: AlignmentType.CENTER, spacing: {before: 20, after: 20}})]
+                children: [new Paragraph({children: [new TextRun({text: h, size: 17, font:FONT.body, bold: true, color: C.WHITE})], alignment: AlignmentType.CENTER, spacing: {before: 20, after: 20}})]
             }))}),
             // Data rows
             ...rows.map((r, i) => new TableRow({
@@ -51,7 +61,7 @@ function reviewTable(headers, rows) {
                             children: [new TextRun({
                                 text: cellObj.text || '',
                                 size: 16,
-                                font: '微软雅黑',
+                                font:FONT.body,
                                 color: cellObj.color || C.BLACK,
                                 bold: cellObj.bold || false
                             })],
@@ -75,12 +85,12 @@ function buildReview() {
         children: [
 
             // ========== COVER ==========
-            new Paragraph({children:[new TextRun({text:'链商平台公测 · 品牌专业审查报告',size:38,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
-            new Paragraph({children:[new TextRun({text:'Chain Commerce Platform · Brand Audit Report',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
-            new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:14,font:'微软雅黑',color:C.LIGHT.replace('#','')})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
-            new Paragraph({children:[new TextRun({text:'审查对象：链商2.0公测版本（22张截图）',size:20,font:'微软雅黑',color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'审查维度：品牌色 / Logo / 字体 / 文案 / 图标 / 组件 / 合规 / 体验',size:20,font:'微软雅黑',color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'审查人：梁君衡 | 日期：2026年6月3日 | 版本：V1.0',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'链商平台公测 · 品牌专业审查报告',size:38,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
+            new Paragraph({children:[new TextRun({text:'Chain Commerce Platform · Brand Audit Report',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
+            new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:14,font:FONT.body,color:C.LIGHT.replace('#','')})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'审查对象：链商2.0公测版本（22张截图）',size:20,font:FONT.body,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'审查维度：品牌色 / Logo / 字体 / 文案 / 图标 / 组件 / 合规 / 体验',size:20,font:FONT.body,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'审查人：梁君衡 | 日期：2026年6月3日 | 版本：V1.0',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
             divider(),
 
             // ========== EXECUTIVE SUMMARY ==========
@@ -445,8 +455,8 @@ function buildReview() {
 
             divider(),
             divider(),
-            new Paragraph({children:[new TextRun({text:'— 链商平台公测 · 品牌专业审查报告 · 完 —',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300}}),
-            new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 链邦科技 · 企业宣传策划专员 | 2026年6月3日',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:100}}),
+            new Paragraph({children:[new TextRun({text:'— 链商平台公测 · 品牌专业审查报告 · 完 —',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300}}),
+            new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 链邦科技 · 企业宣传策划专员 | 2026年6月3日',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:100}}),
         ]
     };
 }
@@ -454,18 +464,11 @@ function buildReview() {
 // ============================================================
 // 构建 & 输出
 // ============================================================
-const doc = new Document({
-    styles: { default: { document: { run: { font: '微软雅黑', size: 21 } } } },
-    sections: [buildReview()]
-});
-
 const outDir = path.join(__dirname, OUT);
-if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+const outFile = path.join(outDir, '链商公测_品牌专业审查报告.docx');
 
-Packer.toBuffer(doc).then(buf => {
-    const filePath = path.join(outDir, '链商公测_品牌专业审查报告.docx');
-    fs.writeFileSync(filePath, buf);
-    console.log('✅ 品牌审查报告已生成: ' + filePath);
+buildAndWrite(buildReview(), outFile, { title: '链商公测 品牌专业审查报告' }).then(outPath => {
+    console.log('✅ 品牌审查报告已生成: ' + outPath);
     console.log('   包含:');
     console.log('   - 第一部分：品牌标准速查（5张速查表）');
     console.log('   - 第二部分：6模块×28触点逐项审查表');

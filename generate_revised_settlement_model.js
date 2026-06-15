@@ -5,8 +5,18 @@ const {
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
     C, h1, h2, h3, p, b, n, divider, pageBreak,
     dataTable, infoTable, flowBox, calloutBox, redline, greenCheck,
-    fmt, pct,
+    fmt, pct, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 const outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理');
 const outFile = path.join(outDir, '链商平台_修订版分润核销模型_V2.0.docx');
@@ -92,17 +102,13 @@ var assumedMonthlyTxns = 50000;
 var fixedCostPerTxn = totalMonthlyFixed / assumedMonthlyTxns;
 
 // ========== DOCUMENT ==========
-var doc = new Document({
-    styles:{default:{document:{run:{font:'微软雅黑',size:21}}}},
-    sections:[{
-        properties:{page:{margin:{top:1440,bottom:1440,left:1440,right:1440}}},
-        children:[
+var children = [
 
             // ===== COVER =====
-            new Paragraph({children:[new TextRun({text:'链商平台 · 链生活品牌',size:28,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'修订版分润与核销模型',size:40,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-            new Paragraph({children:[new TextRun({text:'V2.0 —— 基于6月4日会议共识',size:28,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
-            new Paragraph({children:[new TextRun({text:'—— 无充值 · 无资金池 · 渠道成本扣除 · 六方利益分配 ——',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+            new Paragraph({children:[new TextRun({text:'链商平台 · 链生活品牌',size:28,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'修订版分润与核销模型',size:40,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'V2.0 —— 基于6月4日会议共识',size:28,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
+            new Paragraph({children:[new TextRun({text:'—— 无充值 · 无资金池 · 渠道成本扣除 · 六方利益分配 ——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
             infoTable([
                 ['文档性质','修订版分润核销模型 · 基于6月4日会议共识重新设计'],
                 ['文档版本','V2.0'],
@@ -440,17 +446,14 @@ var doc = new Document({
             divider(),
             divider(),
 
-            new Paragraph({children:[new TextRun({text:'—— 文档结束 ——',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:200}}),
-            new Paragraph({children:[new TextRun({text:'本报告基于6月4日会议共识编制，所有分配比例均为建议值，可根据实际运营数据调优。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-            new Paragraph({children:[new TextRun({text:'各方分配比例调整需经运营提案→品牌评估→技术确认→法务审核→管理层审批。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}),
+            new Paragraph({children:[new TextRun({text:'—— 文档结束 ——',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:200}}),
+            new Paragraph({children:[new TextRun({text:'本报告基于6月4日会议共识编制，所有分配比例均为建议值，可根据实际运营数据调优。',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'各方分配比例调整需经运营提案→品牌评估→技术确认→法务审核→管理层审批。',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}),
 
-        ]} // end children
-    ]} // end sections
-); // end Document
+
+]; // end children
 
 // ========== GENERATE ==========
-Packer.toBuffer(doc).then(function(buf) {
-    fs.writeFileSync(outFile, buf);
-    console.log('✅ 生成完成: ' + outFile);
-    console.log('   文件大小: ' + (buf.length / 1024).toFixed(0) + ' KB');
-}).catch(function(e) { console.error(e); });
+buildAndWrite(children, outFile, { title: '链商平台 修订版分润核销模型 V2.0' }).then(function(outPath) {
+    console.log('✅ 生成完成: ' + outPath);
+}).catch(function(e) { console.error('❌ 生成失败:', e); process.exit(1); });

@@ -3,12 +3,21 @@ var path = require('path');
 var {
     docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
-    C, h2, h3, divider, pageBreak, infoTable, dataTable, calloutBox,
+    C, h1, h2, h3, p, b, n, divider, pageBreak, infoTable, dataTable, calloutBox, buildAndWrite,
 } = require('./lib/docx-helpers');
 
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
+C.WARM_ORANGE = '#F27E34'; // Local: warmer variant than COLORS.WARM_ORANGE
+
 // C extensions
-C.BRAND_RED = '#D62828'; C.TECH_BLUE = '#1F5EFF'; C.GOLD = '#D4A843';
-C.WARM_ORANGE = '#F27E34'; C.DEEP_GREEN = '#0E6655';
 C.CONSUMER = '#1F5EFF'; C.PROMOTER = '#E67E22'; C.MERCHANT = '#0E6655';
 C.CITY_PARTNER = '#8E44AD'; C.STATION = '#D35400'; C.PLATFORM = '#1A5276';
 
@@ -16,12 +25,8 @@ var outDir = path.join(__dirname, '20260611 链商平台多角色评估');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 var outFile = path.join(outDir, '链商平台_多角色客观评估报告_V1.0.docx');
 
-// ========== LOCAL OVERRIDES ==========
-function h1(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_1, spacing:{before:500,after:240}, border:{bottom:{style:BorderStyle.SINGLE,size:3,color:C.MAIN}} }); }
-function p(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:o.after||80,line:o.line||360}, alignment:o.align, indent:o.indent }); }
-function pt(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:t,size:19,font:'微软雅黑',color:o.color||C.GRAY})], spacing:{after:60,line:320}, alignment:o.align }); }
-function b(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:'  • '+t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:60,line:340}, indent:{left:600} }); }
-function n(i,t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:i+'. '+t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:60,line:340}, indent:{left:600} }); }
+// ========== SCRIPT-SPECIFIC HELPERS ==========
+function pt(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:t,size:19,font:FONT.body,color:o.color||C.GRAY})], spacing:{after:60,line:320}, alignment:o.align }); }
 
 function roleHeader(name, en, tagline, colorHex) {
     var c = colorHex || C.MAIN;
@@ -29,9 +34,9 @@ function roleHeader(name, en, tagline, colorHex) {
         new Paragraph({spacing:{before:200},children:[]}),
         new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
             new TableRow({children:[new TableCell({shading:{fill:c},children:[
-                new Paragraph({children:[new TextRun({text:name,size:42,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:25,after:5}}),
-                new Paragraph({children:[new TextRun({text:en,size:24,font:'微软雅黑',color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:5,after:8}}),
-                new Paragraph({children:[new TextRun({text:tagline,size:18,font:'微软雅黑',color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:5,after:25}}),
+                new Paragraph({children:[new TextRun({text:name,size:42,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:25,after:5}}),
+                new Paragraph({children:[new TextRun({text:en,size:24,font:FONT.body,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:5,after:8}}),
+                new Paragraph({children:[new TextRun({text:tagline,size:18,font:FONT.body,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:5,after:25}}),
             ],border:{top:{style:BorderStyle.SINGLE,size:2,color:c},bottom:{style:BorderStyle.SINGLE,size:2,color:c}}})]}),
         ]}),
     ];
@@ -49,18 +54,18 @@ var children = [];
 // ===== COVER PAGE =====
 children.push(
     new Paragraph({spacing:{before:1400},children:[]}),
-    new Paragraph({children:[new TextRun({text:'链商平台',size:26,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'多角色客观评估报告',size:44,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:80}}),
-    new Paragraph({children:[new TextRun({text:'Multi-Role Objective Evaluation Report  V1.0',size:24,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:160}}),
+    new Paragraph({children:[new TextRun({text:'链商平台',size:26,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'多角色客观评估报告',size:44,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:80}}),
+    new Paragraph({children:[new TextRun({text:'Multi-Role Objective Evaluation Report  V1.0',size:24,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:160}}),
     new Paragraph({spacing:{before:200},children:[]}),
-    new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:18,font:'微软雅黑',color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:150}}),
-    new Paragraph({children:[new TextRun({text:'假设平台已成功上线运营，以各角色第一视角客观审视',size:22,font:'微软雅黑',bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:120}}),
-    new Paragraph({children:[new TextRun({text:'7大角色  ·  利益冷算  ·  挑战如实  ·  交叉对比  ·  决策路径',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
-    new Paragraph({children:[new TextRun({text:'评估角色：消费者 | 推广者 | 平台商家 | 联盟商家 | 城市服务商 | 服务站 | 平台运营方',size:17,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:160}}),
+    new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:18,font:FONT.body,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:150}}),
+    new Paragraph({children:[new TextRun({text:'假设平台已成功上线运营，以各角色第一视角客观审视',size:22,font:FONT.body,bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:120}}),
+    new Paragraph({children:[new TextRun({text:'7大角色  ·  利益冷算  ·  挑战如实  ·  交叉对比  ·  决策路径',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
+    new Paragraph({children:[new TextRun({text:'评估角色：消费者 | 推广者 | 平台商家 | 联盟商家 | 城市服务商 | 服务站 | 平台运营方',size:17,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:160}}),
     new Paragraph({spacing:{before:300},children:[]}),
-    new Paragraph({children:[new TextRun({text:'链邦科技  |  2026年6月  |  V1.0 · 客观评估版',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'编制：梁君衡  ·  企业宣传策划专员',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'评估方法论：第一人称沉浸式推演 + 财务冷算 + 竞品对比 + 决策树分析',size:17,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'链邦科技  |  2026年6月  |  V1.0 · 客观评估版',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'编制：梁君衡  ·  企业宣传策划专员',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'评估方法论：第一人称沉浸式推演 + 财务冷算 + 竞品对比 + 决策树分析',size:17,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
     pageBreak()
 );
 
@@ -734,7 +739,7 @@ children.push(
         ['角色', '综合推荐度', '最适合人群', '最不适合人群', '核心风险'],
         [
             ['消费者', '★★★☆☆', '社区归属感强、消费习惯稳定的人', '价格极度敏感、追求极致性价比的人', '商家密度不足导致体验差'],
-            ['推广者（兼职）', '★★★★☆', '有社区人脉、有主业、想增副业收入的人', '急需用钱、期望快速变现的人', '冷启动期收入低、平台不稳定'],
+            ['推广者（兼职）', '★★★★☆', '有社区人脉、有主业、想增副业收入的人', '急需用钱、期望快速见到成果的人', '冷启动期收入低、平台不稳定'],
             ['推广者（全职）', '★★☆☆☆', '有积蓄、有强人脉、愿意长期经营的人', '没有本地资源、全靠平台获客的人', '12个月回本周期、收入不确定'],
             ['平台商家', '★★★★☆', '有品牌意识、受够美团高抽佣的社区店', '依赖线上平台导流、自身无老客的店', '新平台流量有限'],
             ['联盟商家', '★★★☆☆', '想轻量触网、不增加运营负担的小店', '需要强品牌曝光的连锁/大店', '增量有限、模板化无品牌感'],
@@ -779,7 +784,7 @@ children.push(
     n(2, '用推广者的个人信用破冰', {bold:true}),
     p('在品牌信任不足的早期，消费者不会因为「链商」三个字而使用平台。但他们会因为「这是王阿姨（社区里有名的热心人）推荐的」而试一试。推广者的个人信用，是平台早期最宝贵的获客资产。'),
     n(3, '做美团做不了的事', {bold:true}),
-    p('不要和美团团购比价格——比不过。做美团做不了的事：帮助商家建立自己的会员体系、让消费者在A店获得权益在B店使用、让积分成为社区商业的「通用货币」。这些是美团的组织架构和商业模式天然难以支持的。'),
+    p('不要和美团团购比价格——比不过。做美团做不了的事：帮助商家建立自己的会员体系、让消费者在A店获得权益在B店使用、让积分成为社区商业的「通用权益凭证」。这些是美团的组织架构和商业模式天然难以支持的。'),
     n(4, '在巨头注意到你之前做到安全规模', {bold:true}),
     p('当链商在一个城市的月GMV做到5000万-1亿时，美团可能会注意到。如果那时链商已经有了10万+活跃消费者和2000+商家，即使美团推出竞品功能，链商的品牌和网络效应也足以形成一定的护城河。'),
     divider(),
@@ -927,18 +932,6 @@ children.push(
 );
 
 // ========== BUILD & OUTPUT ==========
-var doc = new Document({
-    styles: {
-        default: {
-            document: {
-                run: { font: '微软雅黑', size: 21 },
-            },
-        },
-    },
-    sections: [{ children: children }],
-});
-
-Packer.toBuffer(doc).then(function(buf) {
-    fs.writeFileSync(outFile, buf);
-    console.log('Done: ' + outFile + ' (' + (buf.length/1024).toFixed(1) + ' KB)');
-});
+buildAndWrite(children, outFile, { title: '链商平台 多角色客观评估报告 V1.0' }).then(function(outPath) {
+    console.log('Done: ' + outPath);
+}).catch(function(err) { console.error('❌ 生成失败:', err); });

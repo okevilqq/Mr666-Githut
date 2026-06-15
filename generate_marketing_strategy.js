@@ -5,8 +5,18 @@ const {
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
     C, h1, h2, h3, p, b, n, divider, pageBreak,
     dataTable, infoTable, flowBox, calloutBox, redline, greenCheck,
-    fmt, pct,
+    fmt, pct, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 var outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理');
 var outFile = path.join(outDir, '链商平台_营销策略制定方案_V2.0.docx');
@@ -19,17 +29,17 @@ function sceneBox(scenario) {
     for (var i = 0; i < scenario.length; i++) {
         var s = scenario[i];
         rows.push(new TableRow({children:[
-            new TableCell({width:{size:12,type:WidthType.PERCENTAGE},shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:s[0],size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:12,after:12}})]}),
-            new TableCell({width:{size:18,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:s[1],size:18,font:'微软雅黑',bold:true,color:C.MAIN})],spacing:{before:12,after:12}})]}),
-            new TableCell({width:{size:70,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:s[2],size:18,font:'微软雅黑'})],spacing:{before:12,after:12}})]}),
+            new TableCell({width:{size:12,type:WidthType.PERCENTAGE},shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:s[0],size:18,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:12,after:12}})]}),
+            new TableCell({width:{size:18,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:s[1],size:18,font:FONT.body,bold:true,color:C.MAIN})],spacing:{before:12,after:12}})]}),
+            new TableCell({width:{size:70,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:s[2],size:18,font:FONT.body})],spacing:{before:12,after:12}})]}),
         ]}));
     }
     return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:rows});
 }
 
 function marketingTable(headers, rows) {
-    var hdrRow = new TableRow({children: headers.map(function(h){return new TableCell({shading:{fill:C.ORANGE},children:[new Paragraph({children:[new TextRun({text:h,size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]})})});
-    var dataRows = rows.map(function(r,i){return new TableRow({children: r.map(function(c){return new TableCell({shading:i%2===0?{fill:'#FFF5F0'}:undefined,children:[new Paragraph({children:[new TextRun({text:String(c||'—'),size:18,font:'微软雅黑'})],spacing:{before:12,after:12}})]})})})});
+    var hdrRow = new TableRow({children: headers.map(function(h){return new TableCell({shading:{fill:C.ORANGE},children:[new Paragraph({children:[new TextRun({text:h,size:18,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]})})});
+    var dataRows = rows.map(function(r,i){return new TableRow({children: r.map(function(c){return new TableCell({shading:i%2===0?{fill:'#FFF5F0'}:undefined,children:[new Paragraph({children:[new TextRun({text:String(c||'—'),size:18,font:FONT.body})],spacing:{before:12,after:12}})]})})})});
     return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[hdrRow].concat(dataRows)});
 }
 
@@ -37,7 +47,7 @@ function complianceItem(num, item, status, note) {
     var icon = status === 'pass' ? '✅' : '⛔';
     var color = status === 'pass' ? C.GREEN : C.RED;
     return new Paragraph({
-        children:[new TextRun({text:icon+' '+num+'. '+item+'  '+note,size:20,font:'微软雅黑',color:color})],
+        children:[new TextRun({text:icon+' '+num+'. '+item+'  '+note,size:20,font:FONT.body,color:color})],
         spacing:{after:60,line:340}, indent:{left:300},
     });
 }
@@ -65,21 +75,17 @@ var M = {
 };
 
 // ========== DOCUMENT ==========
-var doc = new Document({
-    styles:{default:{document:{run:{font:'微软雅黑'}}}},
-    sections:[{
-        properties:{page:{margin:{top:1200,bottom:1200,left:1400,right:1400}}},
-        children:[
+var children = [
             // ============ COVER ============
             divider(), divider(),
-            new Paragraph({children:[new TextRun({text:'链商2.0 · 链生活品牌',size:28,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER}),
+            new Paragraph({children:[new TextRun({text:'链商2.0 · 链生活品牌',size:28,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER}),
             divider(),
-            new Paragraph({children:[new TextRun({text:'平台营销策略制定方案',size:36,font:'微软雅黑',bold:true,color:C.DARK})],alignment:AlignmentType.CENTER}),
-            new Paragraph({children:[new TextRun({text:'—— 面向社区商业的数字经营平台',size:24,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}),
+            new Paragraph({children:[new TextRun({text:'平台营销策略制定方案',size:36,font:FONT.body,bold:true,color:C.DARK})],alignment:AlignmentType.CENTER}),
+            new Paragraph({children:[new TextRun({text:'—— 面向社区商业的数字经营平台',size:24,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}),
             divider(),
             flowBox('链商2.0是一套面向社区商业的数字经营平台，通过商户独立经营、生态会员互通、消费权益流转和真实交易激励机制，帮助商家提升复购率、帮助用户获得持续消费权益、帮助社区形成可持续商业循环。', false),
             divider(),
-            new Paragraph({children:[new TextRun({text:'V2.0  |  2026年6月  |  品牌战略部',size:21,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}),
+            new Paragraph({children:[new TextRun({text:'V2.0  |  2026年6月  |  品牌战略部',size:FONT.bodySize,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}),
             divider(),
             infoTable([
                 ['文档性质','平台营销策略制定方案（执行级）——链商2.0社区商业数字经营平台的营销战术手册'],
@@ -859,21 +865,17 @@ var doc = new Document({
 
             // ============ END ============
             divider(), divider(),
-            new Paragraph({children:[new TextRun({text:'—— 文档结束 ——',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:200}}),
-            new Paragraph({children:[new TextRun({text:'本文档为链商2.0·链生活品牌 V2.0 平台营销策略制定方案，基于 V3.2 分润核销模型（跨店通兑版）延伸设计。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-            new Paragraph({children:[new TextRun({text:'链商2.0定位：面向社区商业的数字经营平台——商户独立经营·生态会员互通·消费权益流转·真实交易激励',size:16,font:'微软雅黑',color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-            new Paragraph({children:[new TextRun({text:'所有营销参数均为建议值，可根据实际运营数据调优。任何参数调整需经运营提案→品牌评估→技术确认→法务审核→管理层审批。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-            new Paragraph({children:[new TextRun({text:'营销策略核心原则：营销预算随交易量自动增长（零预付）· 代金券/积分/消费金全平台通用+不可兑现（零金融风险）· 三级推广收入基于交易量（零传销风险）· 跨店通兑不构成二清（汇付直清）',size:16,font:'微软雅黑',color:C.RED})],alignment:AlignmentType.CENTER}),
+            new Paragraph({children:[new TextRun({text:'—— 文档结束 ——',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:200}}),
+            new Paragraph({children:[new TextRun({text:'本文档为链商2.0·链生活品牌 V2.0 平台营销策略制定方案，基于 V3.2 分润核销模型（跨店通兑版）延伸设计。',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'链商2.0定位：面向社区商业的数字经营平台——商户独立经营·生态会员互通·消费权益流转·真实交易激励',size:16,font:FONT.body,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'所有营销参数均为建议值，可根据实际运营数据调优。任何参数调整需经运营提案→品牌评估→技术确认→法务审核→管理层审批。',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'营销策略核心原则：营销预算随交易量自动增长（零预付）· 代金券/积分/消费金全平台通用+不可兑现（零金融风险）· 三级推广收入基于交易量（零传销风险）· 跨店通兑不构成二清（汇付直清）',size:16,font:FONT.body,color:C.RED})],alignment:AlignmentType.CENTER}),
 
-        ]} // end children
-    ]} // end sections
-); // end Document
+]; // end children
 
 // ========== GENERATE ==========
-Packer.toBuffer(doc).then(function(buf) {
-    fs.writeFileSync(outFile, buf);
-    console.log('✅ 生成完成: ' + outFile);
-    console.log('   文件大小: ' + (buf.length / 1024).toFixed(0) + ' KB');
+buildAndWrite(children, outFile, { title: '链商平台 营销策略制定方案 V2.0', margins: { top: 1200, bottom: 1200, left: 1400, right: 1400 } }).then(function(outPath) {
+    console.log('✅ 生成完成: ' + outPath);
     console.log('');
     console.log('📋 V2.0 文档结构（10章+3附录）：');
     console.log('   第一章  执行摘要（链商2.0定位+4大核心机制+6大核心判断+关键数据一览）');

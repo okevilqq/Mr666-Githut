@@ -3,40 +3,46 @@ const path = require('path');
 const {
     docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType,
-    C, h1, h2, h3, p, b, n, divider, infoTable, dataTable,
+    C, h1, h2, h3, p, b, n, divider, infoTable, dataTable, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 // ========== SCRIPT-SPECIFIC HELPERS ==========
 
 function insight(title, content) {
     return new Paragraph({
         children:[
-            new TextRun({text:'💡 '+title+'：',size:21,font:'微软雅黑',bold:true,color:C.MAIN}),
-            new TextRun({text:content,size:21,font:'微软雅黑'}),
+            new TextRun({text:'💡 '+title+'：',size:FONT.bodySize,font:FONT.body,bold:true,color:C.MAIN}),
+            new TextRun({text:content,size:FONT.bodySize,font:FONT.body}),
         ],
-        spacing:{after:80,line:360}, indent:{left:300},
+        spacing:{after:80,line:FONT.lineSpacing}, indent:{left:300},
         border:{left:{style:BorderStyle.SINGLE,size:6,color:C.ORANGE,space:8}},
     });
 }
 
 function flywheel() {
     return new Paragraph({
-        children:[new TextRun({text:'触达 → 消费 → 积分/消费金 → 分润 → 数字权益升级 → 再投资 → 更多触达',size:22,font:'微软雅黑',bold:true,color:C.MAIN})],
+        children:[new TextRun({text:'触达 → 消费 → 积分/消费金 → 分润 → 数字权益升级 → 再投资 → 更多触达',size:22,font:FONT.body,bold:true,color:C.MAIN})],
         alignment:AlignmentType.CENTER, spacing:{before:200,after:200},
         border:{top:{style:BorderStyle.SINGLE,size:1,color:C.GRAY},bottom:{style:BorderStyle.SINGLE,size:1,color:C.GRAY}},
     });
 }
 
 // ============================================================
-const doc = new Document({
-    styles:{default:{document:{run:{font:'微软雅黑',size:21}}}},
-    sections:[{
-        properties:{page:{margin:{top:1440,bottom:1440,left:1440,right:1440}}},
-        children:[
+var children = [
 
             // Title
-            new Paragraph({children:[new TextRun({text:'企业消费权益 × 链商平台分润模型',size:36,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
-            new Paragraph({children:[new TextRun({text:'—— 有机融合策略与实施方案 ——',size:22,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:400}}),
+            new Paragraph({children:[new TextRun({text:'企业消费权益 × 链商平台分润模型',size:36,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
+            new Paragraph({children:[new TextRun({text:'—— 有机融合策略与实施方案 ——',size:22,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:400}}),
             infoTable([
                 ['文档性质','品牌战略策划 · 商业模型设计'],
                 ['编制日期','2026年6月2日'],
@@ -141,7 +147,7 @@ const doc = new Document({
             b('基于交易数据的动态分润比例——不同时段/不同品类/不同区域的分润比例可差异化（高峰时段高让利商家获得更低平台扣点，激励优质供给）'),
             b('基于消费者行为数据的精准让利推荐——AI分析消费者偏好，向商家推荐最优让利设置方案（"设置18%可提升排名3位，预计增量收入¥XXX"）'),
             b('基于商家经营数据的信用评估——自动生成"商家数字资产报告"（客户资产值+信用评级+增长潜力），作为商家融资/合作/品牌授权的参考依据'),
-            b('平台数据资产的商业化：脱敏后的行业数据报告（"新丰社区餐饮消费趋势"）可向品牌商/供应商/城市服务商提供，形成数据服务收入——这是平台数字资产的直接变现路径'),
+            b('平台数据资产的商业化：脱敏后的行业数据报告（"新丰社区餐饮消费趋势"）可向品牌商/供应商/城市服务商提供，形成数据服务收入——这是平台数字资产的直接转化路径'),
 
             h2('4.2  双向增值飞轮的完整运转'),
             p('将五个机制串联，形成完整的数字资产×分润飞轮：'),
@@ -149,7 +155,7 @@ const doc = new Document({
             n(2,'消费行为数据 → 优化商家让利策略 + 提升消费者匹配精准度（L2数据资产反哺）'),
             n(3,'商家高信用+高锁客 → 获得更高商圈排名+更多分润+更大代金券额度（L3品牌资产杠杆）'),
             n(4,'服务站社区密度提升 → 服务站等级提升 → 分润比例梯度上升 → 激励更多社区运营投入'),
-            n(5,'平台全域数据 → 动态分润算法 + 数据服务收入 + 商家数字资产报告（平台资产变现）'),
+            n(5,'平台全域数据 → 动态分润算法 + 数据服务收入 + 商家数字资产报告（平台资源转化）'),
             n(6,'数字权益升级 → 更多消费者参与 → 更多商家入驻 → 更多消费 → 更多分润 → 回到步骤1'),
 
             // ===== 五 =====
@@ -231,17 +237,15 @@ const doc = new Document({
             p('最终目标：当商家和消费者问"我的链生活数字资产值多少"时，答案不是用金钱衡量的，而是"你的每一次消费、每一次服务、每一次分享，都在让这个社区变得更好——这就是你的数字资产"。',{bold:true,color:C.MAIN}),
 
             divider(),
-            new Paragraph({children:[new TextRun({text:'— 文档完 —',size:20,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:400}}),
-            new Paragraph({children:[new TextRun({text:'编制：梁君衡（企业宣传部） | 2026年6月2日 | 链邦科技',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{before:100}}),
-        ],
-    }],
-});
+            new Paragraph({children:[new TextRun({text:'— 文档完 —',size:20,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:400}}),
+            new Paragraph({children:[new TextRun({text:'编制：梁君衡（企业宣传部） | 2026年6月2日 | 链邦科技',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{before:100}}),
+
+];
 
 async function main() {
-    const buffer = await Packer.toBuffer(doc);
     const outPath = path.join(__dirname,'20260602 链商平台 技术部会议整理','链商平台_企业消费权益×分润模型_融合策略.docx');
-    fs.writeFileSync(outPath,buffer);
-    console.log('✅ 已生成: '+outPath);
+    var resultPath = await buildAndWrite(children, outPath, { title: '链商平台 企业消费权益×分润模型 融合策略' });
+    console.log('✅ 已生成: '+resultPath);
     console.log('');
     console.log('📋 文档结构：');
     console.log('   一、核心命题');

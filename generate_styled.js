@@ -1,5 +1,6 @@
 const ExcelJS = require('exceljs');
 const path = require('path');
+const { COLORS, META } = require('./lib/constants');
 
 // ============================================================
 // 基础配置
@@ -55,7 +56,7 @@ function styleHeader(row, ws, colCount) {
     for (let c = 1; c <= colCount; c++) {
         const cell = row.getCell(c);
         cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF'+HEADER_BG} };
-        cell.font = { name:'微软雅黑', size:10, bold:true, color:{argb:'FF'+HEADER_FONT} };
+        cell.font = { name:FONT.body, size:10, bold:true, color:{argb:'FF'+HEADER_FONT} };
         cell.alignment = { vertical:'middle', horizontal:'center', wrapText:true };
         cell.border = {
             top:{style:'thin',color:{argb:'FF'+BORDER_COLOR}},
@@ -69,8 +70,8 @@ function styleHeader(row, ws, colCount) {
 function applyCellStyle(cell, opts={}) {
     const { bg, font, bold, align, border } = opts;
     if (bg) cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF'+bg} };
-    if (font) cell.font = { name:'微软雅黑', size:9, bold:!!bold, color:{argb:'FF'+font} };
-    else cell.font = { name:'微软雅黑', size:9 };
+    if (font) cell.font = { name:FONT.body, size:9, bold:!!bold, color:{argb:'FF'+font} };
+    else cell.font = { name:FONT.body, size:9 };
     cell.alignment = { vertical:'middle', horizontal: align || 'left', wrapText:true };
     cell.border = {
         top:{style:'thin',color:{argb:'FF'+BORDER_COLOR}},
@@ -686,7 +687,7 @@ function buildDeliverablesSheet(wb) {
         const status = item[6];
         if (status.includes('已完成')) {
             row.getCell(7).fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF'+DONE_BG} };
-            row.getCell(7).font = { name:'微软雅黑', size:9, bold:true, color:{argb:'FF'+DONE_FONT} };
+            row.getCell(7).font = { name:FONT.body, size:9, bold:true, color:{argb:'FF'+DONE_FONT} };
             // Also light green bg for the entire row
             for (let c=1;c<=7;c++) {
                 const cell = row.getCell(c);
@@ -698,15 +699,15 @@ function buildDeliverablesSheet(wb) {
             }
         } else if (status.includes('持续')) {
             row.getCell(7).fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFD6EAF8'} };
-            row.getCell(7).font = { name:'微软雅黑', size:9, bold:true, color:{argb:'FF2471A3'} };
+            row.getCell(7).font = { name:FONT.body, size:9, bold:true, color:{argb:'FF2471A3'} };
         } else {
             row.getCell(7).fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF'+PENDING_BG} };
-            row.getCell(7).font = { name:'微软雅黑', size:9, bold:true, color:{argb:'FF'+PENDING_FONT} };
+            row.getCell(7).font = { name:FONT.body, size:9, bold:true, color:{argb:'FF'+PENDING_FONT} };
         }
 
         // Bold for milestone items
         if ([39,47,51,55,59,70,75,76,84,85].includes(item[0])) {
-            row.getCell(2).font = { name:'微软雅黑', size:9, bold:true };
+            row.getCell(2).font = { name:FONT.body, size:9, bold:true };
         }
     }
 

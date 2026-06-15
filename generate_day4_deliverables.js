@@ -6,33 +6,43 @@ const {
     C, h1, h2, h3, p, b, divider, dataTable,
 } = require('./lib/docx-helpers');
 
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
+
 // ========== SCRIPT-SPECIFIC HELPERS ==========
 
 function painRow(n,s,pain,scene,emotion,intensity,opp,chainAdv){
     const ic = intensity==='🔴极高'?C.RED:(intensity==='🟠高'?C.ORANGE:(intensity==='🟡中'?C.YELLOW:C.GREEN));
     return new TableRow({children:[
-        new TableCell({children:[new Paragraph({children:[new TextRun({text:n,size:16,font:'微软雅黑'})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
-        new TableCell({children:[new Paragraph({children:[new TextRun({text:s,size:16,font:'微软雅黑',bold:true})],spacing:{before:10,after:10}})]}),
-        new TableCell({children:[new Paragraph({children:[new TextRun({text:pain,size:16,font:'微软雅黑'})],spacing:{before:10,after:10}})]}),
-        new TableCell({children:[new Paragraph({children:[new TextRun({text:scene,size:15,font:'微软雅黑',color:C.GRAY})],spacing:{before:10,after:10}})]}),
-        new TableCell({children:[new Paragraph({children:[new TextRun({text:emotion,size:16,font:'微软雅黑'})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
-        new TableCell({shading:{fill:ic,type:ShadingType.SOLID},children:[new Paragraph({children:[new TextRun({text:intensity,size:14,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
-        new TableCell({children:[new Paragraph({children:[new TextRun({text:opp,size:16,font:'微软雅黑',color:C.GREEN})],spacing:{before:10,after:10}})]}),
-        new TableCell({children:[new Paragraph({children:[new TextRun({text:chainAdv,size:15,font:'微软雅黑',color:C.MAIN})],spacing:{before:10,after:10}})]}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:n,size:16,font:FONT.body})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:s,size:16,font:FONT.body,bold:true})],spacing:{before:10,after:10}})]}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:pain,size:16,font:FONT.body})],spacing:{before:10,after:10}})]}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:scene,size:15,font:FONT.body,color:C.GRAY})],spacing:{before:10,after:10}})]}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:emotion,size:16,font:FONT.body})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
+        new TableCell({shading:{fill:ic,type:ShadingType.SOLID},children:[new Paragraph({children:[new TextRun({text:intensity,size:14,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:opp,size:16,font:FONT.body,color:C.GREEN})],spacing:{before:10,after:10}})]}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:chainAdv,size:15,font:FONT.body,color:C.MAIN})],spacing:{before:10,after:10}})]}),
     ]});
 }
 
 // ============================================================
 const doc = new Document({
-    styles:{default:{document:{run:{font:'微软雅黑',size:21}}}},
+    styles:{default:{document:{run:{font:FONT.body,size:FONT.bodySize}}}},
     sections:[
         // ====== SECTION 1: 三方痛点与机会图谱 ======
         {
             properties:{page:{margin:{top:1440,bottom:1440,left:1000,right:1000}}},
             children:[
-                new Paragraph({children:[new TextRun({text:'链商平台 · 三方痛点与机会图谱',size:36,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-                new Paragraph({children:[new TextRun({text:'—— 用户·商家·社区 三端痛点深挖 + 链商差异化机会 ——',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
-                new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月4日 | Day 4 交付 | 痛点≥32条 · 每条对应机会+链商优势',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+                new Paragraph({children:[new TextRun({text:'链商平台 · 三方痛点与机会图谱',size:36,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+                new Paragraph({children:[new TextRun({text:'—— 用户·商家·社区 三端痛点深挖 + 链商差异化机会 ——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+                new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月4日 | Day 4 交付 | 痛点≥32条 · 每条对应机会+链商优势',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
 
                 h1('一、研究框架'),
                 p('采用"痛点发现 → 场景还原 → 情绪识别 → 机会判断 → 链商匹配"五步法，对用户端、商家端、社区端进行系统性痛点挖掘。每条痛点标注情绪强度（🔴极高/🟠高/🟡中），并对应链商2.0系统的差异化解决路径。'),
@@ -41,7 +51,7 @@ const doc = new Document({
 
                 // User pain point table header
                 new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
-                    new TableRow({children:['#','痛点维度','痛点描述','典型场景','情绪','强度','机会方向','链商优势'].map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:17,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}))}),
+                    new TableRow({children:['#','痛点维度','痛点描述','典型场景','情绪','强度','机会方向','链商优势'].map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:17,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}))}),
                     painRow('U1','好店难找\n信息不对称','消费者不知道附近哪家店好——\n大众点评刷好评、美团竞价排名\n、抖音种草真假难辨','周末想找家附近好吃的湘菜馆\n打开3个APP对比评价和价格\n花了20分钟还没决定','😤 焦虑\n😡 不信任','🔴极高','基于真实位移+消费数据的\n"让利排名"替代主观评价排名','行为数据榜单（高德已验证可行）\n+独立商家店铺页（每家真实可查）'),
                     painRow('U2','优惠分散\n比价疲劳','优惠券分散在不同平台\n满减规则复杂，凑单累\n用户感到"被算计"','打开美团→领神券→发现限制条件\n打开抖音→团购→发现过期不退\n打开小红书→种草→拔草时发现贵了','😩 疲惫\n😒 被套路感','🟠高','"让利比例公开透明"\n一个商圈内，让利百分比统一展示\n无需跨平台比价','让利排名=价格透明化\n15%底线=消费者预期管理\n消费金通用=跨店优惠统一'),
                     painRow('U3','售后维权难\n平台推诿','到店消费后出现问题\n平台和商家互相推诿\n退款流程冗长','在美团买了一张火锅团购券\n到店后发现与描述严重不符\n退款需商家同意→平台审核→7天到账','😠 愤怒\n😤 无助','🔴极高','T+1结算=资金在商家账户\n消费者可直接与商家协商退款\n平台仲裁而非平台截留','资金直达商家=退款不经过平台\n24小时消费保护期\n申诉→仲裁→退款 清晰链路'),
@@ -58,7 +68,7 @@ const doc = new Document({
                 h1('三、商家端痛点（商户视角）'),
 
                 new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
-                    new TableRow({children:['#','痛点维度','痛点描述','典型场景','情绪','强度','机会方向','链商优势'].map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:17,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}))}),
+                    new TableRow({children:['#','痛点维度','痛点描述','典型场景','情绪','强度','机会方向','链商优势'].map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:17,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}))}),
                     painRow('M1','获客成本高\n不堪重负','美团抽佣15-25%\n抖音投流ROI持续下降\n中小商家利润被挤压殆尽','一家社区小面馆\n月营业额3万→美团抽佣4500\n+推广通2000→到手利润不足3000','😤 愤怒\n😢 无力','🔴极高','让利=排名，而非付费=排名\n商家把钱让利给消费者\n而非交给平台','让利排名=零广告费获客\n15%最低让利=消费者自然被吸引\n商圈免费流量分配'),
                     painRow('M2','客户不沉淀\n数据不归我','平台拥有所有客户数据\n商家看不到客户信息\n无法做私域运营','火锅店在美团做了3年\n积累5000+老客户\n但一个手机号都拿不到','😡 被绑架感\n😤 无奈','🔴极高','锁客=客户关系归商家\n扫码即绑定→消费数据可见\n→可做精准营销','一码锁客=客户资产归商家\n独立商户号=自己的账户\n客户数据面板（Phase 1规划）'),
                     painRow('M3','排名不公\n不花钱就没曝光','竞价排名=有钱排前面\n小商家永远在最后一页\n新店完全没有出头机会','开了家新奶茶店\n不买推广通=没有任何自然流量\n买推广通=每天烧200-500元','😡 不公平\n😤 绝望','🔴极高','让利排名=公平竞争\n新店可以通过高让利\n（如30%）快速冲排名','让利越高→排名越前\n新店有冷启动路径\n排名规则透明公开'),
@@ -75,7 +85,7 @@ const doc = new Document({
                 h1('四、社区端痛点（社区生态视角）'),
 
                 new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
-                    new TableRow({children:['#','痛点维度','痛点描述','典型场景','情绪','强度','机会方向','链商优势'].map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:17,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}))}),
+                    new TableRow({children:['#','痛点维度','痛点描述','典型场景','情绪','强度','机会方向','链商优势'].map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:17,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}))}),
                     painRow('C1','社区服务\n高度分散','家政/维修/美发/宠物\n/快递/洗衣……\n十几个APP和微信群','小区群里有：买菜群、家政群\n宠物群、二手群、团购群\n每天被99+未读轰炸','😩 信息过载\n😤 效率低下','🟠高','商圈=社区服务的\n一站式聚合入口\n一个APP覆盖全社区','商圈=联盟商家聚合页\n按让利排名=自然筛选\n社区服务站=线下聚合点'),
                     painRow('C2','邻里连接\n缺失','城市化让人与人隔绝\n住了5年不认识邻居\n社区没有"附近感"','搬进新小区2年\n只认识物业和快递员\n邻居门对门→零交流','😢 孤独\n😞 疏离','🟡中','社区活动+社区VIP\n+邻里消费网络\n重建"附近"的连接感','社区服务站=邻里社交节点\n消费网络图=邻里消费关系\n社区活动=线下连接'),
                     painRow('C3','社区商业\n被边缘化','社区小店被连锁品牌挤压\n没有线上展示能力\n正在快速消失','小区门口10年的理发店\n被商场里的连锁店抢走客人\n老板准备关门回老家','😢 悲伤\n😤 无力','🔴极高','每个社区小店=一个联盟商家\n免费入驻+独立店铺\n让社区商业数字化重生','联盟商家=每个小店都有\n独立线上店铺\n前200家免费入驻'),
@@ -114,7 +124,7 @@ const doc = new Document({
                     ]
                 ),
                 divider(),
-                new Paragraph({children:[new TextRun({text:'— 三方痛点与机会图谱完 —',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300}}),
+                new Paragraph({children:[new TextRun({text:'— 三方痛点与机会图谱完 —',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300}}),
             ],
         },
 
@@ -122,9 +132,9 @@ const doc = new Document({
         {
             properties:{page:{margin:{top:1440,bottom:1440,left:1000,right:1000}}},
             children:[
-                new Paragraph({children:[new TextRun({text:'链商平台公测 · UI品牌审查问题清单',size:32,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-                new Paragraph({children:[new TextRun({text:'—— 公测版本现有UI界面的品牌不一致问题逐项审查 ——',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
-                new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月4日 | Day 4 交付 | 发现问题≥18条 · 逐条标注修正建议',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+                new Paragraph({children:[new TextRun({text:'链商平台公测 · UI品牌审查问题清单',size:32,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+                new Paragraph({children:[new TextRun({text:'—— 公测版本现有UI界面的品牌不一致问题逐项审查 ——',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+                new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月4日 | Day 4 交付 | 发现问题≥18条 · 逐条标注修正建议',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
 
                 h1('一、审查范围与方法'),
                 p('基于6月2日技术会议对2.0系统的完整演示（老树根Demo + 商圈 + 联盟店铺 + 收银台 + 资管后台），对公测版本中所有用户可见界面的品牌一致性进行逐项审查。审查维度包括：品牌色使用、字体统一性、Logo位置、文案调性、图标风格、交互组件品牌化。'),
@@ -213,7 +223,7 @@ const doc = new Document({
                 b('L01 底部品牌标识 → 所有店铺页统一"由链商·链生活提供技术与运营支持"',{color:C.RED,bold:true}),
                 b('F01 全局字体 → CSS指定PingFang SC, Microsoft YaHei，价格数字DIN字体',{color:C.RED,bold:true}),
                 divider(),
-                new Paragraph({children:[new TextRun({text:'— UI品牌审查问题清单完 —',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300}}),
+                new Paragraph({children:[new TextRun({text:'— UI品牌审查问题清单完 —',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300}}),
             ],
         },
     ],

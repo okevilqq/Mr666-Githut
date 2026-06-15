@@ -3,8 +3,18 @@ const path = require('path');
 const {
     docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType,
-    C, h1, h2, h3, p, b: bullet, n: numItem, divider, infoTable, dataTable,
+    C, h1, h2, h3, p, b: bullet, n: numItem, divider, infoTable, dataTable, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 // C key aliases (this script uses different key names)
 C.LIGHT_BG = C.LIGHT;
@@ -15,10 +25,10 @@ C.HEADER_BG = C.HEADER;
 function keyVal(label, value) {
     return new Paragraph({
         children: [
-            new TextRun({ text: label, size: 21, font: '微软雅黑', bold: true }),
-            new TextRun({ text: value, size: 21, font: '微软雅黑' }),
+            new TextRun({ text: label, size:FONT.bodySize,font:FONT.body, bold: true }),
+            new TextRun({ text: value, size:FONT.bodySize,font:FONT.body }),
         ],
-        spacing: { after: 80, line: 360 },
+        spacing: { after: 80, line:FONT.lineSpacing },
     });
 }
 
@@ -26,10 +36,10 @@ function keyVal(label, value) {
 function insightBox(title, content) {
     return new Paragraph({
         children: [
-            new TextRun({ text: '💡 ' + title + '：', size: 21, font: '微软雅黑', bold: true, color: C.MAIN }),
-            new TextRun({ text: content, size: 21, font: '微软雅黑' }),
+            new TextRun({ text: '💡 ' + title + '：', size:FONT.bodySize,font:FONT.body, bold: true, color: C.MAIN }),
+            new TextRun({ text: content, size:FONT.bodySize,font:FONT.body }),
         ],
-        spacing: { after: 80, line: 360 },
+        spacing: { after: 80, line:FONT.lineSpacing },
         indent: { left: 300 },
         border: { left: { style: BorderStyle.SINGLE, size: 6, color: C.ORANGE, space: 8 } },
     });
@@ -38,19 +48,15 @@ function insightBox(title, content) {
 // ============================================================
 // 文档
 // ============================================================
-const doc = new Document({
-    styles: { default: { document: { run: { font: '微软雅黑', size: 21 } } } },
-    sections: [{
-        properties: { page: { margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 } } },
-        children: [
+var children = [
 
             // ===== 封面标题 =====
             new Paragraph({
-                children: [new TextRun({ text: '链商平台 2.0 系统技术沟通', size: 36, font: '微软雅黑', bold: true, color: C.MAIN })],
+                children: [new TextRun({ text: '链商平台 2.0 系统技术沟通', size: 36, font:FONT.body, bold: true, color: C.MAIN })],
                 alignment: AlignmentType.CENTER, spacing: { after: 60 },
             }),
             new Paragraph({
-                children: [new TextRun({ text: '—— 技术部（数字化中心）跨部门培训会议纪要 ——', size: 22, font: '微软雅黑', color: C.GRAY })],
+                children: [new TextRun({ text: '—— 技术部（数字化中心）跨部门培训会议纪要 ——', size: 22, font:FONT.body, color: C.GRAY })],
                 alignment: AlignmentType.CENTER, spacing: { after: 400 },
             }),
 
@@ -283,7 +289,7 @@ const doc = new Document({
                 '系统支持不同行业的首页装修（餐饮/电商/文旅/灯饰/票务），品牌 VI 体系需设计"统一品牌标识 + 行业可变元素"的弹性框架，确保跨行业场景下品牌辨识度统一。模板固化工作（3+3）本身就是品牌视觉落地的第一战场。'),
 
             insightBox('洞察6：虚拟资产体系是品牌运营的核心工具',
-                '消费金（通用支付抵扣）、积分（通用兑换）、代金券/优惠券（商家自运营）三层体系构成了链商用户运营的工具箱。品牌策划需精确理解每类资产的属性与边界，避免在对外宣传中混淆概念。尤其积分不可兑现是合规红线，品牌话术中绝不可暗示积分可变现。'),
+                '消费金（通用支付抵扣）、积分（通用兑换）、代金券/优惠券（商家自运营）三层体系构成了链商用户运营的工具箱。品牌策划需精确理解每类资产的属性与边界，避免在对外宣传中混淆概念。尤其积分不可兑现是合规红线，品牌话术中绝不可暗示积分可兑换现金。'),
 
             insightBox('洞察7：跨店不能合并支付是模式选择而非缺陷',
                 '这是链商"去中心化收款"模式必然带来的体验取舍。面对商家的质疑时，需从"私域独立收款 vs 公域统一收银"的商业模式角度解释，而非从技术限制角度回应。"香港商家很喜欢这种模式，毕竟是私域"。'),
@@ -369,29 +375,27 @@ const doc = new Document({
 
             // ===== 结尾 =====
             new Paragraph({
-                children: [new TextRun({ text: '— 会议纪要完 —', size: 20, font: '微软雅黑', color: C.GRAY, italics: true })],
+                children: [new TextRun({ text: '— 会议纪要完 —', size: 20, font:FONT.body, color: C.GRAY, italics: true })],
                 alignment: AlignmentType.CENTER, spacing: { before: 400 },
             }),
             new Paragraph({
-                children: [new TextRun({ text: '记录整理：梁君衡  |  2026年6月2日  |  链邦科技·企业宣传部', size: 18, font: '微软雅黑', color: C.GRAY })],
+                children: [new TextRun({ text: '记录整理：梁君衡  |  2026年6月2日  |  链邦科技·企业宣传部', size: 18, font:FONT.body, color: C.GRAY })],
                 alignment: AlignmentType.CENTER, spacing: { before: 100, after: 200 },
             }),
             new Paragraph({
-                children: [new TextRun({ text: '抄送：肖秋利（总经办）、陈冠华（总经办）、数字化中心', size: 18, font: '微软雅黑', color: C.GRAY })],
+                children: [new TextRun({ text: '抄送：肖秋利（总经办）、陈冠华（总经办）、数字化中心', size: 18, font:FONT.body, color: C.GRAY })],
                 alignment: AlignmentType.CENTER, spacing: { after: 100 },
             }),
-        ],
-    }],
-});
+
+];
 
 // ============================================================
 // 生成
 // ============================================================
 async function main() {
-    const buffer = await Packer.toBuffer(doc);
     const outPath = path.join(__dirname, '20260602 链商平台 技术部会议整理', '20260602 链商平台 2.0系统技术沟通 会议纪要.docx');
-    fs.writeFileSync(outPath, buffer);
-    console.log('✅ 会议纪要已生成: ' + outPath);
+    var resultPath = await buildAndWrite(children, outPath, { title: '链商平台 2.0 系统技术沟通 会议纪要' });
+    console.log('✅ 会议纪要已生成: ' + resultPath);
     console.log('');
     console.log('📋 文档结构：');
     console.log('   一、会议基本信息');

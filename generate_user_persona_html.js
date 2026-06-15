@@ -5,6 +5,8 @@ const outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 const outFile = path.join(outDir, '链商平台_用户画像可行性报告_可视化演示.html');
 
+	const { COLORS, META } = require('./lib/constants');
+
 // ========== FLAT DESIGN COLOR PALETTE (轻松扁平 · 色彩明快) ==========
 const C = {
     BLUE: '#4A90D9',      // 柔和蓝 (softer than 深海蓝)
@@ -40,7 +42,7 @@ const html = `<!DOCTYPE html>
 /* ====== CSS RESET & BASE ====== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;font-size:16px}
-body{font-family:'微软雅黑','Microsoft YaHei','PingFang SC',sans-serif;color:${C.DARK};background:${C.LIGHT};line-height:1.7;overflow-x:hidden}
+body{font-family:'${FONT.body}','Microsoft YaHei','PingFang SC',sans-serif;color:${C.DARK};background:${C.LIGHT};line-height:1.7;overflow-x:hidden}
 
 /* ====== NAVIGATION (compact top bar) ====== */
 .top-nav{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:0 30px;box-shadow:0 1px 8px rgba(0,0,0,0.06);border-bottom:1px solid rgba(0,0,0,0.04)}

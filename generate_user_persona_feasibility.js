@@ -3,9 +3,19 @@ var path = require('path');
 var {
     docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
-    C, h1, h2, h3, divider, pageBreak, fmt,
-    infoTable, dataTable, flowBox, calloutBox,
+    C, h1, h2, h3, p, b, n, divider, pageBreak, fmt, pct, pct1,
+    infoTable, dataTable, flowBox, calloutBox, redline, greenCheck, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 // C extensions
 C.SOFT_BG = '#F8F9FA';
@@ -16,37 +26,17 @@ var outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理')
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 var outFile = path.join(outDir, '链商平台_用户画像可行性报告_V1.0.docx');
 
-// ========== LOCAL OVERRIDES (different signatures) ==========
-function p(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:o.after||80,line:o.line||360}, alignment:o.align, indent:o.indent }); }
-function b(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:'  • '+t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:60,line:340}, indent:{left:600} }); }
-function n(i,t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:i+'. '+t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:60,line:340}, indent:{left:600} }); }
-function pct(rate) { return (rate * 100).toFixed(2) + '%'; }
-function pct1(rate) { return (rate * 100).toFixed(1) + '%'; }
-
-function redline(text) {
-    return new Paragraph({
-        children:[new TextRun({text:'⛔ '+text,size:21,font:'微软雅黑',bold:true,color:C.RED})],
-        spacing:{after:80,line:360}, indent:{left:300},
-        border:{left:{style:BorderStyle.SINGLE,size:6,color:C.RED,space:8}},
-    });
-}
-
-function greenCheck(text) {
-    return new Paragraph({
-        children:[new TextRun({text:'✅ '+text,size:21,font:'微软雅黑',color:C.GREEN})],
-        spacing:{after:60,line:340}, indent:{left:300},
-    });
-}
+// Note: p, b, n, pct, pct1, redline, greenCheck now imported from lib/docx-helpers
 
 function warningBox(text) {
     return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
-        new TableRow({children:[new TableCell({shading:{fill:'#FFF8E1'},children:[new Paragraph({children:[new TextRun({text:'⚠ '+text,size:18,font:'微软雅黑',bold:true,color:C.ORANGE})],spacing:{before:15,after:15}})],border:{top:{style:BorderStyle.SINGLE,size:1,color:C.ORANGE},bottom:{style:BorderStyle.SINGLE,size:1,color:C.ORANGE}}})]}),
+        new TableRow({children:[new TableCell({shading:{fill:'#FFF8E1'},children:[new Paragraph({children:[new TextRun({text:'⚠ '+text,size:18,font:FONT.body,bold:true,color:C.ORANGE})],spacing:{before:15,after:15}})],border:{top:{style:BorderStyle.SINGLE,size:1,color:C.ORANGE},bottom:{style:BorderStyle.SINGLE,size:1,color:C.ORANGE}}})]}),
     ]});
 }
 
 function personaTable(headers, rows) {
-    var hdrRow = new TableRow({children: headers.map(function(h){return new TableCell({shading:{fill:C.MAIN},children:[new Paragraph({children:[new TextRun({text:h,size:17,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]})})});
-    var dataRows = rows.map(function(r,i){return new TableRow({children: r.map(function(c,j){return new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:String(c||'—'),size:16,font:'微软雅黑',bold:j===0,color:j===0?C.MAIN:C.BLACK})],spacing:{before:12,after:12}})]})})})});
+    var hdrRow = new TableRow({children: headers.map(function(h){return new TableCell({shading:{fill:C.MAIN},children:[new Paragraph({children:[new TextRun({text:h,size:17,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]})})});
+    var dataRows = rows.map(function(r,i){return new TableRow({children: r.map(function(c,j){return new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:String(c||'—'),size:16,font:FONT.body,bold:j===0,color:j===0?C.MAIN:C.BLACK})],spacing:{before:12,after:12}})]})})})});
     return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[hdrRow].concat(dataRows)});
 }
 
@@ -56,9 +46,9 @@ function scoreBar(label, score, note) {
     var color = score >= 8 ? C.GREEN : (score >= 6 ? C.ORANGE : C.RED);
     return new Paragraph({
         children:[
-            new TextRun({text:label+'  ',size:20,font:'微软雅黑',bold:true}),
-            new TextRun({text:bar+' '+score+'/10  ',size:20,font:'微软雅黑',color:color}),
-            new TextRun({text:note,size:18,font:'微软雅黑',color:C.GRAY}),
+            new TextRun({text:label+'  ',size:20,font:FONT.body,bold:true}),
+            new TextRun({text:bar+' '+score+'/10  ',size:20,font:FONT.body,color:color}),
+            new TextRun({text:note,size:18,font:FONT.body,color:C.GRAY}),
         ],
         spacing:{after:40,line:340},
     });
@@ -69,14 +59,14 @@ var docChildren = [];
 
 // ============ COVER ============
 docChildren.push(divider(), divider());
-docChildren.push(new Paragraph({children:[new TextRun({text:'链商2.0 · 链生活品牌',size:28,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER}));
+docChildren.push(new Paragraph({children:[new TextRun({text:'链商2.0 · 链生活品牌',size:28,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER}));
 docChildren.push(divider());
-docChildren.push(new Paragraph({children:[new TextRun({text:'本地生活平台 用户画像可行性报告',size:36,font:'微软雅黑',bold:true,color:C.DARK})],alignment:AlignmentType.CENTER}));
-docChildren.push(new Paragraph({children:[new TextRun({text:'—— 基于市场数据与链商2.0模型的全景用户策略研究',size:22,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}));
+docChildren.push(new Paragraph({children:[new TextRun({text:'本地生活平台 用户画像可行性报告',size:36,font:FONT.body,bold:true,color:C.DARK})],alignment:AlignmentType.CENTER}));
+docChildren.push(new Paragraph({children:[new TextRun({text:'—— 基于市场数据与链商2.0模型的全景用户策略研究',size:22,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
 docChildren.push(divider());
 docChildren.push(flowBox('面向社区商业的数字经营平台——商户独立经营 · 生态会员互通 · 消费权益流转 · 真实交易激励', false));
 docChildren.push(divider());
-docChildren.push(new Paragraph({children:[new TextRun({text:'V1.0  |  2026年6月6日  |  企业宣传部 · 品牌战略组',size:21,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}));
+docChildren.push(new Paragraph({children:[new TextRun({text:'V1.0  |  2026年6月6日  |  企业宣传部 · 品牌战略组',size:FONT.bodySize,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
 docChildren.push(divider());
 docChildren.push(infoTable([
     ['文档性质','用户画像可行性报告（策略级）——基于行业权威数据与链商2.0 V3.2模型的全景用户研究，为品牌战略决策提供用户端数据支撑'],
@@ -402,7 +392,7 @@ docChildren.push(personaTable(
     ['维度','详细描述'],
     [
         ['典型画像','社区活跃居民/宝妈(35-45岁)/快递员(25-40岁)/学生兼职/退休社区达人——"在社区有人缘的人"'],
-        ['核心动力','副业增收（月均+500-3,000元）+社区影响力/社交货币——"推荐好店给邻居，自己还能赚点"'],
+        ['核心动力','副业增收（月均+500-3,000元）+社区影响力/社交价值——"推荐好店给邻居，自己还能赚点"'],
         ['时间投入','碎片化（日均0.5-2小时），利用接送孩子/遛弯/工作间隙推广'],
         ['收入预期','按推广产出交易额提成（约1-6.5%不等，取决于业态和层级）——¥100消费≈¥1-6.5推广佣金'],
         ['推广方式','线下：社区二维码海报/口口相传/邻里群分享；线上：朋友圈/社区微信群/短视频'],
@@ -754,26 +744,16 @@ docChildren.push(pageBreak());
 
 // ============ END PAGE ============
 docChildren.push(divider(), divider());
-docChildren.push(new Paragraph({children:[new TextRun({text:'— 报告完 —',size:24,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}));
+docChildren.push(new Paragraph({children:[new TextRun({text:'— 报告完 —',size:24,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
 docChildren.push(divider());
-docChildren.push(new Paragraph({children:[new TextRun({text:'链商2.0 · 链生活品牌  |  用户画像可行性报告 V1.0  |  2026年6月6日',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}));
-docChildren.push(new Paragraph({children:[new TextRun({text:'编制：企业宣传部 · 品牌战略组  |  梁君衡',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}));
-docChildren.push(new Paragraph({children:[new TextRun({text:'基于：艾媒咨询 · 艾瑞咨询 · QuestMobile · 链商V3.2/V15模型',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}));
+docChildren.push(new Paragraph({children:[new TextRun({text:'链商2.0 · 链生活品牌  |  用户画像可行性报告 V1.0  |  2026年6月6日',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
+docChildren.push(new Paragraph({children:[new TextRun({text:'编制：企业宣传部 · 品牌战略组  |  梁君衡',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
+docChildren.push(new Paragraph({children:[new TextRun({text:'基于：艾媒咨询 · 艾瑞咨询 · QuestMobile · 链商V3.2/V15模型',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
 docChildren.push(divider());
 
 // ========== BUILD & OUTPUT ==========
-var doc = new Document({
-    styles:{default:{document:{run:{font:'微软雅黑'}}}},
-    sections:[{
-        properties:{page:{margin:{top:1200,bottom:1200,left:1400,right:1400}}},
-        children: docChildren,
-    }],
-});
-
-Packer.toBuffer(doc).then(function(buf){
-    fs.writeFileSync(outFile, buf);
-    console.log('✅ 用户画像可行性报告已生成: ' + outFile);
-    console.log('   文件大小: ' + (buf.length / 1024).toFixed(1) + ' KB');
+buildAndWrite(docChildren, outFile, { title: '链商平台 用户画像可行性报告 V1.0', margins: { top: 1200, bottom: 1200, left: 1400, right: 1400 } }).then(function(outPath){
+    console.log('✅ 用户画像可行性报告已生成: ' + outPath);
     console.log('   结构: 封面 + 9章 + 2附录');
     console.log('   核心内容: 5类消费者画像 + 5类商户画像 + 3级推广网络 + 可行性评估');
 }).catch(function(err){

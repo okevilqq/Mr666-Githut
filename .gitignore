@@ -52,6 +52,7 @@ structured_output_*.json
 Thumbs.db
 Desktop.ini
 .DS_Store
+*.textClipping
 
 # ---- IDE / 编辑器 ----
 .vscode/

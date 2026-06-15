@@ -3,9 +3,19 @@ var path = require('path');
 var {
     docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak,
-    C, h1, h2, h3, divider, pageBreak, spacer,
-    dataTable, calloutInline,
+    C, h1, h2, h3, p, b, n, divider, pageBreak, spacer,
+    dataTable, calloutInline, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 // C extensions
 C.LIGHTGRAY = '#F5F6FA';
@@ -14,17 +24,6 @@ C.GOLD = '#C9A96E';
 
 // Alias
 var calloutBox = calloutInline;
-
-// ── Local overrides (different signatures) ──
-function p(t, o) {
-    o = o || {};
-    return new Paragraph({ children: [new TextRun({ text: t, size: o.size || 21, font: '微软雅黑', bold: !!o.bold, color: o.color || C.BLACK, italics: !!o.italics })], spacing: { after: o.after || 80, line: o.line || 360 }, alignment: o.align, indent: o.indent });
-}
-function b(t, o) {
-    o = o || {};
-    return new Paragraph({ children: [new TextRun({ text: '• ' + t, size: o.size || 21, font: '微软雅黑', bold: !!o.bold, color: o.color || C.BLACK })], spacing: { after: 60, line: 340 }, indent: { left: 600 } });
-}
-function n(i, t) { return new Paragraph({ children: [new TextRun({ text: i + '. ' + t, size: 21, font: '微软雅黑' })], spacing: { after: 60, line: 340 }, indent: { left: 600 } }); }
 
 // ── Script-Specific Helpers ──
 
@@ -45,15 +44,15 @@ function spreadCard(spreadNum, leftTitle, rightTitle, leftContent, rightContent)
 
 function copyBlock(label, content, tone) {
     return [
-        new Paragraph({ children: [new TextRun({ text: '【' + label + '】', size: 18, font: '微软雅黑', bold: true, color: C.MAIN })], spacing: { after: 40 } }),
-        new Paragraph({ children: [new TextRun({ text: content, size: 21, font: '微软雅黑' })], spacing: { after: 60, line: 360 }, indent: { left: 200 } }),
-        tone ? new Paragraph({ children: [new TextRun({ text: '🎨 语调：' + tone, size: 16, font: '微软雅黑', italics: true, color: C.GRAY })], spacing: { after: 80 } }) : divider()
+        new Paragraph({ children: [new TextRun({ text: '【' + label + '】', size: 18, font:FONT.body, bold: true, color: C.MAIN })], spacing: { after: 40 } }),
+        new Paragraph({ children: [new TextRun({ text: content, size:FONT.bodySize,font:FONT.body })], spacing: { after: 60, line:FONT.lineSpacing }, indent: { left: 200 } }),
+        tone ? new Paragraph({ children: [new TextRun({ text: '🎨 语调：' + tone, size: 16, font:FONT.body, italics: true, color: C.GRAY })], spacing: { after: 80 } }) : divider()
     ];
 }
 
 function visualNote(content) {
     return new Paragraph({
-        children: [new TextRun({ text: '📐 视觉方向：' + content, size: 17, font: '微软雅黑', italics: true, color: C.ORANGE })],
+        children: [new TextRun({ text: '📐 视觉方向：' + content, size: 17, font:FONT.body, italics: true, color: C.ORANGE })],
         spacing: { after: 60 }, indent: { left: 200 },
         border: { left: { style: BorderStyle.DOT_DASH, size: 2, color: C.ORANGE, space: 8 } }
     });
@@ -61,7 +60,7 @@ function visualNote(content) {
 
 function complianceNote(content) {
     return new Paragraph({
-        children: [new TextRun({ text: '⚖️ 合规注意：' + content, size: 16, font: '微软雅黑', bold: true, color: C.RED })],
+        children: [new TextRun({ text: '⚖️ 合规注意：' + content, size: 16, font:FONT.body, bold: true, color: C.RED })],
         spacing: { after: 60 }, indent: { left: 200 },
         border: { left: { style: BorderStyle.SINGLE, size: 3, color: C.RED, space: 8 } }
     });
@@ -70,8 +69,8 @@ function complianceNote(content) {
 function bigNumber(num, label) {
     return new Paragraph({
         children: [
-            new TextRun({ text: num, size: 48, font: '微软雅黑', bold: true, color: C.MAIN }),
-            new TextRun({ text: '\n' + label, size: 18, font: '微软雅黑', color: C.GRAY })
+            new TextRun({ text: num, size: 48, font:FONT.body, bold: true, color: C.MAIN }),
+            new TextRun({ text: '\n' + label, size: 18, font:FONT.body, color: C.GRAY })
         ],
         alignment: AlignmentType.CENTER, spacing: { before: 60, after: 60 }
     });
@@ -89,9 +88,9 @@ function buildBrief() {
 
     // ── COVER ──
     ch.push(
-        new Paragraph({ children: [new TextRun({ text: '链商2.0 · 链生活品牌', size: 40, font: '微软雅黑', bold: true, color: C.MAIN })], alignment: AlignmentType.CENTER, spacing: { after: 30 } }),
-        new Paragraph({ children: [new TextRun({ text: '企业形象画册 · 策划简报', size: 32, font: '微软雅黑', bold: true, color: C.DARK })], alignment: AlignmentType.CENTER, spacing: { after: 30 } }),
-        new Paragraph({ children: [new TextRun({ text: 'Corporate Image Brochure — Creative Brief', size: 18, font: '微软雅黑', color: C.GRAY, italics: true })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+        new Paragraph({ children: [new TextRun({ text: '链商2.0 · 链生活品牌', size: 40, font:FONT.body, bold: true, color: C.MAIN })], alignment: AlignmentType.CENTER, spacing: { after: 30 } }),
+        new Paragraph({ children: [new TextRun({ text: '企业形象画册 · 策划简报', size: 32, font:FONT.body, bold: true, color: C.DARK })], alignment: AlignmentType.CENTER, spacing: { after: 30 } }),
+        new Paragraph({ children: [new TextRun({ text: 'Corporate Image Brochure — Creative Brief', size: 18, font:FONT.body, color: C.GRAY, italics: true })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
         divider(),
 
         dataTable(
@@ -730,8 +729,8 @@ function buildBrief() {
         divider(),
 
         // ── 文档结束 ──
-        new Paragraph({ children: [new TextRun({ text: '— 策划简报结束 —', size: 18, font: '微软雅黑', color: C.GRAY, italics: true })], alignment: AlignmentType.CENTER, spacing: { before: 300 } }),
-        new Paragraph({ children: [new TextRun({ text: '编制：梁君衡 | 企业宣传策划专员 | 2026年6月8日 | Version 1.0', size: 16, font: '微软雅黑', color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } })
+        new Paragraph({ children: [new TextRun({ text: '— 策划简报结束 —', size: 18, font:FONT.body, color: C.GRAY, italics: true })], alignment: AlignmentType.CENTER, spacing: { before: 300 } }),
+        new Paragraph({ children: [new TextRun({ text: '编制：梁君衡 | 企业宣传策划专员 | 2026年6月8日 | Version 1.0', size: 16, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } })
     );
 
     return ch;
@@ -740,26 +739,12 @@ function buildBrief() {
 // ═══════════════════════════════════════════════════════════
 // BUILD
 // ═══════════════════════════════════════════════════════════
-var doc = new Document({
-    properties: {
-        title: '链商2.0·链生活 企业形象画册策划简报',
-        creator: '梁君衡',
-        description: '链商企业形象画册（品牌画册V3.0）策划简报——24页逐页内容策划+文案+视觉方向+合规检查+制作计划。商业逻辑清晰·文案合法合规·展示企业活力实力。'
-    },
-    styles: {
-        default: { document: { run: { size: 21, font: '微软雅黑' } } }
-    },
-    sections: [{
-        properties: {
-            page: { margin: { top: 1200, bottom: 1200, left: 1100, right: 1100 } }
-        },
-        children: buildBrief()
-    }]
-});
-
 var outPath = path.join(OUT, '链商平台_企业形象画册策划简报_V1.0.docx');
-Packer.toBuffer(doc).then(function(buf) {
-    fs.writeFileSync(outPath, buf);
+
+buildAndWrite(buildBrief(), outPath, {
+    title: '链商2.0·链生活 企业形象画册策划简报',
+    margins: { top: 1200, bottom: 1200, left: 1100, right: 1100 }
+}).then(function(outPath) {
     console.log('✅ 已生成: ' + outPath);
     console.log('   包含: 24页逐页内容策划 + 文案初稿 + 视觉方向 + 合规检查清单 + 制作执行计划');
 }).catch(function(err) { console.error('生成失败:', err); });

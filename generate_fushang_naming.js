@@ -3,24 +3,29 @@ var path = require('path');
 var {
     docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
-    C, h2, h3, divider, pageBreak, infoTable, dataTable, calloutBox,
+    C, h1, h2, h3, p, b, n, divider, pageBreak, infoTable, dataTable, calloutBox, buildAndWrite,
 } = require('./lib/docx-helpers');
 
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
+C.WARM_ORANGE = '#F27E34'; // Local: warmer variant than COLORS.WARM_ORANGE
+
 // C extensions
-C.BRAND_RED = '#D62828'; C.TECH_BLUE = '#1F5EFF'; C.GOLD = '#D4A843';
-C.WARM_ORANGE = '#F27E34'; C.DEEP_GREEN = '#0E6655';
 C.SCHEME_A = '#1F5EFF'; C.SCHEME_B = '#E67E22'; C.SCHEME_C = '#0E6655';
 
 var outDir = path.join(__dirname, '20260611 赋商创意命名方案');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 var outFile = path.join(outDir, '链商平台_赋商创意命名方案_V1.0.docx');
 
-// ========== LOCAL OVERRIDES ==========
-function h1(t) { return new Paragraph({ text:t, heading:HeadingLevel.HEADING_1, spacing:{before:500,after:240}, border:{bottom:{style:BorderStyle.SINGLE,size:3,color:C.MAIN}} }); }
-function p(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:o.after||80,line:o.line||360}, alignment:o.align, indent:o.indent }); }
-function pt(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:t,size:19,font:'微软雅黑',color:o.color||C.GRAY})], spacing:{after:60,line:320}, alignment:o.align }); }
-function b(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:'  • '+t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:60,line:340}, indent:{left:600} }); }
-function n(i,t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:i+'. '+t,size:21,font:'微软雅黑',bold:!!o.bold,color:o.color||C.BLACK})], spacing:{after:60,line:340}, indent:{left:600} }); }
+// ========== SCRIPT-SPECIFIC HELPERS ==========
+function pt(t,o) { o=o||{}; return new Paragraph({ children:[new TextRun({text:t,size:19,font:FONT.body,color:o.color||C.GRAY})], spacing:{after:60,line:320}, alignment:o.align }); }
 
 function riskBadge(level) {
     var map = {
@@ -29,7 +34,7 @@ function riskBadge(level) {
         'high':   { text:'🔴 高风险 — 存在重大在先权利障碍', color:C.RED },
     };
     var m = map[level] || map.low;
-    return new Paragraph({children:[new TextRun({text:m.text,size:20,font:'微软雅黑',bold:true,color:m.color})],spacing:{after:60}});
+    return new Paragraph({children:[new TextRun({text:m.text,size:20,font:FONT.body,bold:true,color:m.color})],spacing:{after:60}});
 }
 
 function proposalHeader(name, en, tagline, colorHex) {
@@ -38,9 +43,9 @@ function proposalHeader(name, en, tagline, colorHex) {
         new Paragraph({spacing:{before:200},children:[]}),
         new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
             new TableRow({children:[new TableCell({shading:{fill:c},children:[
-                new Paragraph({children:[new TextRun({text:name,size:48,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:30,after:5}}),
-                new Paragraph({children:[new TextRun({text:en,size:28,font:'微软雅黑',color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:5,after:10}}),
-                new Paragraph({children:[new TextRun({text:tagline,size:20,font:'微软雅黑',color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:5,after:30}}),
+                new Paragraph({children:[new TextRun({text:name,size:48,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:30,after:5}}),
+                new Paragraph({children:[new TextRun({text:en,size:28,font:FONT.body,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:5,after:10}}),
+                new Paragraph({children:[new TextRun({text:tagline,size:20,font:FONT.body,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:5,after:30}}),
             ],border:{top:{style:BorderStyle.SINGLE,size:2,color:c},bottom:{style:BorderStyle.SINGLE,size:2,color:c}}})]}),
         ]}),
     ];
@@ -66,18 +71,18 @@ var children = [];
 // ===== COVER PAGE =====
 children.push(
     new Paragraph({spacing:{before:1600},children:[]}),
-    new Paragraph({children:[new TextRun({text:'链商品牌替代方案',size:26,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
-    new Paragraph({children:[new TextRun({text:'"赋商"创意命名方案',size:44,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:80}}),
-    new Paragraph({children:[new TextRun({text:'FuShang Creative Naming Proposal  V1.0',size:26,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+    new Paragraph({children:[new TextRun({text:'链商品牌替代方案',size:26,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
+    new Paragraph({children:[new TextRun({text:'"赋商"创意命名方案',size:44,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:80}}),
+    new Paragraph({children:[new TextRun({text:'FuShang Creative Naming Proposal  V1.0',size:26,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
     new Paragraph({spacing:{before:300},children:[]}),
-    new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:18,font:'微软雅黑',color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:180}}),
-    new Paragraph({children:[new TextRun({text:'创意原点："赋商"——赋能商业，赋予商家数字化经营能力',size:22,font:'微软雅黑',bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:120}}),
-    new Paragraph({children:[new TextRun({text:'三套方案 · "赋商"体系 · B端经营定位 · 2-4字中文+国际化英文 · 全类别商标可注册性评估',size:19,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:80}}),
-    new Paragraph({children:[new TextRun({text:'命名方向：联盟赋能型 · 全域通达型 · 生态汇聚型',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+    new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:18,font:FONT.body,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:180}}),
+    new Paragraph({children:[new TextRun({text:'创意原点："赋商"——赋能商业，赋予商家数字化经营能力',size:22,font:FONT.body,bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:120}}),
+    new Paragraph({children:[new TextRun({text:'三套方案 · "赋商"体系 · B端经营定位 · 2-4字中文+国际化英文 · 全类别商标可注册性评估',size:19,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:80}}),
+    new Paragraph({children:[new TextRun({text:'命名方向：联盟赋能型 · 全域通达型 · 生态汇聚型',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
     new Paragraph({spacing:{before:400},children:[]}),
-    new Paragraph({children:[new TextRun({text:'链邦科技  |  2026年6月  |  V1.0 · 赋商创意版',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'编制：梁君衡  ·  企业宣传策划专员',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'背景：基于6/11创意策划会议"赋商"命名方向，围绕"赋能商业·赋予商家能力"延展三套方案',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}),
+    new Paragraph({children:[new TextRun({text:'链邦科技  |  2026年6月  |  V1.0 · 赋商创意版',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'编制：梁君衡  ·  企业宣传策划专员',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'背景：基于6/11创意策划会议"赋商"命名方向，围绕"赋能商业·赋予商家能力"延展三套方案',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}),
     pageBreak()
 );
 
@@ -851,14 +856,8 @@ children.push(
 );
 
 // ===== BUILD =====
-var doc = new Document({
-    styles:{default:{document:{run:{font:'微软雅黑'}}}},
-    sections:[{children:children}]
-});
-
-Packer.toBuffer(doc).then(function(buf){
-    fs.writeFileSync(outFile, buf);
-    console.log('✅ "赋商"创意命名方案已生成: ' + outFile);
+buildAndWrite(children, outFile, { title: '链商平台 赋商创意命名方案 V1.0' }).then(function(outPath){
+    console.log('✅ "赋商"创意命名方案已生成: ' + outPath);
     console.log('   方案一：赋商联 / FuBizLink — 联盟赋能型（赋能商家·联盟共赢）');
     console.log('   方案二：赋商通 / FuBizFlow — 全域通达型（赋能商业·全域通达）');
     console.log('   方案三：赋商汇 / FuBizHub — 生态汇聚型（赋能商业·汇聚共赢）');

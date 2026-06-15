@@ -3,8 +3,18 @@ const path = require('path');
 const {
     docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
-    C, h1, h2, h3, p, b, n, divider, dataTable, infoTable,
+    C, h1, h2, h3, p, b, n, divider, dataTable, infoTable, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 // C extensions for this script
 C.LIGHT_BG = C.LIGHT;
@@ -18,16 +28,12 @@ const num = n;
 // ============================================================
 // Document
 // ============================================================
-const doc = new Document({
-    styles: { default: { document: { run: { font: '微软雅黑', size: 21 } } } },
-    sections: [{
-        properties: { page: { margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 } } },
-        children: [
+var children = [
 
             // ===== 封面 =====
-            new Paragraph({ children: [new TextRun({ text: '链商平台公测', size: 28, font: '微软雅黑', color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
-            new Paragraph({ children: [new TextRun({ text: '店铺模板设计 Brief', size: 42, font: '微软雅黑', bold: true, color: C.MAIN })], alignment: AlignmentType.CENTER, spacing: { after: 60 } }),
-            new Paragraph({ children: [new TextRun({ text: '3套餐饮模板 + 3套电商模板', size: 24, font: '微软雅黑', color: C.ACCENT })], alignment: AlignmentType.CENTER, spacing: { after: 300 } }),
+            new Paragraph({ children: [new TextRun({ text: '链商平台公测', size: 28, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
+            new Paragraph({ children: [new TextRun({ text: '店铺模板设计 Brief', size: 42, font:FONT.body, bold: true, color: C.MAIN })], alignment: AlignmentType.CENTER, spacing: { after: 60 } }),
+            new Paragraph({ children: [new TextRun({ text: '3套餐饮模板 + 3套电商模板', size: 24, font:FONT.body, color: C.ACCENT })], alignment: AlignmentType.CENTER, spacing: { after: 300 } }),
 
             infoTable([
                 ['文档版本', 'V1.0'],
@@ -348,19 +354,17 @@ const doc = new Document({
             ),
 
             divider(),
-            new Paragraph({ children: [new TextRun({ text: '— Brief 完 —', size: 20, font: '微软雅黑', color: C.GRAY, italics: true })], alignment: AlignmentType.CENTER, spacing: { before: 400 } }),
-            new Paragraph({ children: [new TextRun({ text: '编制：梁君衡（企业宣传部） | 2026年6月2日 | 链邦科技', size: 18, font: '微软雅黑', color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { before: 100 } }),
-        ],
-    }],
-});
+            new Paragraph({ children: [new TextRun({ text: '— Brief 完 —', size: 20, font:FONT.body, color: C.GRAY, italics: true })], alignment: AlignmentType.CENTER, spacing: { before: 400 } }),
+            new Paragraph({ children: [new TextRun({ text: '编制：梁君衡（企业宣传部） | 2026年6月2日 | 链邦科技', size: 18, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { before: 100 } }),
+
+];
 
 // ============================================================
 async function main() {
-    const buffer = await Packer.toBuffer(doc);
     const outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理');
     const outPath = path.join(outDir, '链商平台公测_店铺模板设计Brief_V1.0.docx');
-    fs.writeFileSync(outPath, buffer);
-    console.log('✅ Brief 已生成: ' + outPath);
+    var resultPath = await buildAndWrite(children, outPath, { title: '链商平台公测 店铺模板设计 Brief V1.0' });
+    console.log('✅ Brief 已生成: ' + resultPath);
     console.log('');
     console.log('📋 文档结构：');
     console.log('   一、项目背景');

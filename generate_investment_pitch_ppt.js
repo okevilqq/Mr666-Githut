@@ -13,19 +13,21 @@ const path = require('path');
 const fs = require('fs');
 
 // ========== BRAND CONSTANTS ==========
+const { COLORS, META } = require("./lib/constants");
+
 const BRAND = {
-    DEEP_BLUE:   '#1A5276',
-    CHAIN_RED:   '#D62828',
-    TECH_BLUE:   '#1F5EFF',
-    WARM_ORANGE: '#E67E22',
-    DARK_GRAY:   '#333333',
-    MID_GRAY:    '#7F8C8D',
-    LIGHT_BG:    '#EBF5FB',
-    SOFT_BG:     '#F8F9FA',
-    WHITE:       '#FFFFFF',
-    RED:         '#C0392B',
-    GREEN:       '#1E8449',
-    GOLD:        '#D4A843',
+    DEEP_BLUE:   COLORS.DEEP_BLUE,
+    CHAIN_RED:   COLORS.CHAIN_RED,
+    TECH_BLUE:   COLORS.TECH_BLUE,
+    WARM_ORANGE: COLORS.WARM_ORANGE,
+    DARK_GRAY:   COLORS.DARK_GRAY,
+    MID_GRAY:    COLORS.MID_GRAY,
+    LIGHT_BG:    COLORS.LIGHT_BG,
+    SOFT_BG:     COLORS.SOFT_BG,
+    WHITE:       COLORS.WHITE,
+    RED:         COLORS.RED,
+    GREEN:       COLORS.GREEN,
+    GOLD:        COLORS.GOLD,
     BLACK:       '#1a1a2e',
 };
 

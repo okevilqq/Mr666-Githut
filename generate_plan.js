@@ -1,5 +1,6 @@
-const XLSX = require('xlsx');
+const XLSX = require('@e965/xlsx');
 const path = require('path');
+const { COLORS, META } = require('./lib/constants');
 
 // ============================================================
 // 配置

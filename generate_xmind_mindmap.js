@@ -6,11 +6,13 @@ const outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理
 const outFile = path.join(outDir, '链商2.0_商业模式与核算模型_思维导图.xmind');
 
 // ========== COLOR SYSTEM (for topic styling) ==========
+const { COLORS, META } = require("./lib/constants");
+
 const C = {
-    MAIN: '#1A5276', DARK: '#2C3E50', LIGHT: '#EBF5FB',
-    RED: '#C0392B', GREEN: '#1E8449', ORANGE: '#E67E22',
-    GRAY: '#7F8C8D', PURPLE: '#8E44AD', TEAL: '#16A085',
-    HEADER: '#1a1a2e', YELLOW: '#F39C12',
+    MAIN: COLORS.DEEP_BLUE, DARK: '#2C3E50', LIGHT: COLORS.LIGHT_BG,
+    RED: COLORS.RED, GREEN: COLORS.GREEN, ORANGE: COLORS.WARM_ORANGE,
+    GRAY: COLORS.MID_GRAY, PURPLE: '#8E44AD', TEAL: '#16A085',
+    HEADER: '#1a1a2e', YELLOW: COLORS.YELLOW,
 };
 
 // ========== ID GENERATOR ==========

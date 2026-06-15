@@ -5,8 +5,18 @@ const {
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
     C, h1, h2, h3, p, b, n, divider, pageBreak,
     dataTable, infoTable, flowBox, calloutBox, redline, greenCheck,
-    fmt, pct, pct1,
+    fmt, pct, pct1, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 // Extend C with script-specific colors
 C.CORAL = '#E74C3C'; C.SKY = '#5DADE2'; C.GOLD = '#F4D03F';
@@ -21,8 +31,8 @@ var pct2 = pct1;  // alias for 1-decimal percentage
 
 function warn(text) {
     return new Paragraph({
-        children:[new TextRun({text:'⚠️ '+text,size:21,font:'微软雅黑',bold:true,color:C.ORANGE})],
-        spacing:{after:80,line:360}, indent:{left:300},
+        children:[new TextRun({text:'⚠️ '+text,size:FONT.bodySize,font:FONT.body,bold:true,color:C.ORANGE})],
+        spacing:{after:80,line:FONT.lineSpacing}, indent:{left:300},
         border:{left:{style:BorderStyle.SINGLE,size:4,color:C.ORANGE,space:8}},
     });
 }
@@ -30,8 +40,8 @@ function warn(text) {
 function phaseBanner(title, period, color) {
     return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
         new TableRow({children:[new TableCell({shading:{fill:color||C.MAIN},children:[
-            new Paragraph({children:[new TextRun({text:title,size:24,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20}}),
-            new Paragraph({children:[new TextRun({text:period,size:18,font:'微软雅黑',color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:title,size:24,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20}}),
+            new Paragraph({children:[new TextRun({text:period,size:18,font:FONT.body,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
         ]})]}),
     ]});
 }
@@ -39,22 +49,22 @@ function phaseBanner(title, period, color) {
 function kpiCard(name, now, target24, target612, unit) {
     return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
         new TableRow({children:[new TableCell({width:{size:100,type:WidthType.PERCENTAGE},shading:{fill:C.LIGHT},children:[
-            new Paragraph({children:[new TextRun({text:name,size:18,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{before:12,after:8}}),
+            new Paragraph({children:[new TextRun({text:name,size:18,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{before:12,after:8}}),
             new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
                 new TableRow({children:[
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'当前',size:14,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'2-4月目标',size:14,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'6-12月目标',size:14,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'当前',size:14,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'2-4月目标',size:14,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:'6-12月目标',size:14,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER})]}),
                 ]}),
                 new TableRow({children:[
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:now,size:18,font:'微软雅黑',bold:true,color:C.RED})],alignment:AlignmentType.CENTER})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:target24,size:18,font:'微软雅黑',bold:true,color:C.ORANGE})],alignment:AlignmentType.CENTER})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:target612,size:18,font:'微软雅黑',bold:true,color:C.GREEN})],alignment:AlignmentType.CENTER})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:now,size:18,font:FONT.body,bold:true,color:C.RED})],alignment:AlignmentType.CENTER})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:target24,size:18,font:FONT.body,bold:true,color:C.ORANGE})],alignment:AlignmentType.CENTER})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:target612,size:18,font:FONT.body,bold:true,color:C.GREEN})],alignment:AlignmentType.CENTER})]}),
                 ]}),
                 new TableRow({children:[
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:unit,size:13,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:unit,size:13,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER})]}),
-                    new TableCell({children:[new Paragraph({children:[new TextRun({text:unit,size:13,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:unit,size:13,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:unit,size:13,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER})]}),
+                    new TableCell({children:[new Paragraph({children:[new TextRun({text:unit,size:13,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER})]}),
                 ]}),
             ],width:{size:100,type:WidthType.PERCENTAGE}}),
         ],spacing:{before:12,after:12}})]}),
@@ -62,11 +72,7 @@ function kpiCard(name, now, target24, target612, unit) {
 }
 
 // ========== DOCUMENT ==========
-var doc = new Document({
-    styles:{default:{document:{run:{font:'微软雅黑',size:21}}}},
-    sections:[{
-        properties:{page:{margin:{top:1440,bottom:1440,left:1440,right:1440}}},
-        children:[
+var children = [
 
 // ========== COVER ==========
 h1('链商2.0'),
@@ -643,13 +649,10 @@ p('链邦科技 · 企业宣传部 · 2026年6月9日',{align:AlignmentType.CENT
 p('V1.0 · 公测冲刺版 · 内部策略文件',{align:AlignmentType.CENTER,color:C.GRAY}),
 p('本文件基于 V3.2 分润核销模型（跨店通兑版·链商2.0）编制，所有参数引用自 generate_v3_settlement_model.js',{align:AlignmentType.CENTER,color:C.GRAY,after:20}),
 
-        ]  // close children
-    }]  // close sections
-});
+];  // close children
 
 // ========== GENERATE ==========
-Packer.toBuffer(doc).then(function(buffer) {
-    fs.writeFileSync(outFile, buffer);
-    console.log('✅ 市场策略制定框架已生成: ' + outFile);
+buildAndWrite(children, outFile, { title: '链商平台 市场策略制定框架 公测冲刺期与增长期' }).then(function(outPath) {
+    console.log('✅ 市场策略制定框架已生成: ' + outPath);
     console.log('   公测冲刺期(0→盈亏平衡) + 增长期(→2.79%净利率)');
-});
+}).catch(function(err) { console.error('❌ 生成失败:', err); process.exit(1); });

@@ -5,8 +5,18 @@ const {
     WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
     C, h1, h2, h3, p, b, n, divider, pageBreak,
     dataTable, infoTable, flowBox, calloutBox, redline, greenCheck,
-    fmt, pct, pct1,
+    fmt, pct, pct1, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 // Extend C with script-specific colors
 C.GOLD = '#F4D03F'; C.SKY = '#5DADE2'; C.CORAL = '#E74C3C'; C.MINT = '#27AE60';
@@ -21,7 +31,7 @@ var outFile = path.join(outDir, '链商平台_市场营销计划_HK上市标准_
 function kSep(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 
 function warn(text) {
-    return new Paragraph({children:[new TextRun({text:'⚠️ '+text,size:21,font:'微软雅黑',bold:true,color:C.ORANGE})],spacing:{after:80,line:360},indent:{left:300},border:{left:{style:BorderStyle.SINGLE,size:4,color:C.ORANGE,space:8}}});
+    return new Paragraph({children:[new TextRun({text:'⚠️ '+text,size:FONT.bodySize,font:FONT.body,bold:true,color:C.ORANGE})],spacing:{after:80,line:FONT.lineSpacing},indent:{left:300},border:{left:{style:BorderStyle.SINGLE,size:4,color:C.ORANGE,space:8}}});
 }
 
 // ===== IPO-SPECIFIC HELPERS =====
@@ -44,20 +54,20 @@ function scenarioTable(title, base, upside, downside) {
 
 function riskMatrix(risks) {
     var hdrRow = new TableRow({children:[
-        new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:'风险因素',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}),
-        new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:'概率',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}),
-        new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:'影响',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}),
-        new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:'风险等级',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}),
-        new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:'缓解措施',size:18,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}),
+        new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:'风险因素',size:18,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}),
+        new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:'概率',size:18,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}),
+        new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:'影响',size:18,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}),
+        new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:'风险等级',size:18,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}),
+        new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:'缓解措施',size:18,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:15,after:15}})]}),
     ]});
     var colorMap = {'P0':C.RED,'P1':C.ORANGE,'P2':C.YELLOW,'P3':C.GRAY};
     var dataRows = risks.map(function(r,i){
         return new TableRow({children:[
-            new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:r[0],size:17,font:'微软雅黑',bold:true})],spacing:{before:10,after:10}})]}),
-            new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:r[1],size:17,font:'微软雅黑'})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
-            new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:r[2],size:17,font:'微软雅黑'})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
-            new TableCell({shading:{fill:'#FFF5F5'},children:[new Paragraph({children:[new TextRun({text:r[3],size:17,font:'微软雅黑',bold:true,color:colorMap[r[3]]||C.BLACK})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
-            new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:r[4],size:16,font:'微软雅黑'})],spacing:{before:10,after:10}})]}),
+            new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:r[0],size:17,font:FONT.body,bold:true})],spacing:{before:10,after:10}})]}),
+            new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:r[1],size:17,font:FONT.body})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
+            new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:r[2],size:17,font:FONT.body})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
+            new TableCell({shading:{fill:'#FFF5F5'},children:[new Paragraph({children:[new TextRun({text:r[3],size:17,font:FONT.body,bold:true,color:colorMap[r[3]]||C.BLACK})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]}),
+            new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:r[4],size:16,font:FONT.body})],spacing:{before:10,after:10}})]}),
         ]});
     });
     return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[hdrRow].concat(dataRows)});
@@ -67,11 +77,11 @@ function kpiCard(title, current, target, status) {
     var statusColor = status==='on_track'?C.GREEN:status==='watch'?C.ORANGE:C.RED;
     var statusText = status==='on_track'?'✅ 达标':status==='watch'?'⚠️ 关注':'🔴 预警';
     return new Table({width:{size:32,type:WidthType.PERCENTAGE},rows:[
-        new TableRow({children:[new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:title,size:16,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]})]}),
+        new TableRow({children:[new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:title,size:16,font:FONT.body,bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}})]})]}),
         new TableRow({children:[new TableCell({children:[
-            new Paragraph({children:[new TextRun({text:'当前: '+current,size:18,font:'微软雅黑',bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{before:15,after:5}}),
-            new Paragraph({children:[new TextRun({text:'目标: '+target,size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:5}}),
-            new Paragraph({children:[new TextRun({text:statusText,size:16,font:'微软雅黑',bold:true,color:statusColor})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
+            new Paragraph({children:[new TextRun({text:'当前: '+current,size:18,font:FONT.body,bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{before:15,after:5}}),
+            new Paragraph({children:[new TextRun({text:'目标: '+target,size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:5}}),
+            new Paragraph({children:[new TextRun({text:statusText,size:16,font:FONT.body,bold:true,color:statusColor})],alignment:AlignmentType.CENTER,spacing:{after:15}}),
         ],border:{top:{style:BorderStyle.SINGLE,size:1,color:C.LIGHT}}})]}),
     ]});
 }
@@ -270,14 +280,14 @@ function buildDocument() {
 
     // ===== COVER PAGE =====
     children.push(new Paragraph({spacing:{before:3000}}));
-    children.push(new Paragraph({children:[new TextRun({text:'链商2.0 · 链生活',size:48,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:200}}));
-    children.push(new Paragraph({children:[new TextRun({text:'市场营销计划',size:40,font:'微软雅黑',bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:400}}));
-    children.push(new Paragraph({children:[new TextRun({text:'—— 香港上市财务模型标准 ——',size:28,font:'微软雅黑',color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:600}}));
-    children.push(new Paragraph({children:[new TextRun({text:'3年战略规划（2026-2029）',size:24,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}));
-    children.push(new Paragraph({children:[new TextRun({text:'含完整三表财务模型 · 敏感性分析 · 风险矩阵 · IPO使用募集资金规划',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:800}}));
-    children.push(new Paragraph({children:[new TextRun({text:'链邦科技 · 品牌战略部',size:22,font:'微软雅黑',bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:100}}));
-    children.push(new Paragraph({children:[new TextRun({text:'2026年6月 · 机密文件',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}));
-    children.push(new Paragraph({children:[new TextRun({text:'本文件仅供内部决策参考，不构成公开发售或上市承诺。所含前瞻性陈述基于当前假设，实际结果可能因市场、监管、运营等因素而存在重大差异。',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{before:600}}));
+    children.push(new Paragraph({children:[new TextRun({text:'链商2.0 · 链生活',size:48,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:200}}));
+    children.push(new Paragraph({children:[new TextRun({text:'市场营销计划',size:40,font:FONT.body,bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:400}}));
+    children.push(new Paragraph({children:[new TextRun({text:'—— 香港上市财务模型标准 ——',size:28,font:FONT.body,color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:600}}));
+    children.push(new Paragraph({children:[new TextRun({text:'3年战略规划（2026-2029）',size:24,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}));
+    children.push(new Paragraph({children:[new TextRun({text:'含完整三表财务模型 · 敏感性分析 · 风险矩阵 · IPO使用募集资金规划',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:800}}));
+    children.push(new Paragraph({children:[new TextRun({text:'链邦科技 · 品牌战略部',size:22,font:FONT.body,bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:100}}));
+    children.push(new Paragraph({children:[new TextRun({text:'2026年6月 · 机密文件',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
+    children.push(new Paragraph({children:[new TextRun({text:'本文件仅供内部决策参考，不构成公开发售或上市承诺。所含前瞻性陈述基于当前假设，实际结果可能因市场、监管、运营等因素而存在重大差异。',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{before:600}}));
     children.push(pageBreak());
 
     // ==========================================
@@ -680,7 +690,7 @@ function buildDocument() {
     children.push(pageBreak());
 
     // ===== CHAPTER 8: MONETIZATION =====
-    children.push(h1('第八章  货币化与收入优化'));
+    children.push(h1('第八章  商业化与收入优化'));
     children.push(h2('8.1  Take Rate优化路径'));
     children.push(dataTable(
         ['优化杠杆','当前值','Y1目标','Y2目标','Y3目标','提升幅度\n(Y3 vs 当前)'],
@@ -1257,8 +1267,8 @@ function buildDocument() {
 
     children.push(divider());
     children.push(new Paragraph({spacing:{before:600}}));
-    children.push(new Paragraph({children:[new TextRun({text:'—— 链生活 · 消费有回响 ——',size:28,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:200}}));
-    children.push(new Paragraph({children:[new TextRun({text:'链邦科技 · 品牌战略部 | 2026年6月9日 | 机密文件',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER}));
+    children.push(new Paragraph({children:[new TextRun({text:'—— 链生活 · 消费有回响 ——',size:28,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:200}}));
+    children.push(new Paragraph({children:[new TextRun({text:'链邦科技 · 品牌战略部 | 2026年6月9日 | 机密文件',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
 
     return children;
 }
@@ -1266,14 +1276,7 @@ function buildDocument() {
 // ========== GENERATE ==========
 var children = buildDocument();
 
-var doc = new Document({
-    styles: { default: { document: { run: { size:21, font:'微软雅黑' } } } },
-    sections: [{ children: children }],
-});
-
-Packer.toBuffer(doc).then(function(buffer) {
-    fs.writeFileSync(outFile, buffer);
-    console.log('✅ HK IPO标准市场营销计划已生成: ' + outFile);
+buildAndWrite(children, outFile, { title: '链商平台 市场营销计划 HK上市标准 3年规划' }).then(function(outPath) {
+    console.log('✅ HK IPO标准市场营销计划已生成: ' + outPath);
     console.log('   16章完整结构 · 3年三表财务模型 · 敏感性分析 · 风险矩阵 · IPO募集资金规划');
-    console.log('   输出大小: ' + (buffer.length / 1024 / 1024).toFixed(2) + ' MB');
-});
+}).catch(function(err) { console.error('❌ 生成失败:', err); process.exit(1); });

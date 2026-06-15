@@ -3,8 +3,18 @@ const path = require('path');
 const {
     docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak,
-    C, h1, h2, h3, p, b, n, divider, pageBreak, dataTable, calloutInline,
+    C, h1, h2, h3, p, b, n, divider, pageBreak, dataTable, calloutInline, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 // C extensions
 C.LIGHTGRAY = '#F5F6FA';
@@ -17,8 +27,8 @@ const calloutBox = calloutInline;
 // ── Script-Specific Helpers ──
 
 function quoteBlock(text, attribution) {
-    var children = [new TextRun({ text: '"' + text + '"', size: 24, font: '微软雅黑', italics: true, color: C.MAIN })];
-    if (attribution) children.push(new TextRun({ text: '\n—— ' + attribution, size: 18, font: '微软雅黑', color: C.GRAY }));
+    var children = [new TextRun({ text: '"' + text + '"', size: 24, font:FONT.body, italics: true, color: C.MAIN })];
+    if (attribution) children.push(new TextRun({ text: '\n—— ' + attribution, size: 18, font:FONT.body, color: C.GRAY }));
     return new Paragraph({ children: children, spacing: { before: 120, after: 120 }, indent: { left: 800, right: 800 }, border: { left: { style: BorderStyle.SINGLE, size: 3, color: C.ORANGE } } });
 }
 
@@ -27,9 +37,9 @@ function comparisonTable(leftLabel, rightLabel, rows) {
         width: { size: 100, type: WidthType.PERCENTAGE },
         rows: [].concat(
             [new TableRow({ children: [
-                new TableCell({ shading: { fill: C.HEADER }, children: [new Paragraph({ children: [new TextRun({ text: '', size: 19, font: '微软雅黑', bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] }),
-                new TableCell({ shading: { fill: C.RED }, children: [new Paragraph({ children: [new TextRun({ text: leftLabel, size: 19, font: '微软雅黑', bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] }),
-                new TableCell({ shading: { fill: C.GREEN }, children: [new Paragraph({ children: [new TextRun({ text: rightLabel, size: 19, font: '微软雅黑', bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] })
+                new TableCell({ shading: { fill: C.HEADER }, children: [new Paragraph({ children: [new TextRun({ text: '', size: 19, font:FONT.body, bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] }),
+                new TableCell({ shading: { fill: C.RED }, children: [new Paragraph({ children: [new TextRun({ text: leftLabel, size: 19, font:FONT.body, bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] }),
+                new TableCell({ shading: { fill: C.GREEN }, children: [new Paragraph({ children: [new TextRun({ text: rightLabel, size: 19, font:FONT.body, bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] })
             ]})],
             rows.map(function(r, i) {
                 return new TableRow({ children: r.map(function(cell, j) {
@@ -37,7 +47,7 @@ function comparisonTable(leftLabel, rightLabel, rows) {
                     return new TableCell({
                         shading: i % 2 === 0 ? { fill: j === 0 ? C.LIGHTGRAY : C.SOFT_BG } : undefined,
                         children: [new Paragraph({
-                            children: [new TextRun({ text: cellText.text || '', size: 17, font: '微软雅黑', bold: cellText.bold || (j === 0), color: cellText.color || C.BLACK })],
+                            children: [new TextRun({ text: cellText.text || '', size: 17, font:FONT.body, bold: cellText.bold || (j === 0), color: cellText.color || C.BLACK })],
                             spacing: { before: 12, after: 12 }
                         })]
                     });
@@ -51,9 +61,9 @@ function infoCard(title, items) {
     return new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
         rows: [
-            new TableRow({ children: [new TableCell({ shading: { fill: C.MAIN }, children: [new Paragraph({ children: [new TextRun({ text: title, size: 20, font: '微软雅黑', bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] })] })
+            new TableRow({ children: [new TableCell({ shading: { fill: C.MAIN }, children: [new Paragraph({ children: [new TextRun({ text: title, size: 20, font:FONT.body, bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] })] })
         ].concat(items.map(function(item, i) {
-            return new TableRow({ children: [new TableCell({ shading: i % 2 === 0 ? { fill: C.LIGHT } : undefined, children: [new Paragraph({ children: [new TextRun({ text: (typeof item === 'string' ? '• ' : '') + item, size: 18, font: '微软雅黑' })], spacing: { before: 12, after: 12 } })] })] });
+            return new TableRow({ children: [new TableCell({ shading: i % 2 === 0 ? { fill: C.LIGHT } : undefined, children: [new Paragraph({ children: [new TextRun({ text: (typeof item === 'string' ? '• ' : '') + item, size: 18, font:FONT.body })], spacing: { before: 12, after: 12 } })] })] });
         }))
     });
 }
@@ -82,10 +92,10 @@ function buildDocument() {
 
     // ── COVER ──
     children.push(
-        new Paragraph({ children: [new TextRun({ text: '链商2.0 · 链生活品牌', size: 36, font: '微软雅黑', bold: true, color: C.MAIN })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
-        new Paragraph({ children: [new TextRun({ text: 'P1+P2 营销优化交付物', size: 28, font: '微软雅黑', bold: true, color: C.ORANGE })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
-        new Paragraph({ children: [new TextRun({ text: '三端信息架构分离 + 三元营销简化 + 竞品视觉武器 + 合规语言温度平衡', size: 20, font: '微软雅黑', color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
-        new Paragraph({ children: [new TextRun({ text: '编制：梁君衡 | 2026年6月8日 | P1+P2 交付 | 机密文件', size: 18, font: '微软雅黑', color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+        new Paragraph({ children: [new TextRun({ text: '链商2.0 · 链生活品牌', size: 36, font:FONT.body, bold: true, color: C.MAIN })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
+        new Paragraph({ children: [new TextRun({ text: 'P1+P2 营销优化交付物', size: 28, font:FONT.body, bold: true, color: C.ORANGE })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
+        new Paragraph({ children: [new TextRun({ text: '三端信息架构分离 + 三元营销简化 + 竞品视觉武器 + 合规语言温度平衡', size: 20, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+        new Paragraph({ children: [new TextRun({ text: '编制：梁君衡 | 2026年6月8日 | P1+P2 交付 | 机密文件', size: 18, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
         divider(),
         calloutBox('P1任务（公测第一周内完成）：三端信息架构分离、三元营销简化表达、竞品视觉对比武器。P2任务（持续优化）：合规语言温度平衡——在合规前提下恢复品牌情感感染力。', 'info'),
         divider(),
@@ -511,7 +521,7 @@ function buildDocument() {
         calloutBox('核心结论：合规安全版和品牌温度版不是互斥的——而是"同一信息、两种表达"。合规安全版保障底线、品牌温度版追求上限。正式文件/法务审核使用前者，消费者/商户/推广者传播物料使用后者。', 'success'),
 
         divider(),
-        new Paragraph({ children: [new TextRun({ text: '— 文档结束 —', size: 18, font: '微软雅黑', color: C.GRAY, italics: true })], alignment: AlignmentType.CENTER, spacing: { before: 300 } })
+        new Paragraph({ children: [new TextRun({ text: '— 文档结束 —', size: 18, font:FONT.body, color: C.GRAY, italics: true })], alignment: AlignmentType.CENTER, spacing: { before: 300 } })
     );
 
     return children;
@@ -520,27 +530,12 @@ function buildDocument() {
 // ══════════════════════════════════════════════════════════════════
 // BUILD DOCUMENT
 // ══════════════════════════════════════════════════════════════════
-var doc = new Document({
-    properties: {
-        title: '链商2.0 P1+P2营销优化交付物 — 信息架构+三元营销+竞品对比+合规温度',
-        creator: '梁君衡',
-        description: 'P1公测首周交付：三端信息架构分离、三元营销简化表达、竞品视觉对比武器。P2持续优化：合规语言温度平衡方案。'
-    },
-    styles: {
-        default: { document: { run: { size: 21, font: '微软雅黑' } } }
-    },
-    sections: [{
-        properties: {
-            page: { margin: { top: 1200, bottom: 1200, left: 1100, right: 1100 } }
-        },
-        children: buildDocument()
-    }]
-});
-
-// ── Output ──
 var outPath = path.join(OUT, '链商平台_P1P2营销优化交付物_信息架构+三元营销+竞品对比+合规温度.docx');
-Packer.toBuffer(doc).then(function(buf) {
-    fs.writeFileSync(outPath, buf);
+
+buildAndWrite(buildDocument(), outPath, {
+    title: '链商2.0 P1+P2营销优化交付物 — 信息架构+三元营销+竞品对比+合规温度',
+    margins: { top: 1200, bottom: 1200, left: 1100, right: 1100 }
+}).then(function(outPath) {
     console.log('✅ 已生成: ' + outPath);
     console.log('   包含: P1-1三端信息架构分离 + P1-2三元营销简化 + P1-3竞品视觉对比武器 + P2合规语言温度平衡');
 }).catch(function(err) { console.error('生成失败:', err); });

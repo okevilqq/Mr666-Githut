@@ -3,8 +3,18 @@ const path = require('path');
 const {
     docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak,
-    C, h1, h2, h3, p, b, n, divider, dataTable,
+    C, h1, h2, h3, p, b, n, divider, dataTable, buildAndWrite,
 } = require('./lib/docx-helpers');
+
+
+// ⭐ 集中参数库 — 所有业务参数、颜色、字体、元数据从这里取
+const {
+    MODEL, CHANNEL, PLATFORM_DIST, ALLIANCE_DIST, ECOMMERCE_DIST,
+    MARKETING, MANAGEMENT, FINANCIAL,
+    COLORS, STORE_TIER,
+    COMPLIANCE_MAP, COMPLIANCE_FORBIDDEN, COMPLIANCE_REDLINES,
+    FONT, OUTDIR, META,
+} = require('./lib/constants');
 
 // C extensions
 C.LIGHTGRAY = '#F5F6FA';
@@ -28,8 +38,8 @@ function doDont(doText, dontText) {
         width: { size: 100, type: WidthType.PERCENTAGE },
         rows: [
             new TableRow({children: [
-                new TableCell({shading:{fill:'#E8F8F5'},width:{size:50,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:'✅ DO: '+doText,size:18,font:'微软雅黑',color:C.GREEN})],spacing:{before:12,after:12}})]}),
-                new TableCell({shading:{fill:'#FDEDEC'},width:{size:50,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:'❌ DON\'T: '+dontText,size:18,font:'微软雅黑',color:C.RED})],spacing:{before:12,after:12}})]}),
+                new TableCell({shading:{fill:'#E8F8F5'},width:{size:50,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:'✅ DO: '+doText,size:18,font:FONT.body,color:C.GREEN})],spacing:{before:12,after:12}})]}),
+                new TableCell({shading:{fill:'#FDEDEC'},width:{size:50,type:WidthType.PERCENTAGE},children:[new Paragraph({children:[new TextRun({text:'❌ DON\'T: '+dontText,size:18,font:FONT.body,color:C.RED})],spacing:{before:12,after:12}})]}),
             ]})
         ]
     });
@@ -47,15 +57,15 @@ function buildManual() {
 
             // ========== COVER ==========
             new Paragraph({spacing:{before:2000},children:[]}),
-            new Paragraph({children:[new TextRun({text:'链商·链生活',size:28,font:'微软雅黑',color:C.MAIN,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:100}}),
-            new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:14,font:'微软雅黑',color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
-            new Paragraph({children:[new TextRun({text:'小程序平台',size:32,font:'微软雅黑',bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-            new Paragraph({children:[new TextRun({text:'品牌执行手册',size:48,font:'微软雅黑',bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
-            new Paragraph({children:[new TextRun({text:'Brand Execution Playbook · Mini Program Platform',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
-            new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:14,font:'微软雅黑',color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
-            new Paragraph({children:[new TextRun({text:'版本：V1.0 | 编制：梁君衡 | 日期：2026年6月3日',size:20,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'适用范围：链商2.0公测版小程序 · H5 · APP 全端品牌执行',size:18,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'密级：内部执行文件 | 分发：品牌组·设计·技术部·数字化中心·管理层',size:18,font:'微软雅黑',color:C.RED})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'链商·链生活',size:28,font:FONT.body,color:C.MAIN,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:100}}),
+            new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:14,font:FONT.body,color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'小程序平台',size:32,font:FONT.body,bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'品牌执行手册',size:48,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
+            new Paragraph({children:[new TextRun({text:'Brand Execution Playbook · Mini Program Platform',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
+            new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:14,font:FONT.body,color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'版本：V1.0 | 编制：梁君衡 | 日期：2026年6月3日',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'适用范围：链商2.0公测版小程序 · H5 · APP 全端品牌执行',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'密级：内部执行文件 | 分发：品牌组·设计·技术部·数字化中心·管理层',size:18,font:FONT.body,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
 
             new Paragraph({children:[new PageBreak()]}),
 
@@ -799,17 +809,17 @@ body {
 
             h2('6.1 三道合规红线（产品/运营/品牌均不可突破）'),
             divider(),
-            new Paragraph({children:[new TextRun({text:'红线①：积分不可兑现',size:24,font:'微软雅黑',bold:true,color:C.RED})],spacing:{after:100}}),
+            new Paragraph({children:[new TextRun({text:'红线①：积分不可兑现',size:24,font:FONT.body,bold:true,color:C.RED})],spacing:{after:100}}),
             p('积分只能兑换平台内商品或服务，不可兑换现金、预付卡、或具有现金价值的任何形式。'),
             b('技术实现：积分系统无提现/转账/兑换现金功能入口'),
             b('文案检查：所有页面无"积分兑现""积分提现""积分兑换现金"等文字'),
             divider(),
-            new Paragraph({children:[new TextRun({text:'红线②：不可形成资金池',size:24,font:'微软雅黑',bold:true,color:C.RED})],spacing:{after:100}}),
+            new Paragraph({children:[new TextRun({text:'红线②：不可形成资金池',size:24,font:FONT.body,bold:true,color:C.RED})],spacing:{after:100}}),
             p('资金T+1直达商家账户。平台不在任何环节滞留消费者资金。'),
             b('技术实现：支付成功后资金直接进入商家账户，平台账户不留存'),
             b('文案检查：无"余额""账户余额""平台钱包"等暗示资金留存在平台的表述'),
             divider(),
-            new Paragraph({children:[new TextRun({text:'红线③：不可承诺收益',size:24,font:'微软雅黑',bold:true,color:C.RED})],spacing:{after:100}}),
+            new Paragraph({children:[new TextRun({text:'红线③：不可承诺收益',size:24,font:FONT.body,bold:true,color:C.RED})],spacing:{after:100}}),
             p('所有对外文案不可使用"稳赚""躺赚""投资回报""增值""保证收益"等词汇。'),
             b('文案黑名单（13个禁用词）：稳赚、躺赚、投资回报、保证收益、预期收益、年化、增值、翻倍、暴富、赚钱、发财、利润保证、低风险高回报'),
             divider(),
@@ -1049,10 +1059,10 @@ body {
 
             divider(),
             divider(),
-            new Paragraph({children:[new TextRun({text:'— 链商·链生活 · 小程序平台品牌执行手册 V1.0 · 完 —',size:18,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300}}),
-            new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 链邦科技 · 企业宣传策划专员 | 2026年6月3日',size:16,font:'微软雅黑',color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'本手册为链商·链生活品牌执行的核心参考文件。任何品牌相关的设计、开发、运营决策，请先查阅本手册。',size:16,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'手册更新频率：每2周或重大品牌变更时更新。最新版本存放于企业微盘/品牌资产库/品牌规范/。',size:16,font:'微软雅黑',color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'— 链商·链生活 · 小程序平台品牌执行手册 V1.0 · 完 —',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300}}),
+            new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 链邦科技 · 企业宣传策划专员 | 2026年6月3日',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'本手册为链商·链生活品牌执行的核心参考文件。任何品牌相关的设计、开发、运营决策，请先查阅本手册。',size:16,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'手册更新频率：每2周或重大品牌变更时更新。最新版本存放于企业微盘/品牌资产库/品牌规范/。',size:16,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
         ]
     };
 }
@@ -1060,18 +1070,11 @@ body {
 // ═══════════════════════════════════════════
 // BUILD & OUTPUT
 // ═══════════════════════════════════════════
-const doc = new Document({
-    styles: { default: { document: { run: { font: '微软雅黑', size: 21 } } } },
-    sections: [buildManual()]
-});
-
 const outDir = path.join(__dirname, OUT);
-if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+const outFile = path.join(outDir, '链商平台_小程序品牌执行手册_V1.0.docx');
 
-Packer.toBuffer(doc).then(buf => {
-    const filePath = path.join(outDir, '链商平台_小程序品牌执行手册_V1.0.docx');
-    fs.writeFileSync(filePath, buf);
-    console.log('✅ 品牌执行手册已生成: ' + filePath);
+buildAndWrite(buildManual(), outFile, { title: '链商平台 小程序品牌执行手册 V1.0' }).then(outPath => {
+    console.log('✅ 品牌执行手册已生成: ' + outPath);
     console.log('   包含:');
     console.log('   - 第一章：品牌基因库（色值·Logo·字体·超级符号）');
     console.log('   - 第二章：页面级品牌规范（28触点逐页执行标准）');
