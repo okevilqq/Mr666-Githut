@@ -1,0 +1,23 @@
+# 参考文件索引
+
+本目录存放需要时查阅的详细参考文档，与 CLAUDE.md（每次对话自动加载的核心参数）互补。
+
+## 文件清单
+
+| 文件 | 内容 | 何时查阅 |
+|------|------|----------|
+| `compliance-full.md` | 完整合规框架，含法律条文引用 | 生成合规相关文档、审查文案 |
+| `model-evolution.md` | 分润模型 V1.0→V2.0→V3.2 演进史 | 理解参数变化原因、回应质疑 |
+| `brand-color-system.md` | 完整色彩系统规范（画册/文档/PPT/小程序） | 设计相关输出 |
+| `naming-methodology.md` | 品牌命名方法论与评估框架 | 新的命名任务 |
+| `competitor-profiles.md` | 竞品深度分析数据 | 竞争分析、市场策略文档 |
+
+## 使用方式
+
+在对话中说"查一下 references/xxx.md"即可加载对应参考文件。Claude Code 会 Read 该文件获取详细上下文。
+
+## 维护规则
+
+- 每次重大决策后，更新对应的 reference 文件（如模型参数变更→更新 model-evolution.md）
+- 新增知识领域时，创建新的 reference 文件并更新本 README
+- 不要在 reference 文件中重复 CLAUDE.md 已有的简短参数表——reference 应该提供 CLAUDE.md 没有的"为什么"和"完整版"
