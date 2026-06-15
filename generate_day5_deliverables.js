@@ -1,26 +1,10 @@
-const docx = require('docx');
 const fs = require('fs');
 const path = require('path');
-
-const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak } = docx;
-
-const C={MAIN:'#1A5276',DARK:'#2C3E50',LIGHT:'#EBF5FB',WHITE:'#FFFFFF',BLACK:'#333333',GRAY:'#7F8C8D',RED:'#C0392B',GREEN:'#1E8449',ORANGE:'#E67E22',HEADER:'#1a1a2e',YELLOW:'#F39C12'};
-function h1(t){return new Paragraph({text:t,heading:HeadingLevel.HEADING_1,spacing:{before:400,after:200},border:{bottom:{style:BorderStyle.SINGLE,size:2,color:C.MAIN}}})}
-function h2(t){return new Paragraph({text:t,heading:HeadingLevel.HEADING_2,spacing:{before:300,after:150}})}
-function h3(t){return new Paragraph({text:t,heading:HeadingLevel.HEADING_3,spacing:{before:200,after:100}})}
-function p(t,o={}){return new Paragraph({children:[new TextRun({text:t,size:21,font:'微软雅黑',...o})],spacing:{after:80,line:360}})}
-function b(t,o={}){return new Paragraph({children:[new TextRun({text:'• '+t,size:21,font:'微软雅黑',...o})],spacing:{after:60,line:340},indent:{left:600}})}
-function n(i,t){return new Paragraph({children:[new TextRun({text:`${i}. ${t}`,size:21,font:'微软雅黑'})],spacing:{after:60,line:340},indent:{left:600}})}
-function divider(){return new Paragraph({spacing:{after:200},children:[]})}
-function dataTable(headers,rows,opts={}){
-    return new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
-        new TableRow({children:headers.map(h=>new TableCell({shading:{fill:C.HEADER},children:[new Paragraph({children:[new TextRun({text:h,size:opts.small?17:19,font:'微软雅黑',bold:true,color:C.WHITE})],alignment:AlignmentType.CENTER,spacing:{before:20,after:20}})]}))}),
-        ...rows.map((r,i)=>{
-            const vals = Array.isArray(r) ? r : [r];
-            return new TableRow({children:vals.map(v=>new TableCell({shading:i%2===0?{fill:C.LIGHT}:undefined,children:[new Paragraph({children:[new TextRun({text:String(v),size:opts.small?16:18,font:'微软雅黑'})],spacing:{before:15,after:15}})]}))});
-        }),
-    ]});
-}
+const {
+    docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+    WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType, PageBreak,
+    C, h1, h2, h3, p, b, n, divider, dataTable,
+} = require('./lib/docx-helpers');
 
 const OUT = '20260602 链商平台 技术部会议整理';
 

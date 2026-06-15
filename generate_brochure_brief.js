@@ -1,34 +1,21 @@
-var docx = require('docx');
 var fs = require('fs');
 var path = require('path');
+var {
+    docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+    WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak,
+    C, h1, h2, h3, divider, pageBreak, spacer,
+    dataTable, calloutInline,
+} = require('./lib/docx-helpers');
 
-var Document = docx.Document, Packer = docx.Packer, Paragraph = docx.Paragraph, TextRun = docx.TextRun;
-var Table = docx.Table, TableRow = docx.TableRow, TableCell = docx.TableCell;
-var WidthType = docx.WidthType, AlignmentType = docx.AlignmentType, BorderStyle = docx.BorderStyle;
-var HeadingLevel = docx.HeadingLevel, PageBreak = docx.PageBreak;
+// C extensions
+C.LIGHTGRAY = '#F5F6FA';
+C.SOFT = '#F8F9FA';
+C.GOLD = '#C9A96E';
 
-// ── Brand Color System ──
-var C = {
-    MAIN: '#1A5276',        // 深海蓝·主色
-    DARK: '#2C3E50',        // 深灰蓝·辅助
-    LIGHT: '#EBF5FB',       // 浅蓝·背景
-    WHITE: '#FFFFFF',
-    BLACK: '#333333',
-    GRAY: '#7F8C8D',        // 灰色·辅助文字
-    RED: '#C0392B',         // 红色·合规红线
-    GREEN: '#1E8449',       // 绿色·合规通过
-    ORANGE: '#E67E22',      // 温暖橙·强调色
-    HEADER: '#1a1a2e',      // 表头深色
-    YELLOW: '#F39C12',
-    LIGHTGRAY: '#F5F6FA',
-    SOFT: '#F8F9FA',
-    GOLD: '#C9A96E'         // 金色·高端质感
-};
+// Alias
+var calloutBox = calloutInline;
 
-// ── Helpers ──
-function h1(t) { return new Paragraph({ text: t, heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 }, border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: C.MAIN } } }); }
-function h2(t) { return new Paragraph({ text: t, heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 150 } }); }
-function h3(t) { return new Paragraph({ text: t, heading: HeadingLevel.HEADING_3, spacing: { before: 200, after: 100 } }); }
+// ── Local overrides (different signatures) ──
 function p(t, o) {
     o = o || {};
     return new Paragraph({ children: [new TextRun({ text: t, size: o.size || 21, font: '微软雅黑', bold: !!o.bold, color: o.color || C.BLACK, italics: !!o.italics })], spacing: { after: o.after || 80, line: o.line || 360 }, alignment: o.align, indent: o.indent });
@@ -38,30 +25,8 @@ function b(t, o) {
     return new Paragraph({ children: [new TextRun({ text: '• ' + t, size: o.size || 21, font: '微软雅黑', bold: !!o.bold, color: o.color || C.BLACK })], spacing: { after: 60, line: 340 }, indent: { left: 600 } });
 }
 function n(i, t) { return new Paragraph({ children: [new TextRun({ text: i + '. ' + t, size: 21, font: '微软雅黑' })], spacing: { after: 60, line: 340 }, indent: { left: 600 } }); }
-function divider() { return new Paragraph({ spacing: { after: 200 }, children: [] }); }
-function pageBreak() { return new Paragraph({ children: [new PageBreak()] }); }
-function spacer(h) { return new Paragraph({ spacing: { after: h || 120 }, children: [] }); }
 
-function dataTable(headers, rows, opts) {
-    opts = opts || {};
-    var hdrRow = new TableRow({ children: headers.map(function(h) { return new TableCell({ shading: { fill: C.HEADER }, children: [new Paragraph({ children: [new TextRun({ text: h, size: opts.small ? 17 : 19, font: '微软雅黑', bold: true, color: C.WHITE })], alignment: AlignmentType.CENTER, spacing: { before: 20, after: 20 } })] }); }) });
-    var dataRows = rows.map(function(r, i) {
-        var vals = Array.isArray(r) ? r : [r];
-        return new TableRow({ children: vals.map(function(v) { return new TableCell({ shading: i % 2 === 0 ? { fill: C.LIGHT } : undefined, children: [new Paragraph({ children: [new TextRun({ text: String(v), size: opts.small ? 16 : 18, font: '微软雅黑' })], spacing: { before: 15, after: 15 } })] }); }) });
-    });
-    return new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [hdrRow].concat(dataRows) });
-}
-
-function calloutBox(text, type) {
-    type = type || 'info';
-    var colors = { info: C.MAIN, success: C.GREEN, warning: C.ORANGE, danger: C.RED, highlight: C.GOLD };
-    var icons = { info: '💡', success: '✅', warning: '⚠️', danger: '🔴', highlight: '✨' };
-    return new Paragraph({
-        children: [new TextRun({ text: (icons[type] || '💡') + ' ' + text, size: 21, font: '微软雅黑', bold: true, color: colors[type] || C.MAIN })],
-        spacing: { before: 100, after: 100 }, indent: { left: 400 },
-        border: { left: { style: BorderStyle.SINGLE, size: 6, color: colors[type] || C.MAIN } }
-    });
-}
+// ── Script-Specific Helpers ──
 
 function spreadCard(spreadNum, leftTitle, rightTitle, leftContent, rightContent) {
     // A visual representation of a brochure spread (对开页)

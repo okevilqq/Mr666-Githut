@@ -1,59 +1,17 @@
-const docx = require('docx');
 const fs = require('fs');
 const path = require('path');
+const {
+    docx, Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+    WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType,
+    C, h1, h2, h3, p, b: bullet, n: numItem, divider, infoTable, dataTable,
+} = require('./lib/docx-helpers');
 
-const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType } = docx;
+// C key aliases (this script uses different key names)
+C.LIGHT_BG = C.LIGHT;
+C.HEADER_BG = C.HEADER;
 
-// ============================================================
-// 样式常量
-// ============================================================
-const C = {
-    MAIN: '1A5276',
-    DARK: '2C3E50',
-    LIGHT_BG: 'EBF5FB',
-    WHITE: 'FFFFFF',
-    BLACK: '333333',
-    GRAY: '7F8C8D',
-    RED: 'C0392B',
-    GREEN: '1E8449',
-    ORANGE: 'E67E22',
-    HEADER_BG: '1a1a2e',
-};
+// ========== SCRIPT-SPECIFIC HELPERS ==========
 
-// ============================================================
-// 辅助函数
-// ============================================================
-function h1(text) {
-    return new Paragraph({
-        text, heading: HeadingLevel.HEADING_1,
-        spacing: { before: 400, after: 200 },
-        border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: C.MAIN } },
-    });
-}
-function h2(text) {
-    return new Paragraph({ text, heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 150 } });
-}
-function h3(text) {
-    return new Paragraph({ text, heading: HeadingLevel.HEADING_3, spacing: { before: 200, after: 100 } });
-}
-function p(text, opts = {}) {
-    return new Paragraph({
-        children: [new TextRun({ text, size: 21, font: '微软雅黑', ...opts })],
-        spacing: { after: 80, line: 360 },
-    });
-}
-function bullet(text, opts = {}) {
-    return new Paragraph({
-        children: [new TextRun({ text: '• ' + text, size: 21, font: '微软雅黑', ...opts })],
-        spacing: { after: 60, line: 340 }, indent: { left: 600 },
-    });
-}
-function numItem(n, text) {
-    return new Paragraph({
-        children: [new TextRun({ text: `${n}. ${text}`, size: 21, font: '微软雅黑' })],
-        spacing: { after: 60, line: 340 }, indent: { left: 600 },
-    });
-}
 function keyVal(label, value) {
     return new Paragraph({
         children: [
@@ -61,62 +19,6 @@ function keyVal(label, value) {
             new TextRun({ text: value, size: 21, font: '微软雅黑' }),
         ],
         spacing: { after: 80, line: 360 },
-    });
-}
-function divider() {
-    return new Paragraph({ spacing: { after: 200 }, children: [] });
-}
-
-// 信息表
-function infoTable(rows) {
-    return new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        rows: rows.map(([label, value]) => new TableRow({
-            children: [
-                new TableCell({
-                    width: { size: 18, type: WidthType.PERCENTAGE },
-                    shading: { fill: C.LIGHT_BG },
-                    children: [new Paragraph({
-                        children: [new TextRun({ text: label, size: 20, font: '微软雅黑', bold: true, color: C.MAIN })],
-                        alignment: AlignmentType.RIGHT, spacing: { before: 40, after: 40 },
-                    })],
-                }),
-                new TableCell({
-                    width: { size: 82, type: WidthType.PERCENTAGE },
-                    children: [new Paragraph({
-                        children: [new TextRun({ text: value, size: 20, font: '微软雅黑' })],
-                        spacing: { before: 40, after: 40 },
-                    })],
-                }),
-            ],
-        })),
-    });
-}
-
-// 通用表格
-function dataTable(headers, rows) {
-    return new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        rows: [
-            new TableRow({
-                children: headers.map(h => new TableCell({
-                    shading: { fill: C.HEADER_BG },
-                    children: [new Paragraph({
-                        children: [new TextRun({ text: h, size: 19, font: '微软雅黑', bold: true, color: C.WHITE })],
-                        alignment: AlignmentType.CENTER, spacing: { before: 30, after: 30 },
-                    })],
-                })),
-            }),
-            ...rows.map((row, i) => new TableRow({
-                children: row.map(cell => new TableCell({
-                    shading: i % 2 === 0 ? { fill: C.LIGHT_BG } : undefined,
-                    children: [new Paragraph({
-                        children: [new TextRun({ text: cell, size: 19, font: '微软雅黑' })],
-                        spacing: { before: 30, after: 30 },
-                    })],
-                })),
-            })),
-        ],
     });
 }
 
