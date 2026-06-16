@@ -3,7 +3,7 @@
 # 链商2.0 · 一键重生成全部文档
 # Usage:
 #   ./regenerate_all.sh              # 全部生成
-#   ./regenerate_all.sh --subset core      # 核心：工作计划+分润模型
+#   ./regenerate_all.sh --subset core      # 核心：工作计划+服务费结算模型
 #   ./regenerate_all.sh --subset marketing # 营销策略类
 #   ./regenerate_all.sh --subset naming    # 品牌命名类
 #   ./regenerate_all.sh --subset viz       # 可视化类
@@ -45,16 +45,16 @@ run_one() {
 
 CORE=(
     "generate_styled.js:工作总计划表 (xlsx)"
-    "generate_v3_settlement_model.js:分润核销模型 V3.2"
+    "generate_v3_settlement_model.js:服务费结算与核销模型 V3.2"
     "generate_compliance_framework.js:法律合规框架"
     "generate_brand_execution_manual.js:小程序品牌执行手册"
 )
 
 SETTLEMENT=(
     "generate_settlement_analysis.js:分账核销分析 V1.0"
-    "generate_revised_settlement_model.js:修订分润模型 V2.0"
-    "generate_v3_settlement_model.js:分润核销模型 V3.2"
-    "generate_digital_asset_strategy.js:消费权益×分润融合策略"
+    "generate_revised_settlement_model.js:修订服务费结算模型 V2.0"
+    "generate_v3_settlement_model.js:服务费结算与核销模型 V3.2"
+    "generate_digital_asset_strategy.js:消费权益×服务费结算融合策略"
     "generate_margin_strategy.js:净利率策略框架"
     "generate_100yuan_settlement_demo.js:100元分账演示"
 )
@@ -131,8 +131,8 @@ case "${1:-}" in
         ;;
     --list)
         echo "可用分组:"
-        echo "  core         — 核心文档（工作总计划+分润模型+合规+执行手册）"
-        echo "  settlement   — 分润核销模型全系列"
+        echo "  core         — 核心文档（工作总计划+服务费结算模型+合规+执行手册）"
+        echo "  settlement   — 服务费结算与核销模型全系列"
         echo "  marketing    — 营销策略类"
         echo "  naming       — 品牌命名全系列"
         echo "  viz          — 可视化（HTML思维导图+XMind）"

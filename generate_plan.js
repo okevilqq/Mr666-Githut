@@ -204,7 +204,7 @@ function generateDailyPlan() {
             if (dayNum === 16) {
                 entry.taskTheme = '品牌战略总纲撰写（上）';
                 entry.morningTasks = '1. 整合第1-3周成果：行业分析→定位→命名→话语体系\n2. 战略总纲框架搭建：战略定义→战略逻辑→使命体系\n3. Claude 辅助：框架展开与逻辑串联';
-                entry.afternoonTasks = '4. 品牌战略核心逻辑章节："先社区后平台；先服务后规模；先盈利后分润；先复购后增长"\n5. 使命/愿景/价值观章节融入\n6. 文档进度：完成前50%';
+                entry.afternoonTasks = '4. 品牌战略核心逻辑章节："先社区后平台；先服务后规模；先盈利后服务费结算；先复购后增长"\n5. 使命/愿景/价值观章节融入\n6. 文档进度：完成前50%';
                 entry.deliverables = '《品牌战略总纲体系》50%进度';
                 entry.kpis = '战略定义清晰 / 4条战略逻辑每条约300字 / 使命体系完整';
                 entry.aiTools = 'Claude（文档展开+逻辑串联）';
@@ -333,15 +333,15 @@ function generateDailyPlan() {
 
             if (dayNum === 31) {
                 entry.taskTheme = '商业模式设计';
-                entry.morningTasks = '1. 收入结构设计：商家服务费/交易佣金/会员收入/活动收入/品牌合作\n2. Claude 辅助：收入模型推演——各板块定价逻辑与占比\n3. 分润机制设计：试跑→增长→长期合作的阶梯式分润模型';
+                entry.morningTasks = '1. 收入结构设计：商家服务费/交易佣金/会员收入/活动收入/品牌合作\n2. Claude 辅助：收入模型推演——各板块定价逻辑与占比\n3. 服务费结算机制设计：试跑→增长→长期合作的阶梯式服务费结算模型';
                 entry.afternoonTasks = '4. 会员体系设计：等级/权益/成长路径/盈利逻辑\n5. 撰写《商业模式说明》\n6. 与财务部初步对接收入口径';
                 entry.deliverables = '《商业模式说明》初稿';
-                entry.kpis = '收入板块 ≥5个 / 分润模型3阶段 / 会员等级 ≥4级 / 财务口径对齐';
+                entry.kpis = '收入板块 ≥5个 / 服务费结算模型3阶段 / 会员等级 ≥4级 / 财务口径对齐';
                 entry.collaborators = '财务部';
-                entry.aiTools = 'Claude（收入模型推演+分润阶梯设计）';
+                entry.aiTools = 'Claude（收入模型推演+服务费结算阶梯设计）';
             } else if (dayNum === 32) {
                 entry.taskTheme = '招商战略体系';
-                entry.morningTasks = '1. 招商核心定位："先帮你赚钱，再和你分润"\n2. 招商目标对象定义：高频消费×高复购×本地生活服务型商家\n3. 重点招商行业筛选：餐饮/生鲜/家政/美业/教育/亲子/维修/健康';
+                entry.morningTasks = '1. 招商核心定位："先帮你赚钱，再和你服务费结算"\n2. 招商目标对象定义：高频消费×高复购×本地生活服务型商家\n3. 重点招商行业筛选：餐饮/生鲜/家政/美业/教育/亲子/维修/健康';
                 entry.afternoonTasks = '4. 招商转化路径：触达→案例沟通→试跑→导流→复盘→长期合作\n5. 招商核心竞争力梳理\n6. 撰写《招商战略体系》';
                 entry.deliverables = '《招商战略体系》';
                 entry.kpis = '目标行业 ≥8个 / 转化路径 ≥6步 / 竞争力 ≥5条 / 每行业有定制策略';
@@ -443,7 +443,7 @@ function generateDailyPlan() {
             } else if (dayNum === 44) {
                 entry.taskTheme = '单社区财务模型';
                 entry.morningTasks = '1. 核心参数假设表：社区体量/注册率/月活率/付费率/客单价/佣金率\n2. 收入结构模型：商家服务费+交易佣金+会员+活动+广告\n3. Claude 辅助：三种情景测算（保守/基准/进取）';
-                entry.afternoonTasks = '4. 成本结构：启动成本+固定成本+变动成本+服务商分润\n5. 盈亏平衡分析与回本周期测算\n6. 撰写《单社区财务模型》';
+                entry.afternoonTasks = '4. 成本结构：启动成本+固定成本+变动成本+服务商服务费结算\n5. 盈亏平衡分析与回本周期测算\n6. 撰写《单社区财务模型》';
                 entry.deliverables = '《单社区财务模型》';
                 entry.kpis = '参数 ≥15项 / 收入来源 ≥5项 / 成本分项 ≥8项 / 3情景测算完整';
                 entry.collaborators = '财务部';
@@ -451,7 +451,7 @@ function generateDailyPlan() {
             } else if (dayNum === 45) {
                 entry.taskTheme = '城市服务商管理办法 & 周复盘';
                 entry.morningTasks = '1. 服务商准入标准：主体资质/团队配置/本地资源/资金/执行/合规\n2. 授权机制：意向期→试运营→片区→城市→整改→退出\n3. 培训认证体系+绩效考核+KPI';
-                entry.afternoonTasks = '4. 分润结算与风控退出机制\n5. 撰写《城市服务商管理办法》\n6. 第9周成果汇总+周报';
+                entry.afternoonTasks = '4. 服务费结算结算与风控退出机制\n5. 撰写《城市服务商管理办法》\n6. 第9周成果汇总+周报';
                 entry.deliverables = '《城市服务商管理办法》\n《周总结和周计划报告》';
                 entry.kpis = '授权等级 ≥5级 / 考核维度 ≥6个 / KPI ≥15项 / 周报准时';
                 entry.aiTools = 'Claude（制度设计+KPI体系）';

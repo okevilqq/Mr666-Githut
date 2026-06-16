@@ -215,7 +215,7 @@ body{font-family:'${FONT.body}','Microsoft YaHei','PingFang SC',sans-serif;color
   <a href="#hero" class="active">🏠 全景总览</a>
   <a href="#mindmap" class="section-header">🧠 商业模式思维导图</a>
   <a href="#coresystems">🔗 两大核心体系</a>
-  <a href="#distribution">💰 分润模型全景</a>
+  <a href="#distribution">💰 服务费结算模型全景</a>
   <a href="#scenarios">📊 九场景动态对比</a>
   <a href="#dashboard" class="section-header">📈 动态指标仪表盘</a>
   <a href="#marketing">🎯 三元营销体系</a>
@@ -279,7 +279,7 @@ body{font-family:'${FONT.body}','Microsoft YaHei','PingFang SC',sans-serif;color
   </div>
   <div class="callout info" style="margin-top:20px">
     <h4>💡 思维导图说明</h4>
-    <p>以"链商2.0 数字经营平台"为中心，向外辐射六大板块：核心定位、两大体系、分润模型、三元营销、三级管理、合规风控。悬停节点查看详情，拖拽画布平移视图。</p>
+    <p>以"链商2.0 数字经营平台"为中心，向外辐射六大板块：核心定位、两大体系、服务费结算模型、三元营销、三级管理、合规风控。悬停节点查看详情，拖拽画布平移视图。</p>
   </div>
 </section>
 
@@ -356,7 +356,7 @@ body{font-family:'${FONT.body}','Microsoft YaHei','PingFang SC',sans-serif;color
 <section class="section" id="distribution">
   <div class="section-title">
     <div class="ch-num">S E C T I O N · 0 3</div>
-    <h2>💰 分润模型全景 — 资金流向图</h2>
+    <h2>💰 服务费结算模型全景 — 资金流向图</h2>
     <p class="ch-desc">消费者¥100 → 汇付天下监管账户 → 实时直清至九方 · 平台不经手资金</p>
   </div>
   <div id="sankey-container">
@@ -769,7 +769,7 @@ body{font-family:'${FONT.body}','Microsoft YaHei','PingFang SC',sans-serif;color
 <div class="footer">
   <p>链商2.0 · 链生活品牌 | 商业模式全景图 V3.2 | 面向社区商业的数字经营平台</p>
   <p style="margin-top:6px">商户独立经营 · 生态会员互通 · 消费权益流转 · 真实交易激励 | 编制：梁君衡（企业宣传部）| 2026年6月6日</p>
-  <p style="margin-top:6px;color:rgba(255,255,255,0.3)">数据来源：分润核销模型 V3.2 · 营销策略制定方案 V2.0 · 品牌执行手册 · 法律合规框架</p>
+  <p style="margin-top:6px;color:rgba(255,255,255,0.3)">数据来源：服务费结算与核销模型 V3.2 · 营销策略制定方案 V2.0 · 品牌执行手册 · 法律合规框架</p>
 </div>
 
 </div><!-- /main-content -->
@@ -812,7 +812,7 @@ const chartOptions=(extra)=>({responsive:true,maintainAspectRatio:false,plugins:
         {name:'商户独立经营',color:'${C.GREEN}',desc:'每个商家拥有独立小程序主体'},
         {name:'生态会员互通',color:'${C.GREEN}',desc:'消费者在一个生态内积累权益'},
         {name:'消费权益流转',color:'${C.GREEN}',desc:'三券全平台通用·跨店通兑'},
-        {name:'真实交易激励',color:'${C.GREEN}',desc:'交易即分润·零固定费用'},
+        {name:'真实交易激励',color:'${C.GREEN}',desc:'交易即服务费结算·零固定费用'},
       ]},
       {name:'两大体系',color:'${C.ORANGE}',size:20,children:[
         {name:'消费流转体系',color:'${C.PURPLE}',desc:'平台商家→联盟商家→综合商城\\n软性优先级(+2/0/-2)',children:[
@@ -826,7 +826,7 @@ const chartOptions=(extra)=>({responsive:true,maintainAspectRatio:false,plugins:
           {name:'消费金·全平台通用',color:'${C.GREEN}',desc:'2-3%返利·30%核销上限·12个月'},
         ]},
       ]},
-      {name:'分润模型',color:'${C.TEAL}',size:20,children:[
+      {name:'服务费结算模型',color:'${C.TEAL}',size:20,children:[
         {name:'9场景全覆盖',color:'${C.MAIN}',desc:'3商家类型×3支付方式=9场景'},
         {name:'九方利益分配',color:'${C.MAIN}',desc:'含城市服务商·三级管理体系'},
         {name:'汇付直清',color:'${C.GREEN}',desc:'持牌支付机构·实时分账'},
@@ -1344,7 +1344,7 @@ new Chart(document.getElementById('chartRiskMatrix'),{
 
 console.log('✅ 链商2.0 商业模式全景图 · 思维导图 · 动态指标仪表盘 · 全部图表已渲染完成');
 console.log('📊 总计: 思维导图(1) + Sankey资金流(1) + Chart.js图表(20) + 仪表盘(3) + 数据表格(2) + 卡片(12+)');
-console.log('🔗 数据来源: 分润核销模型 V3.2 · 营销策略制定方案 V2.0');
+console.log('🔗 数据来源: 服务费结算与核销模型 V3.2 · 营销策略制定方案 V2.0');
 </script>
 </body>
 </html>`;

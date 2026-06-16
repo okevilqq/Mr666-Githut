@@ -274,7 +274,7 @@ tbody tr:hover{background:#e8f0f8}
     </div>
     <div class="card blue">
       <h4>💰 真实交易激励</h4>
-      <p>平台仅在商家实际产生交易时获取服务费——<strong>零固定费用、零预充值、零资金占用</strong>。"交易即分润"——商家先盈利，平台后分润。</p>
+      <p>平台仅在商家实际产生交易时获取服务费——<strong>零固定费用、零预充值、零资金占用</strong>。"交易即服务费结算"——商家先盈利，平台后服务费结算。</p>
     </div>
     <div class="card orange">
       <h4>📊 营销预算自动生成</h4>
@@ -443,7 +443,7 @@ tbody tr:hover{background:#e8f0f8}
 
   <div class="callout danger" style="margin-top:20px">
     <h4>⛔ 推广合规红线</h4>
-    <p>≤3层分润 · 零入门费（免费注册）· 收入基于交易量（非人头费）· 禁止多级返佣 · 禁止承诺收益</p>
+    <p>≤3层服务费结算 · 零入门费（免费注册）· 收入基于交易量（非人头费）· 禁止多级返佣 · 禁止承诺收益</p>
   </div>
 </section>
 
@@ -461,7 +461,7 @@ tbody tr:hover{background:#e8f0f8}
       <canvas id="chart_merchant_tier"></canvas>
     </div>
     <div class="chart-card">
-      <h4>📊 平台商家 vs 联盟商家 分润结构对比</h4>
+      <h4>📊 平台商家 vs 联盟商家 服务费结算结构对比</h4>
       <canvas id="chart_platform_vs_alliance"></canvas>
     </div>
   </div>
@@ -804,7 +804,7 @@ tbody tr:hover{background:#e8f0f8}
 <!-- ====== FOOTER ====== -->
 <div class="doc-footer">
   <div class="footer-brand">🔗 链商2.0 · 链生活品牌</div>
-  <p>平台营销策略制定方案 V2.0 | 基于 V3.2 分润核销模型（跨店通兑版）延伸设计 | 2026年6月 · 品牌战略部</p>
+  <p>平台营销策略制定方案 V2.0 | 基于 V3.2 服务费结算与核销模型（跨店通兑版）延伸设计 | 2026年6月 · 品牌战略部</p>
   <p style="margin-top:8px;color:${C.MAIN}"><strong>链商2.0定位：面向社区商业的数字经营平台——商户独立经营 · 生态会员互通 · 消费权益流转 · 真实交易激励</strong></p>
   <p style="margin-top:8px">所有营销参数均为建议值，可根据实际运营数据调优。任何参数调整需经运营提案→品牌评估→技术确认→法务审核→管理层审批。</p>
   <p class="redline-note">营销策略核心原则：营销预算随交易量自动增长（零预付）· 代金券/积分/消费金全平台通用+不可兑现（零金融风险）· 三级推广收入基于交易量（零传销风险）· 跨店通兑不构成二清（汇付直清）</p>
@@ -1011,7 +1011,7 @@ new Chart(document.getElementById('chart_merchant_tier'), {
 new Chart(document.getElementById('chart_platform_vs_alliance'), {
     type: 'bar',
     data: {
-        labels: ['商家分润','平台费用','推广佣金','营销池','消费金'],
+        labels: ['商家服务费结算','平台费用','推广佣金','营销池','消费金'],
         datasets: [
             { label: '平台商家', data: [75.4, 5.0, 9.0, 4.0, 3.0], backgroundColor: C_MAIN, borderRadius: 6 },
             { label: '联盟商家', data: [71.4, 9.5, 10.0, 3.5, 2.0], backgroundColor: C_ORANGE, borderRadius: 6 },
@@ -1262,7 +1262,7 @@ fs.writeFileSync(outFile, html, 'utf-8');
 console.log('✅ 链商2.0 可视化演示 HTML 已生成: ' + outFile);
 console.log('   文件大小: ' + (Buffer.byteLength(html, 'utf-8') / 1024).toFixed(0) + ' KB');
 console.log('   定位：社区商业数字经营平台——商户独立经营·生态会员互通·消费权益流转·真实交易激励');
-console.log('   版本：V2.0 · 基于V3.2分润核销模型（跨店通兑版）');
+console.log('   版本：V2.0 · 基于V3.2服务费结算与核销模型（跨店通兑版）');
 console.log('');
 console.log('📊 包含可视化图表：');
 console.log('   CH1  营销池率对比柱状图 + 九场景营销池金额图');

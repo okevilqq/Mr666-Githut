@@ -19,7 +19,7 @@ const {
 } = require('./lib/constants');
 
 const outDir = path.join(__dirname, '20260602 链商平台 技术部会议整理');
-const outFile = path.join(outDir, '链商平台_修订版分润核销模型_V2.0.docx');
+const outFile = path.join(outDir, '链商平台_修订版服务费结算与核销模型_V2.0.docx');
 
 // ========== HELPERS (imported from lib/docx-helpers.js) ==========
 
@@ -106,15 +106,15 @@ var children = [
 
             // ===== COVER =====
             new Paragraph({children:[new TextRun({text:'链商平台 · 链生活品牌',size:28,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'修订版分润与核销模型',size:40,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+            new Paragraph({children:[new TextRun({text:'修订版服务费结算与核销模型',size:40,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
             new Paragraph({children:[new TextRun({text:'V2.0 —— 基于6月4日会议共识',size:28,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
             new Paragraph({children:[new TextRun({text:'—— 无充值 · 无资金池 · 渠道成本扣除 · 六方利益分配 ——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
             infoTable([
-                ['文档性质','修订版分润核销模型 · 基于6月4日会议共识重新设计'],
+                ['文档性质','修订版服务费结算与核销模型 · 基于6月4日会议共识重新设计'],
                 ['文档版本','V2.0'],
                 ['编制日期','2026年6月4日'],
                 ['编制人','梁君衡（企业宣传部）'],
-                ['核心变更','① 取消充值板块 ② 扣除支付提现渠道成本 ③ 资金不经平台（汇付直清） ④ 新增推广者/服务站分润'],
+                ['核心变更','① 取消充值板块 ② 扣除支付提现渠道成本 ③ 资金不经平台（汇付直清） ④ 新增推广者/服务站服务费结算'],
                 ['适用场景','消费者在平台商家 / 联盟商家 / 综合商城各消费¥100'],
                 ['关联文档','《分账与核销模型分析报告 V1.0》《法律合规框架》《品牌执行手册》'],
             ]),
@@ -129,7 +129,7 @@ var children = [
                 [
                     ['充值板块','平台商家/联盟商家/综合电商\n各有充值场景（4个子模型）','充值板块全部取消\n仅保留消费场景','充值资金涉嫌“资金池”，且充值场景中联盟商家分账为0%的逻辑缺陷无法修复，直接取消'],
                     ['资金流转','链邦备付金账户作为中转枢纽\n平台先收款→再分账','汇付监管账户直接分账到各方\n平台不经手资金','合规红线第2条：不可形成资金池'],
-                    ['分润方','平台商家/联盟商家/综合电商\n+链商金融备付','消费者 + 商家 + 平台 + 推广者\n+ 服务站 + 支付渠道 六方分配','新增推广者和服务站两个利益方，体现社区裂变模式'],
+                    ['服务费结算方','平台商家/联盟商家/综合电商\n+链商金融备付','消费者 + 商家 + 平台 + 推广者\n+ 服务站 + 支付渠道 六方分配','新增推广者和服务站两个利益方，体现社区裂变模式'],
                     ['渠道成本','未计入模型','明确扣除 0.6% 支付渠道费\n+¥1/笔提现费','实际经营硬成本，必须计入模型'],
                 ]
             ),
@@ -427,7 +427,7 @@ var children = [
                     ['备付金','平台营销额度','避免与央行备付金混淆'],
                     ['链商金融','链商平台服务','去除“金融”暗示'],
                     ['消费福利','消费让利','“福利”可能被误解为固定承诺'],
-                    ['分润','分账/消费让利分配','“分润”可能涉嫌收益承诺'],
+                    ['服务费结算','分账/消费让利分配','“服务费结算”可能涉嫌收益承诺'],
                     ['链商金融备付分账比率','平台服务费率','精确描述业务本质'],
                     ['资管核销分账','消费让利分配','去除“资管”暗示'],
                 ]
@@ -454,6 +454,6 @@ var children = [
 ]; // end children
 
 // ========== GENERATE ==========
-buildAndWrite(children, outFile, { title: '链商平台 修订版分润核销模型 V2.0' }).then(function(outPath) {
+buildAndWrite(children, outFile, { title: '链商平台 修订版服务费结算与核销模型 V2.0' }).then(function(outPath) {
     console.log('✅ 生成完成: ' + outPath);
 }).catch(function(e) { console.error('❌ 生成失败:', e); process.exit(1); });

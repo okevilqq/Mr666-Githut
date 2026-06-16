@@ -487,7 +487,7 @@ tbody tr:hover{background:#F0F4F8}
 
   <div class="callout info" style="margin-top:10px">
     <h4>💡 关键洞察：商户决策逻辑已从"价格导向"→"价值导向"</h4>
-    <p>"更低的佣金"已跌至第9位（32.0%）——商家不再单纯追求低价，而是追求"钱花得值"。链商2.0核心竞争力不在价格战，而在<strong>"私域锁客+运营赋能+权益互通"</strong>的价值组合。商家到手率82.4%-90%、汇付实时直清、交易即分润——这些不是"更便宜"而是"更值得"。</p>
+    <p>"更低的佣金"已跌至第9位（32.0%）——商家不再单纯追求低价，而是追求"钱花得值"。链商2.0核心竞争力不在价格战，而在<strong>"私域锁客+运营赋能+权益互通"</strong>的价值组合。商家到手率82.4%-90%、汇付实时直清、交易即服务费结算——这些不是"更便宜"而是"更值得"。</p>
   </div>
 </section>
 
@@ -653,7 +653,7 @@ tbody tr:hover{background:#F0F4F8}
     <div class="score-item">
       <span class="si-label">商业模式自洽性</span>
       <div class="si-bar-wrap"><div class="si-bar" style="width:90%;background:linear-gradient(90deg,${C.MINT},${C.TEAL})">9/10</div></div>
-      <span class="si-note">交易即分润+V3.2参数验证</span>
+      <span class="si-note">交易即服务费结算+V3.2参数验证</span>
     </div>
     <div class="score-item">
       <span class="si-label">获客成本优势</span>

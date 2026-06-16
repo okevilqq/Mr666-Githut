@@ -58,7 +58,7 @@ var V15_POOL_ECOM = {
 };
 
 // ========== 12-SCENARIO DATA MODEL ==========
-// 分润方定义
+// 服务费结算方定义
 var PARTIES = ['会员','平台','联盟','推广','招商','服务站','金融'];
 
 function makeScenario(id, name, payment, merchantPct, reservePct, welfare, splitParties, example) {
@@ -118,7 +118,7 @@ function verifyAll() {
         });
     });
 
-    console.log('\n=== 分润拆分合计验证 ===');
+    console.log('\n=== 服务费结算拆分合计验证 ===');
     BIZ_TYPES.forEach(function(bt) {
         bt.scenarios.forEach(function(s) {
             if (!s.splitParties) return;
@@ -128,7 +128,7 @@ function verifyAll() {
             if (sum > 0 && Math.abs(sum - s.welfare) <= 0.2) note = ' ≈ 让利' + s.welfare + '% ✓';
             else if (sum > 0 && sum < s.welfare) note = ' < 让利' + s.welfare + '%（其余归平台/其他）';
             else if (sum > s.welfare) note = ' > 让利' + s.welfare + '%（含虚拟权益）';
-            console.log(bt.name + ' ' + s.id + ' ' + s.name + ': 分润合计=' + sum.toFixed(1) + '%' + note);
+            console.log(bt.name + ' ' + s.id + ' ' + s.name + ': 服务费结算合计=' + sum.toFixed(1) + '%' + note);
         });
     });
     return allOk;
@@ -155,7 +155,7 @@ function buildSettlementTable(s, btName) {
     return rows;
 }
 
-// Build 分润拆分 table for scenarios with explicit split
+// Build 服务费结算拆分 table for scenarios with explicit split
 function buildSplitTable(s) {
     if (!s.splitParties) return null;
     var rows = [];
@@ -166,11 +166,11 @@ function buildSplitTable(s) {
         if (val > 0) {
             rows.push([pn, pct3(val), fmt(val), pn === '会员' ? '消费者权益（非现金）' : pn === '金融' ? '链商金融收入' : pn + '佣金']);
         } else if (val === 0 && ['推广','服务站','招商','平台'].indexOf(pn) >= 0) {
-            rows.push([pn, '0%', fmt(0), '本场景不分润']);
+            rows.push([pn, '0%', fmt(0), '本场景不服务费结算']);
         }
     });
     rows.push(['','','','']);
-    rows.push(['分润拆分合计', pct3(total), fmt(total), total > 0 && Math.abs(total - s.welfare) <= 0.2 ? '≈让利' + s.welfare + '%' : '让利' + s.welfare + '%（含虚拟权益/平台留存）']);
+    rows.push(['服务费结算拆分合计', pct3(total), fmt(total), total > 0 && Math.abs(total - s.welfare) <= 0.2 ? '≈让利' + s.welfare + '%' : '让利' + s.welfare + '%（含虚拟权益/平台留存）']);
     return rows;
 }
 
@@ -240,7 +240,7 @@ function buildCrossMatrix() {
     return dataTable(headers, rows, {small:true});
 }
 
-// Build 分润角色参与度矩阵
+// Build 服务费结算角色参与度矩阵
 function buildPartyMatrix() {
     var scenarioLabels = [];
     BIZ_TYPES.forEach(function(bt) {
@@ -283,7 +283,7 @@ docChildren.push(infoTable([
     ['覆盖业态','平台商家（福利20%）/ 联盟商家（福利15%）/ 综合电商（福利20%）'],
     ['支付方式','充值-汇付收单 / 消费-余额支付 / 消费-消费金核销 / 消费-汇付收单'],
     ['基准场景','¥100.00 现金消费（可为¥1,000或任意金额缩放）'],
-    ['模型结构','分账（商家净收入+备付金）+ 分润拆分（7方角色分配）'],
+    ['模型结构','分账（商家净收入+备付金）+ 服务费结算拆分（7方角色分配）'],
     ['核心规则','代金券不可跨平台商家使用（新规）、积分/消费金全平台通用'],
     ['编制','梁君衡 · 企业宣传策划部 · 链邦科技'],
     ['适用范围','内部培训 / 商户说明 / 管理层汇报 / 财务测算参考'],
@@ -380,10 +380,10 @@ BIZ_TYPES.forEach(function(bt, bi) {
 
         // Split table for scenarios with explicit split
         if (s.splitParties) {
-            docChildren.push(h3('分润拆分明细'));
-            docChildren.push(p('让利' + s.welfare + '%的分润拆分为各方分配占比（占交易额/GMV的百分比）：'));
+            docChildren.push(h3('服务费结算拆分明细'));
+            docChildren.push(p('让利' + s.welfare + '%的服务费结算拆分为各方分配占比（占交易额/GMV的百分比）：'));
             docChildren.push(dataTable(
-                ['分润角色', '占交易额比例', '金额', '说明'],
+                ['服务费结算角色', '占交易额比例', '金额', '说明'],
                 buildSplitTable(s)
             ));
         }
@@ -392,7 +392,7 @@ BIZ_TYPES.forEach(function(bt, bi) {
     // 4-scenario summary
     docChildren.push(h2((bi+2)+'.5  ' + bt.name + '4场景汇总对比'));
     docChildren.push(dataTable(
-        ['编号', '场景', '匹配条件', '商家到手率', '备付金比例', '分账合计', '分润拆分要点'],
+        ['编号', '场景', '匹配条件', '商家到手率', '备付金比例', '分账合计', '服务费结算拆分要点'],
         buildBizSummaryTable(bt)
     ));
 
@@ -413,11 +413,11 @@ docChildren.push(calloutBox('12场景核心洞察', [
     '消费金核销场景统一90%商家到手率——平台让利最大（商家仅让10%）以鼓励消费金流转',
     '余额支付场景分账全0——资金在充值时已完成分配，消费环节不再重复分账',
     '消费-汇付场景的商家到手率（82.4%-85%）略低于充值场景（82.4%-86.8%），因消费场景需额外计提推广激励',
-    '电商3.4场景分润拆分中服务站占16.4%——异常高于其他场景，可能为特定推广期参数',
+    '电商3.4场景服务费结算拆分中服务站占16.4%——异常高于其他场景，可能为特定推广期参数',
 ], '#E8EAF6'));
 
-docChildren.push(h2('5.3  分润角色参与度矩阵'));
-docChildren.push(p('下表展示7个分润角色在12个场景中的参与情况（数值为占交易额百分比，"—"表示该场景该角色未参与分润）。充值场景使用V15备付金内部分配，不在此矩阵中。'));
+docChildren.push(h2('5.3  服务费结算角色参与度矩阵'));
+docChildren.push(p('下表展示7个服务费结算角色在12个场景中的参与情况（数值为占交易额百分比，"—"表示该场景该角色未参与服务费结算）。充值场景使用V15备付金内部分配，不在此矩阵中。'));
 docChildren.push(buildPartyMatrix());
 docChildren.push(pageBreak());
 
@@ -599,7 +599,7 @@ docChildren.push(dataTable(
         ['综合电商', '82.4%', '90%', '82.4%', '—', '≈84.4%'],
     ]
 ));
-docChildren.push(p('注：余额支付场景商家到手率为0（资金已在充值时完成分账），不纳入加权。充值场景分账与消费-汇付相同但无推广分润，商家实际收入略高。', {color:C.GRAY}));
+docChildren.push(p('注：余额支付场景商家到手率为0（资金已在充值时完成分账），不纳入加权。充值场景分账与消费-汇付相同但无推广服务费结算，商家实际收入略高。', {color:C.GRAY}));
 docChildren.push(pageBreak());
 
 // ===== CHAPTER 9: COMPLIANCE =====
@@ -625,7 +625,7 @@ var finChecks = [
     '积分为营销工具——不可兑现，仅限消费抵扣',
     '无数字货币/代币发行——代金券为商家营销凭证',
     '消费金仅限平台内消费——不可提现/转让/交易',
-    '分润本质为商家服务费分配——非金融产品收益',
+    '服务费结算本质为商家服务费分配——非金融产品收益',
     '推广者收入为服务佣金——基于实际消费交易',
     '风控备用金托管于持牌机构——汇付天下备付金账户',
     '无承诺收益表述——所有文档合规术语检查通过',
@@ -659,10 +659,10 @@ for (var mi = 0; mi < mlmChecks.length; mi++) {
 docChildren.push(pageBreak());
 
 // ===== CHAPTER 10: PROFIT ROLES =====
-docChildren.push(h1('第十章  通用分润构成项'));
+docChildren.push(h1('第十章  通用服务费结算构成项'));
 
 docChildren.push(h2('10.1  资金拆分三维度'));
-docChildren.push(p('链商平台的分润体系围绕三个核心资金维度展开：'));
+docChildren.push(p('链商平台的服务费结算体系围绕三个核心资金维度展开：'));
 docChildren.push(dataTable(
     ['资金维度', '性质', '使用范围', '可否提现', '成本承担方'],
     [
@@ -672,9 +672,9 @@ docChildren.push(dataTable(
     ]
 ));
 
-docChildren.push(h2('10.2  分润角色总览'));
+docChildren.push(h2('10.2  服务费结算角色总览'));
 docChildren.push(dataTable(
-    ['分润角色', '角色定位', '收入性质', '主要参与场景', '典型收入（每¥100）'],
+    ['服务费结算角色', '角色定位', '收入性质', '主要参与场景', '典型收入（每¥100）'],
     [
         ['会员（消费者）', '权益受益人', '消费权益（非现金）', '消费-汇付、消费-余额', '¥2.00-¥20.00（权益面值）'],
         ['平台商家', '品质商户', '商品/服务收入', '全部场景（余额支付除外）', '¥82.40-¥90.00'],
@@ -687,7 +687,7 @@ docChildren.push(dataTable(
 ));
 
 docChildren.push(h2('10.3  各角色在12场景中的参与汇总'));
-docChildren.push(p('以下矩阵展示每个角色在12场景中的分润参与情况（"✓"表示该角色在此场景中有分润）：'));
+docChildren.push(p('以下矩阵展示每个角色在12场景中的服务费结算参与情况（"✓"表示该角色在此场景中有服务费结算）：'));
 docChildren.push(buildPartyMatrix());
 docChildren.push(pageBreak());
 
@@ -709,7 +709,7 @@ docChildren.push(dataTable(
 
 docChildren.push(h2('11.2  各方共赢机制（V15扩展模型）'));
 docChildren.push(b('消费者：获得代金券+积分+消费金三重权益，积分/消费金全平台通用，代金券限定同业态保障商家利益'));
-docChildren.push(b('商家：零固定费用+交易即分润——消费金核销场景高达90%到手率，常规场景82.4%-86.8%'));
+docChildren.push(b('商家：零固定费用+交易即服务费结算——消费金核销场景高达90%到手率，常规场景82.4%-86.8%'));
 docChildren.push(b('平台：每笔交易获得5.0-6.2%毛利，盈亏平衡仅需' + BREAKEVEN_TX.toLocaleString() + '笔/月'));
 docChildren.push(b('推广者：基于实际消费交易获得佣金（多场景参与），兼职月均200笔可获¥200-400'));
 docChildren.push(b('招商员（城市服务商）：联盟/商城场景1%-1.5%全域提成，规模效应显著'));
@@ -719,7 +719,7 @@ docChildren.push(h2('11.3  V15扩展模型核心优势'));
 docChildren.push(calloutBox('V15扩展模型总结（相较于V3.2的进步）', [
     '12场景全覆盖：从单一"消费-汇付"场景扩展为3业态×4支付方式，模型覆盖所有真实业务场景',
     '商家到手率大幅提升：消费-汇付场景82.4%-85%（较V3.2提升7-13.6pp），消费金核销场景高达90%',
-    '分润角色清晰透明：7方角色在12场景中的参与度矩阵化展示，谁在何时分润一目了然',
+    '服务费结算角色清晰透明：7方角色在12场景中的参与度矩阵化展示，谁在何时服务费结算一目了然',
     '代金券规则更合规：限定同业态使用杜绝补贴套利，降低二清风险',
     '各业态营销池独立核算：营销投入产出更清晰，资金流向可审计',
     '盈亏平衡门槛降低27%：' + BREAKEVEN_TX.toLocaleString() + '笔/月（V3.2为41,806笔/月）',
@@ -735,7 +735,7 @@ docChildren.push(h1('附录A  12场景参数总览'));
 
 docChildren.push(h2('A.1  完整参数矩阵'));
 docChildren.push(dataTable(
-    ['业态', '编号', '场景', '匹配条件', '福利', '商家%', '备付金%', '分润角色数', '¥1000示例'],
+    ['业态', '编号', '场景', '匹配条件', '福利', '商家%', '备付金%', '服务费结算角色数', '¥1000示例'],
     [
         ['平台商家', '1.1', '充值-汇付收单', '充值+汇付', '20%', '82.4%', '17.6%', '8项(V15池)', '商家824+金融176'],
         ['平台商家', '1.2', '消费-余额支付', '消费+余额', '20%', '0%', '0%', '3方(会员+推广+服务站)', '—'],
@@ -838,7 +838,7 @@ docChildren.push(new Paragraph({spacing:{before:2000}}));
 docChildren.push(new Paragraph({children:[new TextRun({text:'—— 文档结束 ——',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:200}}));
 docChildren.push(new Paragraph({children:[new TextRun({text:'本报告基于链商平台V15扩展模型（2026-06-06），以¥100消费为基准场景，',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:10}}));
 docChildren.push(new Paragraph({children:[new TextRun({text:'涵盖平台商家·联盟商家·综合电商三种业态下4种支付方式的12场景完整分账与核销机制。',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:10}}));
-docChildren.push(new Paragraph({children:[new TextRun({text:'核心新增：① 4支付方式全覆盖 ② 分润7方角色矩阵 ③ 代金券不可跨平台商家使用（新规）。',size:16,font:FONT.body,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}));
+docChildren.push(new Paragraph({children:[new TextRun({text:'核心新增：① 4支付方式全覆盖 ② 服务费结算7方角色矩阵 ③ 代金券不可跨平台商家使用（新规）。',size:16,font:FONT.body,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:20}}));
 docChildren.push(new Paragraph({children:[new TextRun({text:'代金券/积分/消费金均不可兑现，严守三条合规红线：积分不可兑现 · 不可形成资金池 · 不可承诺收益。',size:16,font:FONT.body,color:C.RED})],alignment:AlignmentType.CENTER}));
 docChildren.push(new Paragraph({children:[new TextRun({text:'生成日期：2026年6月6日 · 编制：梁君衡 · 企业宣传策划部 · 链邦科技',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{before:40}}));
 
