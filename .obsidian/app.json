@@ -1,0 +1,33 @@
+{
+  "attachmentFolderPath": "附件",
+  "newFileLocation": "folder",
+  "newFileFolderPath": "知识库/收件箱",
+  "alwaysUpdateLinks": true,
+  "showUnsupportedFiles": true,
+  "userIgnoreFilters": [
+    "node_modules/",
+    ".git/",
+    ".claude/",
+    ".agents/",
+    "*.docx",
+    "*.xlsx",
+    "*.pdf",
+    "*.png",
+    "*.jpg",
+    "*.js",
+    "*.json",
+    "*.sh",
+    "*.lock"
+  ],
+  "showLineNumber": false,
+  "readableLineLength": true,
+  "strictLineBreaks": false,
+  "defaultViewMode": "reading",
+  "livePreview": true,
+  "showFrontmatter": false,
+  "foldHeading": true,
+  "foldIndent": true,
+  "tabSize": 4,
+  "promptDelete": true,
+  "trashOption": "local"
+}

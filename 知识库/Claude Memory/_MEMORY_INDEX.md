@@ -1,0 +1,6 @@
+- [项目定位与品牌身份](project-identity.md) — 链邦赋商通核心定位、两大体系、三大目标
+- [合规术语映射表](compliance-terminology.md) — 16组强制替换词 + 三条红线
+- [V3.2分润模型核心参数](v3-2-model-params.md) — 三种业态分账比例 + 三元营销参数 + 盈亏平衡
+- [用户工作偏好](user-preferences.md) — 梁君衡的工作风格、格式偏好、沟通习惯
+- [品牌命名迭代决策](brand-naming-decisions.md) — V2→V3→V4→赋商版→链邦赋商通 演进逻辑与最终落定
+- [商标注册合同](trademark-contract.md) — IP-2026-001 链邦赋商通 第35/42/9类 广东链邦科技→北京捷佳联合 ¥2,000

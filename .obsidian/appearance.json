@@ -1,0 +1,12 @@
+{
+  "baseFontSize": 16,
+  "cssTheme": "",
+  "theme": "obsidian",
+  "accentColor": "#D62828",
+  "interfaceFontFamily": "Inter, -apple-system, sans-serif",
+  "textFontFamily": "LXGW WenKai, 微软雅黑, sans-serif",
+  "monospaceFontFamily": "JetBrains Mono, SF Mono, monospace",
+  "translucency": false,
+  "nativeMenus": true,
+  "showRibbon": true
+}

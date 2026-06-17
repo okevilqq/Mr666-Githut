@@ -1,0 +1,37 @@
+{
+  "command_timeout": 5,
+  "templates_folder": ".obsidian/templates",
+  "templates_pairs": [
+    ["", ""]
+  ],
+  "trigger_on_file_creation": true,
+  "auto_jump_to_cursor": false,
+  "enable_system_commands": false,
+  "shell_path": "",
+  "user_scripts_folder": "",
+  "enable_folder_templates": true,
+  "folder_templates": [
+    {
+      "folder": "会议纪要",
+      "template": ".obsidian/templates/会议纪要模板.md"
+    },
+    {
+      "folder": "工作日志",
+      "template": ".obsidian/templates/日报模板.md"
+    },
+    {
+      "folder": "知识库/品牌",
+      "template": ".obsidian/templates/品牌笔记模板.md"
+    },
+    {
+      "folder": "知识库/模型",
+      "template": ".obsidian/templates/模型笔记模板.md"
+    }
+  ],
+  "syntax_highlighting": true,
+  "enabled_templates_hotkeys": [
+    ".obsidian/templates/日报模板.md",
+    ".obsidian/templates/会议纪要模板.md"
+  ],
+  "startup_templates": [""]
+}

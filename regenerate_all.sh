@@ -194,6 +194,13 @@ if [ "$FAIL" -gt 0 ]; then
 fi
 echo -e "${BLUE}════════════════════════════════════════════════════${NC}"
 
+# ============================================================================
+# Obsidian 变更日志
+# ============================================================================
+if [ -f "./脚本/obsidian_auto_log.sh" ]; then
+    bash "./脚本/obsidian_auto_log.sh" "regenerate_all --subset $SUBSET" "通过:$PASS 失败:$FAIL"
+fi
+
 if [ "$FAIL" -gt 0 ]; then
     exit 1
 fi
