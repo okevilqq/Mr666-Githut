@@ -768,7 +768,7 @@ body{font-family:'${FONT.body}','Microsoft YaHei','PingFang SC',sans-serif;color
 <!-- ====== FOOTER ====== -->
 <div class="footer">
   <p>链商2.0 · 链生活品牌 | 商业模式全景图 V3.2 | 面向社区商业的数字经营平台</p>
-  <p style="margin-top:6px">商户独立经营 · 生态会员互通 · 消费权益流转 · 真实交易激励 | 编制：梁君衡（企业宣传部）| 2026年6月6日</p>
+  <p style="margin-top:6px">商户独立经营 · 生态会员互通 · 消费权益流转 · 真实交易激励 | 编制：Mr666（企业宣传部）| 2026年6月6日</p>
   <p style="margin-top:6px;color:rgba(255,255,255,0.3)">数据来源：服务费结算与核销模型 V3.2 · 营销策略制定方案 V2.0 · 品牌执行手册 · 法律合规框架</p>
 </div>
 

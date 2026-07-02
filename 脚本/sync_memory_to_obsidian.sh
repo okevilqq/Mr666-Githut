@@ -8,7 +8,7 @@
 set -e
 
 MEMORY_DIR="$HOME/.claude/projects/-Users-mac-Downloads---------/memory"
-VAULT_DIR="/Users/mac/Downloads/君衡 项目文件夹/知识库/Claude Memory"
+VAULT_DIR="/Users/[user]/Mr666-项目文件夹/知识库/Claude Memory"
 VERSION=$(date +"%Y%m%d-%H%M%S")
 
 echo "🔗 同步 Claude Memory → Obsidian Vault"

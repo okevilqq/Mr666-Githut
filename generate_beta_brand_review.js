@@ -90,7 +90,7 @@ function buildReview() {
             new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:14,font:FONT.body,color:C.LIGHT.replace('#','')})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
             new Paragraph({children:[new TextRun({text:'审查对象：链商2.0公测版本（22张截图）',size:20,font:FONT.body,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
             new Paragraph({children:[new TextRun({text:'审查维度：品牌色 / Logo / 字体 / 文案 / 图标 / 组件 / 合规 / 体验',size:20,font:FONT.body,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-            new Paragraph({children:[new TextRun({text:'审查人：梁君衡 | 日期：2026年6月3日 | 版本：V1.0',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'审查人：Mr666 | 日期：2026年6月3日 | 版本：V1.0',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
             divider(),
 
             // ========== EXECUTIVE SUMMARY ==========
@@ -456,7 +456,7 @@ function buildReview() {
             divider(),
             divider(),
             new Paragraph({children:[new TextRun({text:'— 链商平台公测 · 品牌专业审查报告 · 完 —',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300}}),
-            new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 链邦科技 · 企业宣传策划专员 | 2026年6月3日',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:100}}),
+            new Paragraph({children:[new TextRun({text:'编制：Mr666 | 链商平台运营方 · 企业宣传策划专员 | 2026年6月3日',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:100}}),
         ]
     };
 }

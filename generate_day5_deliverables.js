@@ -28,7 +28,7 @@ function buildFeasibilityReport() {
             // Cover
             new Paragraph({children:[new TextRun({text:'链商平台 · 市场机会与可行性报告',size:36,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
             new Paragraph({children:[new TextRun({text:'—— 本地生活赛道进入判断：是否值得做 / 切入点选择 / 风险可控性 ——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
-            new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月5日 | Day 5 交付 | 机密文件',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'编制：Mr666 | 2026年6月5日 | Day 5 交付 | 机密文件',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
 
             h1('执行摘要'),
             p('本报告基于第1周（6/1-6/5）赛道调研、竞品分析、三方痛点挖掘、技术能力评估和合规框架审查，对链商平台进入本地生活赛道的市场机会与可行性做出系统性判断。',{bold:true}),
@@ -98,7 +98,7 @@ function buildFeasibilityReport() {
             h1('四、切入点选择：三步走策略'),
 
             h2('4.1 第一步：单一社区验证（公测期·6/12起）'),
-            p('选择一个标杆社区（建议选链邦科技周边3公里范围），上线公测版，验证：'),
+            p('选择一个标杆社区（建议选链商平台运营方周边3公里范围），上线公测版，验证：'),
             b('让利排名算法：消费者是否理解并接受"让利多→排名高"逻辑'),
             b('锁客机制：扫码绑定率、复购转化率'),
             b('模板体验：6套模板在不同行业的适配度'),
@@ -167,17 +167,17 @@ function buildChecklist() {
         children:[
             new Paragraph({children:[new TextRun({text:'链商平台 · 公测品牌准备清单',size:36,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
             new Paragraph({children:[new TextRun({text:'—— 四大模块：模板设计 / 知识库内容 / 入驻指南 / 品牌触点 ——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
-            new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月5日 | Day 5 交付 | 公测倒计时7天',size:18,font:FONT.body,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+            new Paragraph({children:[new TextRun({text:'编制：Mr666 | 2026年6月5日 | Day 5 交付 | 公测倒计时7天',size:18,font:FONT.body,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
             new Paragraph({children:[new TextRun({text:'⏰ 公测上线日：2026年6月12日（星期五） | 从明天起进入公测冲刺周',size:20,font:FONT.body,bold:true,color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
 
             h1('一、清单总览'),
             dataTable(
                 ['模块','子项数','关键交付物','负责人/协作方','截止日','当前状态'],
                 [
-                    ['A. 模板设计','6套','6套店铺模板终稿\n(3餐饮+3电商)','梁君衡（Brief）\n设计师（视觉稿）\n数字化中心（部署）','6/11\n(Day 9)','Brief已出\n视觉稿待启动'],
-                    ['B. 知识库内容','3大板块','品牌规范+商家操作指南\n+FAQ+品牌故事','梁君衡（内容）\n数字化中心（平台）','6/11\n(Day 9)','内容框架已定\n待填充'],
-                    ['C. 入驻指南','2类商家','平台商家+联盟商家\n入驻物料清单+流程','梁君衡（指南）\n商务（审核）','6/11\n(Day 9)','框架已定\n待细化'],
-                    ['D. 品牌触点','28项触点','6大模块全覆盖审查\n+统一+修复','梁君衡（审查）\n数字化中心（修复）','6/11\n(Day 9)','清单已出\n(Day 3)\n待审查修复'],
+                    ['A. 模板设计','6套','6套店铺模板终稿\n(3餐饮+3电商)','Mr666（Brief）\n设计师（视觉稿）\n数字化中心（部署）','6/11\n(Day 9)','Brief已出\n视觉稿待启动'],
+                    ['B. 知识库内容','3大板块','品牌规范+商家操作指南\n+FAQ+品牌故事','Mr666（内容）\n数字化中心（平台）','6/11\n(Day 9)','内容框架已定\n待填充'],
+                    ['C. 入驻指南','2类商家','平台商家+联盟商家\n入驻物料清单+流程','Mr666（指南）\n商务（审核）','6/11\n(Day 9)','框架已定\n待细化'],
+                    ['D. 品牌触点','28项触点','6大模块全覆盖审查\n+统一+修复','Mr666（审查）\n数字化中心（修复）','6/11\n(Day 9)','清单已出\n(Day 3)\n待审查修复'],
                 ]
             ),
 
@@ -207,11 +207,11 @@ function buildChecklist() {
                 ['任务','负责人','工作量（人天）','开始日','截止日','验收标准'],
                 [
                     ['6套模板视觉设计','设计师','3天','6/8 (Day 6)','6/10 (Day 8)','每套≥8模块/品牌色统一/移动端优先'],
-                    ['模板审核（餐饮3套）','梁君衡+设计师','0.5天','6/9 (Day 7)','6/9 (Day 7)','色彩/字体/Logo位/文案调性通过'],
-                    ['模板审核（电商3套）','梁君衡+设计师','0.5天','6/10 (Day 8)','6/10 (Day 8)','功能完整性/品牌一致性'],
-                    ['模板终审+修订','梁君衡+管理层','1天','6/11 (Day 9)','6/11 (Day 9)','6套全部通过/品牌元素无偏差'],
+                    ['模板审核（餐饮3套）','Mr666+设计师','0.5天','6/9 (Day 7)','6/9 (Day 7)','色彩/字体/Logo位/文案调性通过'],
+                    ['模板审核（电商3套）','Mr666+设计师','0.5天','6/10 (Day 8)','6/10 (Day 8)','功能完整性/品牌一致性'],
+                    ['模板终审+修订','Mr666+管理层','1天','6/11 (Day 9)','6/11 (Day 9)','6套全部通过/品牌元素无偏差'],
                     ['模板部署至公测版','数字化中心','0.5天','6/11 (Day 9)','6/11 (Day 9)','6套模板可正常加载/无bug'],
-                    ['公测日线上检查','梁君衡+数字化中心','0.5天','6/12 (Day 10)','6/12 (Day 10)','所有模板品牌触点正常展示'],
+                    ['公测日线上检查','Mr666+数字化中心','0.5天','6/12 (Day 10)','6/12 (Day 10)','所有模板品牌触点正常展示'],
                 ]
             ),
 
@@ -220,15 +220,15 @@ function buildChecklist() {
             dataTable(
                 ['板块','子模块','内容要点','形式','负责人','截止日'],
                 [
-                    ['品牌规范','Logo使用规范','标准版/横版/竖版/反白/图标\n最小尺寸/安全间距/禁止行为','图文规范文档','梁君衡','6/10'],
-                    ['品牌规范','色彩体系规范','主色#1A5276/强调#E67E22\n辅助色系/使用场景/禁忌搭配','色值对照表','梁君衡','6/10'],
-                    ['品牌规范','字体与排版','微软雅黑/层级/大小/行距\n移动端适配规范','排版指南','梁君衡','6/10'],
-                    ['品牌规范','文案语调指南','品牌人格关键词/分场景语调\n禁忌词库/正反向示例','语调手册','梁君衡','6/10'],
-                    ['商家操作','商家后台操作指南','注册/认证/店铺装修/商品上架\n优惠券设置/查看数据/提现','图文教程+短视频','梁君衡+数字化中心','6/11'],
-                    ['商家操作','让利排名说明','让利比例如何影响排名\n算法逻辑/常见误区/优化建议','简明图文','梁君衡','6/11'],
-                    ['商家操作','锁客机制说明','扫码绑定的技术原理\n消费者关系管理/数据查看','简明图文','梁君衡+数字化中心','6/11'],
-                    ['FAQ','消费者FAQ','怎么用/积分规则/退款流程\n消费金说明/隐私保护','QA文档','梁君衡','6/11'],
-                    ['FAQ','商家FAQ','入驻条件/费用/结算周期\n排名规则/客户管理/退出机制','QA文档','梁君衡','6/11'],
+                    ['品牌规范','Logo使用规范','标准版/横版/竖版/反白/图标\n最小尺寸/安全间距/禁止行为','图文规范文档','Mr666','6/10'],
+                    ['品牌规范','色彩体系规范','主色#1A5276/强调#E67E22\n辅助色系/使用场景/禁忌搭配','色值对照表','Mr666','6/10'],
+                    ['品牌规范','字体与排版','微软雅黑/层级/大小/行距\n移动端适配规范','排版指南','Mr666','6/10'],
+                    ['品牌规范','文案语调指南','品牌人格关键词/分场景语调\n禁忌词库/正反向示例','语调手册','Mr666','6/10'],
+                    ['商家操作','商家后台操作指南','注册/认证/店铺装修/商品上架\n优惠券设置/查看数据/提现','图文教程+短视频','Mr666+数字化中心','6/11'],
+                    ['商家操作','让利排名说明','让利比例如何影响排名\n算法逻辑/常见误区/优化建议','简明图文','Mr666','6/11'],
+                    ['商家操作','锁客机制说明','扫码绑定的技术原理\n消费者关系管理/数据查看','简明图文','Mr666+数字化中心','6/11'],
+                    ['FAQ','消费者FAQ','怎么用/积分规则/退款流程\n消费金说明/隐私保护','QA文档','Mr666','6/11'],
+                    ['FAQ','商家FAQ','入驻条件/费用/结算周期\n排名规则/客户管理/退出机制','QA文档','Mr666','6/11'],
                 ]
             ),
 
@@ -254,7 +254,7 @@ function buildChecklist() {
                     ['C. 收银台','支付页品牌标识/金额展示/消费金/积分/备注','5','🟢 待审查','数字化中心'],
                     ['D. 消费者端','我的/消费金/积分/订单/收藏/设置/消息','6','🟢 待审查','数字化中心'],
                     ['E. 商家端','后台Logo/品牌色/菜单/数据面板','4','🟢 待审查','数字化中心'],
-                    ['F. 全局元素','字体/文案/加载页/空状态/错误提示/分享卡片','6','🟡 Day 4已审查\nP0: F01字体','数字化中心+梁君衡'],
+                    ['F. 全局元素','字体/文案/加载页/空状态/错误提示/分享卡片','6','🟡 Day 4已审查\nP0: F01字体','数字化中心+Mr666'],
                 ]
             ),
             divider(),
@@ -289,7 +289,7 @@ function buildWeeklyReport() {
         children:[
             new Paragraph({children:[new TextRun({text:'链商平台 · 第1周工作总结与第2周计划',size:36,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
             new Paragraph({children:[new TextRun({text:'—— 品牌地基期 · 赛道调研与竞品分析阶段完成 · 进入公测冲刺 ——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
-            new Paragraph({children:[new TextRun({text:'汇报人：梁君衡 | 2026年6月5日 | 周报（6/1-6/5）| 部门周会汇报',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
+            new Paragraph({children:[new TextRun({text:'汇报人：Mr666 | 2026年6月5日 | 周报（6/1-6/5）| 部门周会汇报',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
 
             h1('第一部分：本周工作总结（6/1-6/5）'),
 

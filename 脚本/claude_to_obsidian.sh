@@ -7,7 +7,7 @@
 #   ./脚本/claude_to_obsidian.sh note "标题" "内容..."
 # ============================================================
 
-VAULT="/Users/mac/Downloads/君衡 项目文件夹"
+VAULT="/Users/[user]/Mr666-项目文件夹"
 INBOX="$VAULT/知识库/收件箱"
 DATE=$(date +"%Y%m%d")
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")

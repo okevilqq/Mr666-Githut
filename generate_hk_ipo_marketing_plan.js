@@ -285,7 +285,7 @@ function buildDocument() {
     children.push(new Paragraph({children:[new TextRun({text:'—— 香港上市财务模型标准 ——',size:28,font:FONT.body,color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:600}}));
     children.push(new Paragraph({children:[new TextRun({text:'3年战略规划（2026-2029）',size:24,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}));
     children.push(new Paragraph({children:[new TextRun({text:'含完整三表财务模型 · 敏感性分析 · 风险矩阵 · IPO使用募集资金规划',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:800}}));
-    children.push(new Paragraph({children:[new TextRun({text:'链邦科技 · 品牌战略部',size:22,font:FONT.body,bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:100}}));
+    children.push(new Paragraph({children:[new TextRun({text:'链商平台运营方 · 品牌战略部',size:22,font:FONT.body,bold:true,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:100}}));
     children.push(new Paragraph({children:[new TextRun({text:'2026年6月 · 机密文件',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
     children.push(new Paragraph({children:[new TextRun({text:'本文件仅供内部决策参考，不构成公开发售或上市承诺。所含前瞻性陈述基于当前假设，实际结果可能因市场、监管、运营等因素而存在重大差异。',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{before:600}}));
     children.push(pageBreak());
@@ -1168,7 +1168,7 @@ function buildDocument() {
     children.push(b('监督：管理层持续监控+内部审计+外部审计+董事会监督'));
 
     children.push(h2('15.3  关联交易管理'));
-    children.push(b('母公司全球拼购(GGbingo)：关联交易定价政策——按市场公允价格（Arm\'s Length Principle）'));
+    children.push(b('母公司(母公司)：关联交易定价政策——按市场公允价格（Arm\'s Length Principle）'));
     children.push(b('关联交易审批：≥¥50万须独立非执行董事审批·≥¥200万须股东大会批准'));
     children.push(b('定期披露：年度报告披露所有≥¥10万的关联交易'));
     children.push(pageBreak());
@@ -1250,7 +1250,7 @@ function buildDocument() {
 
     children.push(h2('16.7  免责声明与前瞻性陈述'));
     children.push(calloutBox('重要声明', [
-        '本文件（"链商2.0市场营销计划·香港上市财务模型标准"）仅供链邦科技内部决策参考，不构成任何形式的公开发售、上市承诺、投资建议或法律意见。',
+        '本文件（"链商2.0市场营销计划·香港上市财务模型标准"）仅供链商平台运营方内部决策参考，不构成任何形式的公开发售、上市承诺、投资建议或法律意见。',
         '',
         '前瞻性陈述：本文件包含前瞻性陈述，涉及对未来事件、财务表现、市场趋势和业务策略的预期、预测、计划和假设。前瞻性陈述通常包含"预计""预期""计划""相信""预测""估计""可能""将要""目标"等词语。此类陈述基于当前可获得的信息和假设，存在已知和未知的风险、不确定性和其他因素，可能导致实际结果与本文件中的前瞻性陈述存在重大差异。',
         '',
@@ -1262,13 +1262,13 @@ function buildDocument() {
         '',
         '更新义务：除非适用法律或监管规定要求，本公司不承担更新本文件中任何前瞻性陈述的义务。本文件的使用者不应将本文件中的任何内容视为对未来事件的承诺或保证。',
         '',
-        '机密性：本文件为链邦科技机密文件，未经链邦科技书面授权，不得全部或部分复制、分发或向任何第三方披露。',
+        '机密性：本文件为链商平台运营方机密文件，未经链商平台运营方书面授权，不得全部或部分复制、分发或向任何第三方披露。',
     ], '#FFF8F0'));
 
     children.push(divider());
     children.push(new Paragraph({spacing:{before:600}}));
     children.push(new Paragraph({children:[new TextRun({text:'—— 链生活 · 消费有回响 ——',size:28,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:200}}));
-    children.push(new Paragraph({children:[new TextRun({text:'链邦科技 · 品牌战略部 | 2026年6月9日 | 机密文件',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
+    children.push(new Paragraph({children:[new TextRun({text:'链商平台运营方 · 品牌战略部 | 2026年6月9日 | 机密文件',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
 
     return children;
 }

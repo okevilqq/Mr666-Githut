@@ -75,7 +75,7 @@ children.push(
     new Paragraph({children:[new TextRun({text:'全新品牌命名方案 V4.0',size:44,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:80}}),
     new Paragraph({children:[new TextRun({text:'基于商标字频深度分析 · 三套高通过率方案',size:24,font:FONT.body,color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:50}}),
     new Paragraph({children:[new TextRun({text:'2026年6月12日',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
-    new Paragraph({children:[new TextRun({text:'链邦科技 · 梁君衡',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
+    new Paragraph({children:[new TextRun({text:'链商平台运营方 · Mr666',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
     new Paragraph({children:[new TextRun({text:'密级：内部机密',size:18,font:FONT.body,color:C.RED})],alignment:AlignmentType.CENTER}),
     pageBreak()
 );
@@ -157,7 +157,7 @@ children.push(
     p('回顾此前三轮命名方案，每个方案都包含至少一个高频饱和字，导致商标注册存在结构性风险：'),
     divider(),
     dataTable(['轮次','方案','含高频字','最高频字','第35类风险','第42类风险','诊断结论'],[
-        ['V2.0','链邦域营','链（#12）、域','链','🟡','🔴','链=42类极高风险'],
+        ['V2.0','域营','链（#12）、域','链','🟡','🔴','链=42类极高风险'],
         ['V2.0','店智汇','智（#2）、汇（#11）','智','🔴','🔴','智=三类别均极高风险'],
         ['V2.0','邻汇通','汇（#11）、通（#1）','通','🔴','🔴','通=三类别均极高风险'],
         ['V3.0','近商联','商（#5）、联（#4）','商','🔴','🔴','商+联=双高叠加'],
@@ -563,10 +563,10 @@ children.push(
     divider(),
 
     calloutBox('⚠️ 重要提醒', [
-        '1. 链邦科技当前的"图形商标全类注册"仍处于审查阶段（31类"注册申请中"+14类"初审公告"），尚未有一件拿到注册证',
+        '1. 链商平台运营方当前的"图形商标全类注册"仍处于审查阶段（31类"注册申请中"+14类"初审公告"），尚未有一件拿到注册证',
         '2. "赋商通"在第42类的雷同风险不可忽视——建议暂不提交"赋商通/联/汇"的注册申请，优先提交本方案三套名称',
-        '3. 商标申请遵循"申请在先"原则——即使同一申请人（链邦科技），不同商标之间也是独立审查，不存在"已有商标注册所以新商标可通过"的豁免机制',
-        '4. 如果坚持使用"赋商通"作为运营品牌，最低风险的做法是：同时注册"链邦·赋商通"作为联合商标，以链邦的申请历史为赋商通提供关联性支撑',
+        '3. 商标申请遵循"申请在先"原则——即使同一申请人（链商平台运营方），不同商标之间也是独立审查，不存在"已有商标注册所以新商标可通过"的豁免机制',
+        '4. 如果坚持使用"赋商通"作为运营品牌，最低风险的做法是：同时注册"链商平台·赋商通"作为联合商标，以链商平台的申请历史为赋商通提供关联性支撑',
     ], C.LIGHT),
     pageBreak()
 );

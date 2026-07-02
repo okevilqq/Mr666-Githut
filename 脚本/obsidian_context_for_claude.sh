@@ -8,7 +8,7 @@
 #   ./脚本/obsidian_context_for_claude.sh all      # 输出全部知识摘要
 # ============================================================
 
-VAULT="/Users/mac/Downloads/君衡 项目文件夹"
+VAULT="/Users/[user]/Mr666-项目文件夹"
 KNOWLEDGE_DIR="$VAULT/知识库"
 
 domain="${1:-all}"
@@ -52,7 +52,7 @@ case "$domain" in
         done
         ;;
     all|*)
-        echo "# 链邦赋商通 · 知识摘要"
+        echo "# 赋商通 · 知识摘要"
         echo "> 提取自 Obsidian 知识库"
         echo ""
         for dir in "$KNOWLEDGE_DIR"/*/; do

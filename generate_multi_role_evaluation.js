@@ -63,8 +63,8 @@ children.push(
     new Paragraph({children:[new TextRun({text:'7大角色  ·  利益冷算  ·  挑战如实  ·  交叉对比  ·  决策路径',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
     new Paragraph({children:[new TextRun({text:'评估角色：消费者 | 推广者 | 平台商家 | 联盟商家 | 城市服务商 | 服务站 | 平台运营方',size:17,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:160}}),
     new Paragraph({spacing:{before:300},children:[]}),
-    new Paragraph({children:[new TextRun({text:'链邦科技  |  2026年6月  |  V1.0 · 客观评估版',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'编制：梁君衡  ·  企业宣传策划专员',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'链商平台运营方  |  2026年6月  |  V1.0 · 客观评估版',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'编制：Mr666  ·  企业宣传策划专员',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
     new Paragraph({children:[new TextRun({text:'评估方法论：第一人称沉浸式推演 + 财务冷算 + 竞品对比 + 决策树分析',size:17,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
     pageBreak()
 );
@@ -925,8 +925,8 @@ children.push(
         '报告的目的不是「推销」平台，而是为每个潜在参与者提供一个冷静、全面、不回避问题的决策参考框架。',
         '链商平台的核心命题不是「它现在好不好」，而是「它有没有可能成长为一个不可忽视的力量」——以及「你愿不愿意用自己的时间/金钱/信誉，去赌这个可能性」。',
         '',
-        '编制：梁君衡  ·  企业宣传策划专员',
-        '链邦科技  ·  2026年6月11日',
+        '编制：Mr666  ·  企业宣传策划专员',
+        '链商平台运营方  ·  2026年6月11日',
         '文档版本：V1.0 · 客观评估版',
     ], '#E8F0FE'),
 );

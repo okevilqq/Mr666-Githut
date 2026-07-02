@@ -80,8 +80,8 @@ children.push(
     new Paragraph({children:[new TextRun({text:'三套方案 · B端经营定位 · 2-4字中文+国际化英文 · 全类别商标可注册性评估',size:19,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:80}}),
     new Paragraph({children:[new TextRun({text:'命名方向：近场商业联盟型 · 门店经营工具型 · 商业领域生态型',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
     new Paragraph({spacing:{before:400},children:[]}),
-    new Paragraph({children:[new TextRun({text:'链邦科技  |  2026年6月  |  V3.0 · 会议决议版',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'编制：梁君衡  ·  企业宣传策划专员',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'链商平台运营方  |  2026年6月  |  V3.0 · 会议决议版',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'编制：Mr666  ·  企业宣传策划专员',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
     new Paragraph({children:[new TextRun({text:'背景：经6/10领导会议讨论链商品牌风险评估后，决定注册全新品牌替代原品牌名',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}),
     pageBreak()
 );
@@ -341,7 +341,7 @@ children.push(
     dataTable(['品牌','所属公司','定位','与"店营通"差异'],[
         ['店店通','百炼智能（北京）','线下渠道招商拓展平台（to Brand）','面向品牌商的渠道管理，不面向门店经营'],
         ['店务通','科脉技术（深圳）','门店进销存管理App（零售工具）','聚焦进销存，不涉及跨店联盟/消费权益互通'],
-        ['店营通','链邦科技（本方案）','门店数字化经营+跨店联盟生态平台','差异化核心：经营+联盟+消费权益互通'],
+        ['店营通','链商平台运营方（本方案）','门店数字化经营+跨店联盟生态平台','差异化核心：经营+联盟+消费权益互通'],
     ]),
     p('关键差异：现有"店X通"产品均为单一工具型SaaS，而"店营通"的核心差异在于"营"——不仅是工具，更是经营生态（跨店互通+消费权益流转+三级推广网络）。这个差异足以支撑商标显著性论证。'),
     divider(),
@@ -652,7 +652,7 @@ children.push(
 
     h2('10.2 品牌资产迁移清单'),
     dataTable(['资产类型','迁移动作','优先级'],[
-        ['公司主体','评估是否需要工商更名（独立新品牌建议仅作为商标/产品品牌，公司主体可保留"链邦科技"）','🟡 视需要'],
+        ['公司主体','评估是否需要工商更名（独立新品牌建议仅作为商标/产品品牌，公司主体可保留"链商平台运营方"）','🟡 视需要'],
         ['小程序/App','应用名称更新、开屏页更新、关于页面更新','🔴 P0'],
         ['公众号/媒体号','名称/头像/简介更新','🔴 P0'],
         ['商家合同/协议','品牌名称条款更新','🔴 P0'],
@@ -769,10 +769,10 @@ children.push(
     n(4,'启动品牌VI基础设计（Logo/色板/字体）'),
     n(5,'制定品牌过渡计划（内部系统→产品端→市场传播）'),
     divider(),
-    p('期待新品牌名成为链邦科技在本地生活B端服务领域的鲜明旗帜。', {bold:true,color:C.MAIN}),
+    p('期待新品牌名成为链商平台运营方在本地生活B端服务领域的鲜明旗帜。', {bold:true,color:C.MAIN}),
     divider(),
     divider(),
-    p('编制：梁君衡  ·  企业宣传策划专员  ·  链邦科技', {color:C.GRAY}),
+    p('编制：Mr666  ·  企业宣传策划专员  ·  链商平台运营方', {color:C.GRAY}),
     p('日期：2026年6月10日  ·  V3.0 · 会议决议版', {color:C.GRAY}),
     p('背景：基于6/10领导会议"链商品牌风险评估"结论，全新独立命名', {color:C.GRAY}),
     p('本文件为内部决策参考材料，三方案均已完成初步商标检索，建议最终确认前委托专业代理机构出具正式检索报告。', {color:C.GRAY})

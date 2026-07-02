@@ -63,7 +63,7 @@ function buildManual() {
             new Paragraph({children:[new TextRun({text:'品牌执行手册',size:48,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
             new Paragraph({children:[new TextRun({text:'Brand Execution Playbook · Mini Program Platform',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
             new Paragraph({children:[new TextRun({text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━',size:14,font:FONT.body,color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
-            new Paragraph({children:[new TextRun({text:'版本：V1.0 | 编制：梁君衡 | 日期：2026年6月3日',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'版本：V1.0 | 编制：Mr666 | 日期：2026年6月3日',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
             new Paragraph({children:[new TextRun({text:'适用范围：链商2.0公测版小程序 · H5 · APP 全端品牌执行',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
             new Paragraph({children:[new TextRun({text:'密级：内部执行文件 | 分发：品牌组·设计·技术部·数字化中心·管理层',size:18,font:FONT.body,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
 
@@ -694,7 +694,7 @@ body {
                 ['位置','标准文案','法规依据'],
                 [
                     ['隐私弹窗标题','隐私保护告知','PIPL第17条'],
-                    ['隐私弹窗正文','链商·链生活（链邦科技）重视您的隐私保护。我们将收集您的手机号码用于会员注册和订单通知，不会用于其他用途。您可以在"我的-设置-隐私"中随时查看、修改或删除您的个人信息。','PIPL第17-18条'],
+                    ['隐私弹窗正文','链商·链生活（链商平台运营方）重视您的隐私保护。我们将收集您的手机号码用于会员注册和订单通知，不会用于其他用途。您可以在"我的-设置-隐私"中随时查看、修改或删除您的个人信息。','PIPL第17-18条'],
                     ['会员绑定同意','同意并成为会员','PIPL第13条\n（明确同意）'],
                     ['隐私政策链接','查看隐私政策完整版','PIPL第17条'],
                     ['用户协议链接','查看用户服务协议','电商法第33条'],
@@ -776,10 +776,10 @@ body {
             dataTable(
                 ['评审项','评审内容','通过条件','评审人'],
                 [
-                    ['6套模板终审','逐套检查品牌色/Logo/字体/组件\n是否符合本手册规范','6套全部通过\n品牌元素无偏差','梁君衡+设计师\n+管理层'],
-                    ['28触点全覆盖','按第二章28触点逐项走查\n（建议投影仪逐屏走查）','100%触点审查通过\nP0清零·P1≤2项','梁君衡+数字化中心\n+技术部'],
-                    ['合规复查','法务逐页审查合规用语\n隐私弹窗·PIPL·三红线','0项合规问题','法务+梁君衡'],
-                    ['真机测试','iOS+Android各3款主流机型\n实测品牌色/字体/Logo显示','3款机型全部通过\n无品牌显示异常','测试+梁君衡'],
+                    ['6套模板终审','逐套检查品牌色/Logo/字体/组件\n是否符合本手册规范','6套全部通过\n品牌元素无偏差','Mr666+设计师\n+管理层'],
+                    ['28触点全覆盖','按第二章28触点逐项走查\n（建议投影仪逐屏走查）','100%触点审查通过\nP0清零·P1≤2项','Mr666+数字化中心\n+技术部'],
+                    ['合规复查','法务逐页审查合规用语\n隐私弹窗·PIPL·三红线','0项合规问题','法务+Mr666'],
+                    ['真机测试','iOS+Android各3款主流机型\n实测品牌色/字体/Logo显示','3款机型全部通过\n无品牌显示异常','测试+Mr666'],
                 ]
             ),
 
@@ -789,7 +789,7 @@ body {
             dataTable(
                 ['签核角色','签核内容','签核标准','签名/日期'],
                 [
-                    ['品牌组\n（梁君衡）','品牌视觉与文案\n28触点全部达标','P0清零·P1≤2项\nP2已登记排期',''],
+                    ['品牌组\n（Mr666）','品牌视觉与文案\n28触点全部达标','P0清零·P1≤2项\nP2已登记排期',''],
                     ['法务','合规用语与隐私保护\n三红线无突破','0项合规问题',''],
                     ['数字化中心','模板部署与品牌触点\n技术实现无误','6模板可正常加载\n28触点无技术bug',''],
                     ['技术部','系统稳定性\n品牌元素渲染正常','真机测试通过\n品牌显示无异常',''],
@@ -861,7 +861,7 @@ body {
             dataTable(
                 ['角色','姓名/团队','品牌执行职责','决策权限'],
                 [
-                    ['品牌负责人','梁君衡','① 品牌标准制定与维护\n② 28触点审查与签核\n③ 品牌文案审核\n④ 合规术语审查','品牌标准最终决定权\n公测品牌签核'],
+                    ['品牌负责人','Mr666','① 品牌标准制定与维护\n② 28触点审查与签核\n③ 品牌文案审核\n④ 合规术语审查','品牌标准最终决定权\n公测品牌签核'],
                     ['设计师','[待确认]','① 6套模板视觉设计\n② 品牌插画/图标设计\n③ 海报/物料模板设计\n④ 品牌色/字体/组件落地','设计执行决策\n品牌规范内的设计自由度'],
                     ['数字化中心','[团队]','① 模板技术部署\n② 品牌触点技术实现\n③ CSS变量/组件库开发\n④ 品牌问题技术修复','技术实现方案决策'],
                     ['技术部','[团队]','① 品牌规范代码实施\n② 品牌QA自检\n③ 真机测试与兼容性\n④ 品牌bug修复','代码实现决策'],
@@ -877,10 +877,10 @@ body {
                 ['步骤','操作','责任人','时限'],
                 [
                     ['① 发现问题','任何人发现品牌问题：截图标注+描述偏差\n提报至品牌问题日志（企业微信群/共享文档）','发现人','随时'],
-                    ['② 分级判定','品牌组判定优先级别：\nP0=公测阻塞·P1=1周内·P2=2周内·P3=可延后','梁君衡','2小时内\n（工作时间）'],
-                    ['③ 分配修复','按模块分配责任人：\n视觉问题→设计师·技术问题→数字化中心·文案→品牌组','梁君衡','判定后\n立即分配'],
+                    ['② 分级判定','品牌组判定优先级别：\nP0=公测阻塞·P1=1周内·P2=2周内·P3=可延后','Mr666','2小时内\n（工作时间）'],
+                    ['③ 分配修复','按模块分配责任人：\n视觉问题→设计师·技术问题→数字化中心·文案→品牌组','Mr666','判定后\n立即分配'],
                     ['④ 限时修复','P0=1小时 / P1=4小时 / P2=24小时 / P3=排期迭代','责任人','按时限'],
-                    ['⑤ 验证关闭','品牌组验证修复效果→截图留证→关闭问题→更新日志','梁君衡','修复后\n2小时内'],
+                    ['⑤ 验证关闭','品牌组验证修复效果→截图留证→关闭问题→更新日志','Mr666','修复后\n2小时内'],
                 ]
             ),
             divider(),
@@ -1060,7 +1060,7 @@ body {
             divider(),
             divider(),
             new Paragraph({children:[new TextRun({text:'— 链商·链生活 · 小程序平台品牌执行手册 V1.0 · 完 —',size:18,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300}}),
-            new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 链邦科技 · 企业宣传策划专员 | 2026年6月3日',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+            new Paragraph({children:[new TextRun({text:'编制：Mr666 | 链商平台运营方 · 企业宣传策划专员 | 2026年6月3日',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
             new Paragraph({children:[new TextRun({text:'本手册为链商·链生活品牌执行的核心参考文件。任何品牌相关的设计、开发、运营决策，请先查阅本手册。',size:16,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
             new Paragraph({children:[new TextRun({text:'手册更新频率：每2周或重大品牌变更时更新。最新版本存放于企业微盘/品牌资产库/品牌规范/。',size:16,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
         ]

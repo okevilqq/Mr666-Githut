@@ -38,7 +38,7 @@ var children = [
             infoTable([
                 ['文档版本', 'V1.0'],
                 ['编制日期', '2026年6月2日'],
-                ['编制人', '梁君衡（企业宣传部）'],
+                ['编制人', 'Mr666（企业宣传部）'],
                 ['审核方', '技术部（数字化中心）/ 总经办'],
                 ['交付时限', '2026年6月10日前（公测前2天）'],
                 ['保密级别', '内部文件'],
@@ -355,7 +355,7 @@ var children = [
 
             divider(),
             new Paragraph({ children: [new TextRun({ text: '— Brief 完 —', size: 20, font:FONT.body, color: C.GRAY, italics: true })], alignment: AlignmentType.CENTER, spacing: { before: 400 } }),
-            new Paragraph({ children: [new TextRun({ text: '编制：梁君衡（企业宣传部） | 2026年6月2日 | 链邦科技', size: 18, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { before: 100 } }),
+            new Paragraph({ children: [new TextRun({ text: '编制：Mr666（企业宣传部） | 2026年6月2日 | 链商平台运营方', size: 18, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { before: 100 } }),
 
 ];
 

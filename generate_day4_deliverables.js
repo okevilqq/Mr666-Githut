@@ -42,7 +42,7 @@ const doc = new Document({
             children:[
                 new Paragraph({children:[new TextRun({text:'链商平台 · 三方痛点与机会图谱',size:36,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
                 new Paragraph({children:[new TextRun({text:'—— 用户·商家·社区 三端痛点深挖 + 链商差异化机会 ——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
-                new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月4日 | Day 4 交付 | 痛点≥32条 · 每条对应机会+链商优势',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+                new Paragraph({children:[new TextRun({text:'编制：Mr666 | 2026年6月4日 | Day 4 交付 | 痛点≥32条 · 每条对应机会+链商优势',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
 
                 h1('一、研究框架'),
                 p('采用"痛点发现 → 场景还原 → 情绪识别 → 机会判断 → 链商匹配"五步法，对用户端、商家端、社区端进行系统性痛点挖掘。每条痛点标注情绪强度（🔴极高/🟠高/🟡中），并对应链商2.0系统的差异化解决路径。'),
@@ -134,7 +134,7 @@ const doc = new Document({
             children:[
                 new Paragraph({children:[new TextRun({text:'链商平台公测 · UI品牌审查问题清单',size:32,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
                 new Paragraph({children:[new TextRun({text:'—— 公测版本现有UI界面的品牌不一致问题逐项审查 ——',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
-                new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月4日 | Day 4 交付 | 发现问题≥18条 · 逐条标注修正建议',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+                new Paragraph({children:[new TextRun({text:'编制：Mr666 | 2026年6月4日 | Day 4 交付 | 发现问题≥18条 · 逐条标注修正建议',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
 
                 h1('一、审查范围与方法'),
                 p('基于6月2日技术会议对2.0系统的完整演示（老树根Demo + 商圈 + 联盟店铺 + 收银台 + 资管后台），对公测版本中所有用户可见界面的品牌一致性进行逐项审查。审查维度包括：品牌色使用、字体统一性、Logo位置、文案调性、图标风格、交互组件品牌化。'),

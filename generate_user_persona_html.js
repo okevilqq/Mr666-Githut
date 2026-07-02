@@ -753,7 +753,7 @@ tbody tr:hover{background:#F0F4F8}
   <p style="margin-top:8px"><strong>链商2.0定位：面向社区商业的数字经营平台——商户独立经营 · 生态会员互通 · 消费权益流转 · 真实交易激励</strong></p>
   <p style="margin-top:6px;font-size:12px">数据来源：艾媒咨询 · 艾瑞咨询 · QuestMobile · 商务部 · 链商V3.2/V15模型 | 分析方法论：奥美FABE · USP · 利益分层 · 全渠道渗透</p>
   <p class="footer-note">核心结论：综合可行性 8/10 · 社区依赖型(8%)冷启动 → 精打细算型(30%)规模增长 → 全画像覆盖</p>
-  <p style="margin-top:14px;font-size:11px">© 2026 广东链邦科技有限公司（全球拼购 GGbingo 子公司）· 企业宣传策划专员 梁君衡</p>
+  <p style="margin-top:14px;font-size:11px">© 2026 链商平台运营方（母公司 母公司 子公司）· 企业宣传策划专员 Mr666</p>
 </div>
 
 </div><!-- /main-content -->

@@ -747,7 +747,7 @@ docChildren.push(divider(), divider());
 docChildren.push(new Paragraph({children:[new TextRun({text:'— 报告完 —',size:24,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
 docChildren.push(divider());
 docChildren.push(new Paragraph({children:[new TextRun({text:'链商2.0 · 链生活品牌  |  用户画像可行性报告 V1.0  |  2026年6月6日',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
-docChildren.push(new Paragraph({children:[new TextRun({text:'编制：企业宣传部 · 品牌战略组  |  梁君衡',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
+docChildren.push(new Paragraph({children:[new TextRun({text:'编制：企业宣传部 · 品牌战略组  |  Mr666',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
 docChildren.push(new Paragraph({children:[new TextRun({text:'基于：艾媒咨询 · 艾瑞咨询 · QuestMobile · 链商V3.2/V15模型',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}));
 docChildren.push(divider());
 

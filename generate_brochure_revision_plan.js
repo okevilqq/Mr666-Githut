@@ -31,8 +31,8 @@ var children = [
     new Paragraph({children:[new TextRun({text:'合规审查 · 逻辑校对 · 设计评审 · 修改方案',size:28,font:FONT.body,bold:true,color:C.ORANGE})],alignment:AlignmentType.CENTER,spacing:{after:30}}),
     new Paragraph({children:[new TextRun({text:'审查基准：V3.1服务费结算与核销模型（城市服务商版）+ 法律合规框架',size:FONT.bodySize,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
     new Paragraph({children:[new TextRun({text:'审查日期：2026年6月5日',size:FONT.bodySize,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-    new Paragraph({children:[new TextRun({text:'编制：梁君衡 · 企业宣传策划专员',size:FONT.bodySize,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
-    new Paragraph({children:[new TextRun({text:'广东链邦科技有限公司',size:FONT.bodySize,font:FONT.body,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:400}}),
+    new Paragraph({children:[new TextRun({text:'编制：Mr666 · 企业宣传策划专员',size:FONT.bodySize,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:20}}),
+    new Paragraph({children:[new TextRun({text:'链商平台运营方',size:FONT.bodySize,font:FONT.body,color:C.DARK})],alignment:AlignmentType.CENTER,spacing:{after:400}}),
 
     divider(),
     pageBreak(),
@@ -302,7 +302,7 @@ var children = [
     calloutBox('品牌命名架构建议', [
         '品牌名称：链生活 Chain Life（面向消费者的社区本地生活品牌）',
         '平台品类：链商 链商平台（面向B端的数字化服务平台品类名）',
-        '公司主体：广东链邦科技有限公司',
+        '公司主体：链商平台运营方',
         '建议：画册封面和品牌简介页需同时体现"链生活"品牌和"链商平台"品类',
     ], C.LIGHT),
 
@@ -577,7 +577,7 @@ var children = [
     divider(),
 
     // Final metadata
-    new Paragraph({children:[new TextRun({text:'审查人：梁君衡',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.RIGHT,spacing:{after:10}}),
+    new Paragraph({children:[new TextRun({text:'审查人：Mr666',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.RIGHT,spacing:{after:10}}),
     new Paragraph({children:[new TextRun({text:'审查日期：2026年6月5日',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.RIGHT,spacing:{after:10}}),
     new Paragraph({children:[new TextRun({text:'文档性质：内部审查报告 · 仅供内部使用',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.RIGHT,spacing:{after:10}}),
     new Paragraph({children:[new TextRun({text:'本报告部分内容由AI辅助生成，已由人工核验',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.RIGHT,spacing:{after:10}}),

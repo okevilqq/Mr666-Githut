@@ -26,7 +26,7 @@ const doc = new Document({
             children:[
                 new Paragraph({children:[new TextRun({text:'链商平台 · 竞品矩阵对比表',size:36,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
                 new Paragraph({children:[new TextRun({text:'—— 本地生活赛道全景分析（10+平台覆盖）——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
-                new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月3日 | Day 3 交付',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+                new Paragraph({children:[new TextRun({text:'编制：Mr666 | 2026年6月3日 | Day 3 交付',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
 
                 h1('一、竞品全景总览'),
                 p('覆盖第一梯队（美团/阿里/抖音/京东）+ 第二梯队（高德/小红书/快手/百度/朴朴）+ 特色玩家（社区团购/本地团长/垂直服务），共12个对标对象，对比维度20+项。',{bold:true}),
@@ -146,7 +146,7 @@ const doc = new Document({
             children:[
                 new Paragraph({children:[new TextRun({text:'链商平台公测 · 品牌触点清单',size:36,font:FONT.body,bold:true,color:C.MAIN})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
                 new Paragraph({children:[new TextRun({text:'—— 公测涉及的所有品牌视觉与文案触点逐项梳理 ——',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:300}}),
-                new Paragraph({children:[new TextRun({text:'编制：梁君衡 | 2026年6月3日 | Day 3 交付 | 协作方：数字化中心',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+                new Paragraph({children:[new TextRun({text:'编制：Mr666 | 2026年6月3日 | Day 3 交付 | 协作方：数字化中心',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
 
                 h1('一、触点总览'),
                 p('基于6月2日技术会议对链商2.0系统架构的全面讲解，梳理公测版本所有涉及品牌视觉、文案、交互的触点。按系统模块分为6大板块，共计28个品牌触点。',{bold:true}),

@@ -80,8 +80,8 @@ children.push(
     new Paragraph({children:[new TextRun({text:'三套方案 · "赋商"体系 · B端经营定位 · 2-4字中文+国际化英文 · 全类别商标可注册性评估',size:19,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:80}}),
     new Paragraph({children:[new TextRun({text:'命名方向：联盟赋能型 · 全域通达型 · 生态汇聚型',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
     new Paragraph({spacing:{before:400},children:[]}),
-    new Paragraph({children:[new TextRun({text:'链邦科技  |  2026年6月  |  V1.0 · 赋商创意版',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
-    new Paragraph({children:[new TextRun({text:'编制：梁君衡  ·  企业宣传策划专员',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'链商平台运营方  |  2026年6月  |  V1.0 · 赋商创意版',size:20,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'编制：Mr666  ·  企业宣传策划专员',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
     new Paragraph({children:[new TextRun({text:'背景：基于6/11创意策划会议"赋商"命名方向，围绕"赋能商业·赋予商家能力"延展三套方案',size:16,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER}),
     pageBreak()
 );
@@ -377,7 +377,7 @@ children.push(
     dataTable(['品牌','所属公司','定位','与"赋商通"差异'],[
         ['富商通','（多家小型企业使用）','通用商业名称，非特定行业','完全不同——"赋"（赋能）与"富"（财富）字义差异明显，无混淆风险'],
         ['e商通','中国银行','银行B2B电子服务','银行金融服务，与本地生活平台完全不同领域'],
-        ['赋商通','链邦科技（本方案）','本地商家数字化赋能+全域流通平台','独创性——"赋能商业·全域通达"的完整品牌叙事'],
+        ['赋商通','链商平台运营方（本方案）','本地商家数字化赋能+全域流通平台','独创性——"赋能商业·全域通达"的完整品牌叙事'],
     ]),
     p('关键差异："赋商通"以"赋"（赋能）字头形成独特识别——"赋能商业"的品牌叙事与"富商通"的"财富商业"或"e商通"的"电子商业"存在本质区别。这个差异足以支撑商标显著性论证。'),
     divider(),
@@ -716,7 +716,7 @@ children.push(
 
     h2('10.2 品牌资产迁移清单'),
     dataTable(['资产类型','迁移动作','优先级'],[
-        ['公司主体','评估是否需要工商更名（建议仅作为商标/产品品牌，公司主体保留"链邦科技"）','🟡 视需要'],
+        ['公司主体','评估是否需要工商更名（建议仅作为商标/产品品牌，公司主体保留"链商平台运营方"）','🟡 视需要'],
         ['小程序/App','应用名称更新、开屏页更新、关于页面更新','🔴 P0'],
         ['公众号/媒体号','名称/头像/简介更新','🔴 P0'],
         ['商家合同/协议','品牌名称条款更新','🔴 P0'],
@@ -849,7 +849,7 @@ children.push(
     p('期待"赋商"成为本地商业数字化赋能领域的一面鲜明旗帜。', {bold:true,color:C.MAIN}),
     divider(),
     divider(),
-    p('编制：梁君衡  ·  企业宣传策划专员  ·  链邦科技', {color:C.GRAY}),
+    p('编制：Mr666  ·  企业宣传策划专员  ·  链商平台运营方', {color:C.GRAY}),
     p('日期：2026年6月11日  ·  V1.0 · 赋商创意版', {color:C.GRAY}),
     p('创意原点："赋商"——赋能商业 · 赋予商家能力 · 释放经营天赋', {color:C.GRAY}),
     p('本文件为内部决策参考材料，三方案均已完成初步商标检索，建议最终确认前委托专业代理机构出具正式检索报告。', {color:C.GRAY})

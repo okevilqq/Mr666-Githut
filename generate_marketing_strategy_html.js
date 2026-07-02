@@ -808,7 +808,7 @@ tbody tr:hover{background:#e8f0f8}
   <p style="margin-top:8px;color:${C.MAIN}"><strong>链商2.0定位：面向社区商业的数字经营平台——商户独立经营 · 生态会员互通 · 消费权益流转 · 真实交易激励</strong></p>
   <p style="margin-top:8px">所有营销参数均为建议值，可根据实际运营数据调优。任何参数调整需经运营提案→品牌评估→技术确认→法务审核→管理层审批。</p>
   <p class="redline-note">营销策略核心原则：营销预算随交易量自动增长（零预付）· 代金券/积分/消费金全平台通用+不可兑现（零金融风险）· 三级推广收入基于交易量（零传销风险）· 跨店通兑不构成二清（汇付直清）</p>
-  <p style="margin-top:20px;font-size:12px">© 2026 广东链邦科技有限公司（全球拼购 GGbingo 子公司）· 企业宣传策划专员 梁君衡</p>
+  <p style="margin-top:20px;font-size:12px">© 2026 链商平台运营方（母公司 母公司 子公司）· 企业宣传策划专员 Mr666</p>
 </div>
 
 </div><!-- /main-content -->

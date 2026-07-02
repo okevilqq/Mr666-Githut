@@ -75,14 +75,14 @@ function getPreWorkData() {
             ],
             deliverables: '培训笔记 / 链商项目初步理解文档', kpis: '培训课程8节全覆盖 / 笔记≥3000字', collab: '教培部', ai: 'Claude（培训内容整理）' },
 
-        { date: '2026/05/20', dayOfWeek: '二', phase: '前期·项目熟悉期', taskTheme: '全球拼购母公司体系调研',
+        { date: '2026/05/20', dayOfWeek: '二', phase: '前期·项目熟悉期', taskTheme: '母公司体系调研',
             tasks: [
-                { content: '全球拼购企业介绍与公司架构学习（含宣传片）', type: '调研分析', hours: 2 },
+                { content: '母公司企业介绍与公司架构学习（含宣传片）', type: '调研分析', hours: 2 },
                 { content: '2025公司介绍PPT深度研读与业务版图梳理', type: '调研分析', hours: 2 },
                 { content: '跨境电商+链商双赛道协同关系分析', type: '策略规划', hours: 2 },
-                { content: '撰写《全球拼购体系架构认知总结》', type: '归档整理', hours: 2 },
+                { content: '撰写《母公司体系架构认知总结》', type: '归档整理', hours: 2 },
             ],
-            deliverables: '《全球拼购（GGbingo）总结》', kpis: '母公司业务版图覆盖≥6大板块 / 链商与母公司协同关系清晰', collab: '—', ai: 'Claude（总结梳理）' },
+            deliverables: '《母公司总结》', kpis: '母公司业务版图覆盖≥6大板块 / 链商与母公司协同关系清晰', collab: '—', ai: 'Claude（总结梳理）' },
 
         { date: '2026/05/21', dayOfWeek: '三', phase: '前期·品牌启动期', taskTheme: '新品牌命名策划+会议+品牌手册',
             tasks: [
@@ -131,7 +131,7 @@ function getPreWorkData() {
 
         { date: '2026/05/27', dayOfWeek: '三', phase: '前期·体系成型期', taskTheme: '组织架构+协作机制+链生活概念',
             tasks: [
-                { content: '全球拼购&链邦科技组织架构完整版文档梳理', type: '调研分析', hours: 2 },
+                { content: '母公司&链商平台运营方组织架构完整版文档梳理', type: '调研分析', hours: 2 },
                 { content: '链商资源与协作机制沟通与梳理', type: '会议汇报', hours: 2 },
                 { content: '链生活品牌概念设计（从火星链→链生活的关键转折）', type: '品牌创意', hours: 2.5 },
                 { content: '链生活概念方案初稿与命名定调', type: '品牌创意', hours: 1.5 },
@@ -752,7 +752,7 @@ function buildExcel() {
     const deliverables = [
         // 前期
         [1,'链商项目培训总结','前期','5/19','Word','—','✅ 已完成'],
-        [2,'全球拼购体系架构认知总结','前期','5/20','Word','—','✅ 已完成'],
+        [2,'母公司体系架构认知总结','前期','5/20','Word','—','✅ 已完成'],
         [3,'新品牌命名策划','前期','5/21','Word','—','✅ 已完成'],
         [4,'链商品牌手册优化建议','前期','5/21','Word','—','✅ 已完成'],
         [5,'"链商"注册可行性分析','前期','5/21','Word','合规部','✅ 已完成'],
@@ -766,7 +766,7 @@ function buildExcel() {
         [13,'链商品牌手册V2.2','前期','5/26','Word','—','✅ 已完成'],
         [14,'火星链概念设计+Logo','前期','5/26','PNG/Word','设计师','✅ 已完成'],
         [15,'链商宣传海报文案×3版','前期','5/26','Word','—','✅ 已完成'],
-        [16,'全球拼购&链邦科技组织架构','前期','5/27','Word','—','✅ 已完成'],
+        [16,'母公司&链商平台运营方组织架构','前期','5/27','Word','—','✅ 已完成'],
         [17,'链商资源与协作机制','前期','5/27','Word','跨部门','✅ 已完成'],
         [18,'链生活概念设计方案','前期','5/27','Word','—','✅ 已完成'],
         [19,'链生活品牌定位体系战略手册','前期','5/28','Word','—','✅ 已完成'],
@@ -883,7 +883,7 @@ function buildExcel() {
     ws3['!cols'] = [{wch:8},{wch:22},{wch:18},{wch:25},{wch:50},{wch:40},{wch:25},{wch:35}];
     ws5['!cols'] = [{wch:5},{wch:40},{wch:12},{wch:8},{wch:12},{wch:18},{wch:10}];
 
-    const outputPath = path.join(__dirname, '梁君衡_3个月品牌全案工作计划表.xlsx');
+    const outputPath = path.join(__dirname, 'Mr666_3个月品牌全案工作计划表.xlsx');
     XLSX.writeFile(wb, outputPath);
     console.log(`✅ 生成成功: ${outputPath}`);
     console.log(`📊 6个工作表: 每日计划(${rows1.length-1}行) | 甘特图 | 周度汇总(${wr.length-1}周) | 月度里程碑(${mr.length-1}月) | 交付物(${dr.length-1}项) | AI工具(${ar.length-1}项)`);

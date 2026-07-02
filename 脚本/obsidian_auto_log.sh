@@ -4,7 +4,7 @@
 # 在 regenerate_all.sh 完成后自动记录变更到 Obsidian
 # ============================================================
 
-LOG_FILE="/Users/mac/Downloads/君衡 项目文件夹/知识库/变更日志.md"
+LOG_FILE="/Users/[user]/Mr666-项目文件夹/知识库/变更日志.md"
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 DATE=$(date +"%Y-%m-%d")
 

@@ -525,7 +525,7 @@ function generateDailyPlan() {
                 entry.afternoonTasks = '4. 数据需求：注册/领券/核销/复购/CRM/看板\n5. 非功能需求：性能/安全/兼容性\n6. 撰写《产品需求文档 PRD》';
                 entry.deliverables = '《产品需求文档 PRD》';
                 entry.kpis = '功能模块 ≥8个 / 页面 ≥20个 / 数据指标 ≥15个 / 可直接用于开发';
-                entry.collaborators = '数字化中心（张冬/江周辉）';
+                entry.collaborators = '数字化中心（数字化中心/数字化中心）';
                 entry.aiTools = 'Claude（PRD结构化+功能展开）';
             } else if (dayNum === 54) {
                 entry.taskTheme = '品牌使用规范手册';
@@ -825,7 +825,7 @@ function generateExcel() {
     ws2['!cols'] = weeklyColWidths;
 
     // ---- 写入文件 ----
-    const outputPath = path.join(__dirname, '梁君衡_3个月品牌全案工作计划表.xlsx');
+    const outputPath = path.join(__dirname, 'Mr666_3个月品牌全案工作计划表.xlsx');
     XLSX.writeFile(wb, outputPath);
     console.log('Excel file generated: ' + outputPath);
     console.log('Sheets: 每日工作计划(' + (dailyData.length - 1) + '天), 周度汇总(' + (weekData.length - 1) + '周), 月度里程碑(' + (monthData.length - 1) + '月), 交付物清单(' + (deliverables.length - 1) + '项), AI工具使用计划(' + (aiData.length - 1) + '项)');

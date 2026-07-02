@@ -95,7 +95,7 @@ function buildDocument() {
         new Paragraph({ children: [new TextRun({ text: '链商2.0 · 链生活品牌', size: 36, font:FONT.body, bold: true, color: C.MAIN })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
         new Paragraph({ children: [new TextRun({ text: 'P1+P2 营销优化交付物', size: 28, font:FONT.body, bold: true, color: C.ORANGE })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
         new Paragraph({ children: [new TextRun({ text: '三端信息架构分离 + 三元营销简化 + 竞品视觉武器 + 合规语言温度平衡', size: 20, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
-        new Paragraph({ children: [new TextRun({ text: '编制：梁君衡 | 2026年6月8日 | P1+P2 交付 | 机密文件', size: 18, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+        new Paragraph({ children: [new TextRun({ text: '编制：Mr666 | 2026年6月8日 | P1+P2 交付 | 机密文件', size: 18, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
         divider(),
         calloutBox('P1任务（公测第一周内完成）：三端信息架构分离、三元营销简化表达、竞品视觉对比武器。P2任务（持续优化）：合规语言温度平衡——在合规前提下恢复品牌情感感染力。', 'info'),
         divider(),

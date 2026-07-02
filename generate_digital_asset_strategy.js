@@ -46,7 +46,7 @@ var children = [
             infoTable([
                 ['文档性质','品牌战略策划 · 商业模型设计'],
                 ['编制日期','2026年6月2日'],
-                ['编制人','梁君衡（企业宣传部）'],
+                ['编制人','Mr666（企业宣传部）'],
                 ['关联文档','《链商平台2.0系统技术沟通会议纪要》《链生活商业模式说明》《链生活服务费结算机制与会员体系》'],
             ]),
             divider(),
@@ -238,7 +238,7 @@ var children = [
 
             divider(),
             new Paragraph({children:[new TextRun({text:'— 文档完 —',size:20,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:400}}),
-            new Paragraph({children:[new TextRun({text:'编制：梁君衡（企业宣传部） | 2026年6月2日 | 链邦科技',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{before:100}}),
+            new Paragraph({children:[new TextRun({text:'编制：Mr666（企业宣传部） | 2026年6月2日 | 链商平台运营方',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{before:100}}),
 
 ];
 

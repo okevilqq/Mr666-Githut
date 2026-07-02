@@ -43,7 +43,7 @@ var children = [
                 ['文档性质','法律合规基准文件 · 所有品牌策划工作的前置审查依据'],
                 ['文档版本','V1.0'],
                 ['编制日期','2026年6月2日'],
-                ['编制人','梁君衡（企业宣传部）'],
+                ['编制人','Mr666（企业宣传部）'],
                 ['法律审核','待法务部/合规部复核确认（本文件为策划部门的合规自查框架，不构成正式法律意见）'],
                 ['适用范围','链商平台品牌全案策划 · 服务费结算模型设计 · 数字资产策略 · 对外话术与物料'],
                 ['关联文档','《链商平台2.0系统技术沟通会议纪要》《企业数字资产×服务费结算模型融合策略》《链生活商业模式说明》《品牌定位体系战略手册》'],
@@ -281,7 +281,7 @@ var children = [
             dataTable(
                 ['步骤','节点','审查内容','责任人'],
                 [
-                    ['Step 1','方案初稿完成','策划人自查：对照本合规框架逐项检查\n① 话术是否触及禁用词\n② 模型是否触及红线\n③ 数据使用是否符合PIPL','策划人\n（梁君衡）'],
+                    ['Step 1','方案初稿完成','策划人自查：对照本合规框架逐项检查\n① 话术是否触及禁用词\n② 模型是否触及红线\n③ 数据使用是否符合PIPL','策划人\n（Mr666）'],
                     ['Step 2','方案内部评审','品牌组交叉审查：从消费者视角\n检查是否存在误导性/歧义性表述','品牌组\n同事'],
                     ['Step 3','法务/合规审核\n（高风险事项）','涉及服务费结算机制/虚拟资产/数据隐私\n/投资回报暗示的事项，须提交法务部','法务部/\n合规部'],
                     ['Step 4','终稿发布','Step 1-3全部通过后，方可对外发布\n或提交管理层/人事部审核','策划人'],
@@ -293,7 +293,7 @@ var children = [
             dataTable(
                 ['文档','合规状态','待处理事项'],
                 [
-                    ['工作计划表（梁君衡_3个月品牌全案工作计划表.xlsx）','✅ 低风险','无——工作计划属内部管理文档，不涉及对外传播'],
+                    ['工作计划表（Mr666_3个月品牌全案工作计划表.xlsx）','✅ 低风险','无——工作计划属内部管理文档，不涉及对外传播'],
                     ['技术部会议纪要（20260602）','✅ 低风险','已含合规讨论（积分红线/资金池红线）\n分发前标注"内部会议纪要，禁止外传"'],
                     ['店铺模板设计Brief','✅ 低风险','确认字体/图标商用授权状态'],
                     ['Logo设计DEMO','🟡 待审查','定稿后进行商标查询+注册申请'],
@@ -322,7 +322,7 @@ var children = [
             divider(),
 
             new Paragraph({children:[new TextRun({text:'— 合规框架完 —',size:20,font:FONT.body,color:C.GRAY,italics:true})],alignment:AlignmentType.CENTER,spacing:{before:400}}),
-            new Paragraph({children:[new TextRun({text:'编制：梁君衡（企业宣传部） | 2026年6月2日 | 链邦科技',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{before:100}}),
+            new Paragraph({children:[new TextRun({text:'编制：Mr666（企业宣传部） | 2026年6月2日 | 链商平台运营方',size:18,font:FONT.body,color:C.GRAY})],alignment:AlignmentType.CENTER,spacing:{before:100}}),
             new Paragraph({children:[new TextRun({text:'本文件为策划部门的合规自查框架，不构成正式法律意见。所有涉及法律判断的事项，以法务部/合规部的正式意见为准。',size:16,font:FONT.body,color:C.RED})],alignment:AlignmentType.CENTER,spacing:{before:100}}),
 ];
 

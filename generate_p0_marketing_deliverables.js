@@ -73,7 +73,7 @@ function buildBrandAnchorChapter() {
         new Paragraph({ children: [new TextRun({ text: '链商2.0 · 链生活品牌', size: 36, font:FONT.body, bold: true, color: C.MAIN })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
         new Paragraph({ children: [new TextRun({ text: 'P0 紧急营销交付物', size: 28, font:FONT.body, bold: true, color: C.ORANGE })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
         new Paragraph({ children: [new TextRun({ text: '品牌锚点 + 跨店通兑用户故事 + 公测落地页策略', size: 20, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
-        new Paragraph({ children: [new TextRun({ text: '编制：梁君衡 | 2026年6月8日 | 公测倒计时4天 | 机密文件', size: 18, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+        new Paragraph({ children: [new TextRun({ text: '编制：Mr666 | 2026年6月8日 | 公测倒计时4天 | 机密文件', size: 18, font:FONT.body, color: C.GRAY })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
         divider(),
 
         calloutBox('P0 紧急背景：距离6/12公测仅剩4天。当前品牌一句话介绍过长（75+字）、缺少跨店通兑的消费者故事、尚无公测落地页文案。以下三份交付物直接解决这三个阻断性问题。', 'danger'),
@@ -545,10 +545,10 @@ function buildBrandAnchorChapter() {
         dataTable(
             ['日期', '倒计时', '关键动作', '产出物', '负责人'],
             [
-                ['6/8（一）', 'D-4', '确定品牌锚点+三端LP文案定稿', '品牌锚点决策 + LP文案Final', '梁君衡'],
-                ['6/9（二）', 'D-3', 'LP视觉设计（三端）+ 品牌锚点视觉化', '三端LP初版设计稿', '设计/梁君衡'],
-                ['6/10（三）', 'D-2', 'LP上线测试 + 地推物料定稿', 'LP测试通过 + 地推物料印刷', '技术/梁君衡'],
-                ['6/11（四）', 'D-1', '全渠道预热（朋友圈+社群+公众号）', '预热海报+文案+传播SOP', '梁君衡/伍绍兴'],
+                ['6/8（一）', 'D-4', '确定品牌锚点+三端LP文案定稿', '品牌锚点决策 + LP文案Final', 'Mr666'],
+                ['6/9（二）', 'D-3', 'LP视觉设计（三端）+ 品牌锚点视觉化', '三端LP初版设计稿', '设计/Mr666'],
+                ['6/10（三）', 'D-2', 'LP上线测试 + 地推物料定稿', 'LP测试通过 + 地推物料印刷', '技术/Mr666'],
+                ['6/11（四）', 'D-1', '全渠道预热（朋友圈+社群+公众号）', '预热海报+文案+传播SOP', 'Mr666/运营同事'],
                 ['6/12（五）', 'D-Day', '公测正式启动', '三端LP正式上线 + 地推启动', '全员'],
             ]
         ),
